@@ -60,6 +60,7 @@ class DocumentRepositoryTest {
     @Test fun failedUpdatePreservesPreviousPairAndLease() = runBlocking {
         val store = store(); val source = Source(); val repo = repo(store, source)
         val previous = repo.open("example")
+        source.meta = SourceMetadata("r2", hash(pdf + 1), hash(index))
         source.failure = IOException("network failure")
         fails { repo.download("example") }
         assertArrayEquals(pdf, previous.pdfFile.readBytes())
@@ -81,7 +82,7 @@ class DocumentRepositoryTest {
         val old = store.install(descriptor, { ByteArrayInputStream(pdf) }, { ByteArrayInputStream(index) })
         fails { store.install(descriptor.copy(searchIndexSha256 = "0".repeat(64)), { ByteArrayInputStream(pdf) }, { ByteArrayInputStream(index) }) }
         val rejecting = LocalDocumentStore(root, DocumentIntegrityValidator { _, _ -> throw IOException("Malformed PDF/index") })
-        fails { rejecting.install(descriptor, { ByteArrayInputStream(pdf) }, { ByteArrayInputStream(index) }) }
+        fails { rejecting.install(descriptor.copy(pdfSha256 = hash(pdf + 1)), { ByteArrayInputStream(pdf + 1) }, { ByteArrayInputStream(index) }) }
         store.acquire("example")!!.use { assertEquals(old.pdfFile, it.pdfFile) }
         old.close()
     }
@@ -169,7 +170,7 @@ class DocumentRepositoryTest {
     @Test fun interruptedStreamClosesAndLeavesPreviousPair() = runBlocking {
         val store = store(); val old = store.install(descriptor, { ByteArrayInputStream(pdf) }, { ByteArrayInputStream(index) })
         var closed = false
-        fails { store.install(descriptor, { object : InputStream() {
+        fails { store.install(descriptor.copy(pdfSha256 = hash(pdf + 1)), { object : InputStream() {
             override fun read(): Int = throw IOException("interrupted")
             override fun close() { closed = true }
         } }, { ByteArrayInputStream(index) }) }
@@ -183,6 +184,7 @@ class DocumentRepositoryTest {
         val source = object : Source() {
             override fun openSearchIndex(location: DocumentSource): InputStream = throw CancellationException("cancelled")
         }
+        source.meta = SourceMetadata("r2", hash(pdf), hash(index))
         val repo = repo(store, source)
         assertTrue(fails { repo.download("example") } is CancellationException)
         assertTrue(repo.observeState("example").value is DocumentState.ReadyOffline)
@@ -229,7 +231,7 @@ class DocumentRepositoryTest {
         val started = CountDownLatch(1); val release = CountDownLatch(1)
         var closed = false
         val job = launch(Dispatchers.Default) {
-            store.install(descriptor, { object : ByteArrayInputStream(pdf) {
+            store.install(descriptor.copy(revision = "r2"), { object : ByteArrayInputStream(pdf) {
                 override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
                     started.countDown(); check(release.await(10, TimeUnit.SECONDS))
                     return super.read(buffer, offset, length)
@@ -280,6 +282,79 @@ class DocumentRepositoryTest {
             assertTrue(fails { repository.checkForUpdate("example") } is UnsupportedDocumentSourceException)
             assertTrue(repository.observeState("example").value is DocumentState.Error)
         }
+    }
+
+    private fun occupiedBytes(root: File): Long = root.walkTopDown().filter { it.isFile }.sumOf { it.length() }
+    private fun generationCount(root: File, id: String): Int = File(root, id).listFiles()!!.count { it.isDirectory }
+
+    @Test fun repeatedDownloadsDoNotGrowStorageOrReadSourceAgain() = runBlocking {
+        val root = temp.newFolder(); val source = Source(); val repository = repo(store(root), source)
+        val original = repository.download("example")
+        val bytes = occupiedBytes(root)
+        repeat(5) {
+            repository.download("example").use { repeated ->
+                assertEquals(original.pdfFile, repeated.pdfFile)
+                assertEquals(original.searchIndexFile, repeated.searchIndexFile)
+            }
+            assertEquals(bytes, occupiedBytes(root))
+            assertEquals(1, generationCount(root, "example"))
+        }
+        assertEquals(1, source.reads)
+        original.close()
+    }
+
+    @Test fun storeDeduplicatesAcrossInstancesAndProtectsEveryReturnedLease() = runBlocking {
+        val root = temp.newFolder(); val firstStore = store(root); val otherStore = store(root)
+        val original = firstStore.install(descriptor, { ByteArrayInputStream(pdf) }, { ByteArrayInputStream(index) })
+        val repeated = otherStore.install(descriptor,
+            { throw AssertionError("Unchanged PDF stream must not be opened") },
+            { throw AssertionError("Unchanged index stream must not be opened") })
+        assertEquals(original.pdfFile, repeated.pdfFile)
+        assertEquals(1, generationCount(root, "example"))
+        val updated = firstStore.install(descriptor.copy(pdfSha256 = hash(pdf + 1)), { ByteArrayInputStream(pdf + 1) }, { ByteArrayInputStream(index) })
+        original.close()
+        assertEquals(0, otherStore.pruneUnused("example"))
+        assertTrue(repeated.pdfFile.exists())
+        repeated.close()
+        assertEquals(1, otherStore.pruneUnused("example"))
+        assertTrue(updated.pdfFile.exists())
+        updated.close()
+    }
+
+    @Test fun changedRevisionWithSameBytesCreatesDistinctGeneration() = runBlocking {
+        val root = temp.newFolder(); val store = store(root)
+        val first = store.install(revision("r1"), { ByteArrayInputStream(pdf) }, { ByteArrayInputStream(index) })
+        val second = store.install(revision("r2"), { ByteArrayInputStream(pdf) }, { ByteArrayInputStream(index) })
+        assertNotEquals(first.pdfFile, second.pdfFile)
+        assertEquals("r2", second.revision)
+        assertEquals(2, generationCount(root, "example"))
+        first.close(); second.close()
+    }
+
+    @Test fun readingAndPruningOtherDocumentDoNotWaitForSlowCopy() = runBlocking {
+        val root = temp.newFolder(); val writer = store(root); val reader = store(root)
+        val otherDescriptor = descriptor.copy(documentId = "other")
+        writer.install(otherDescriptor, { ByteArrayInputStream(pdf) }, { ByteArrayInputStream(index) }).close()
+        writer.install(otherDescriptor.copy(pdfSha256 = hash(pdf + 1)), { ByteArrayInputStream(pdf + 1) }, { ByteArrayInputStream(index) }).close()
+        val started = CountDownLatch(1); val release = CountDownLatch(1)
+        val download = async(Dispatchers.Default) {
+            writer.install(descriptor, { object : ByteArrayInputStream(pdf) {
+                override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
+                    started.countDown(); check(release.await(10, TimeUnit.SECONDS))
+                    return super.read(buffer, offset, length)
+                }
+            } }, { ByteArrayInputStream(index) }).close()
+        }
+        try {
+            assertTrue(started.await(10, TimeUnit.SECONDS))
+            withTimeout(3000) {
+                reader.acquire("other")!!.use { assertArrayEquals(pdf + 1, it.pdfFile.readBytes()) }
+                assertEquals(1, reader.pruneUnused("other"))
+            }
+            assertEquals(1L, release.count)
+            assertFalse(download.isCompleted)
+        } finally { release.countDown() }
+        download.await()
     }
 
 }

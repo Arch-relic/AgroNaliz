@@ -22,11 +22,17 @@ class LocalDocumentStore(
 ) {
     constructor(context: Context) : this(File(context.noBackupFilesDir, "documents"))
     internal val storageKey: String = root.absoluteFile.normalize().path
-    private val coordinator = coordinators.getOrPut(storageKey) { Coordinator() }
+    // One coordinator per storage/documentId, shared by all store instances.
+    // A slow copy or hash for one document must not stall other documents.
+    private fun coordinator(id: String): Coordinator {
+        require(Regex("[a-z][a-z0-9_]*").matches(id)) { "Invalid documentId" }
+        return coordinators.getOrPut(storageKey + ":" + id) { Coordinator() }
+    }
     private class Coordinator { val leases = mutableMapOf<String, Int>() }
     companion object { private val coordinators = ConcurrentHashMap<String, Coordinator>() }
 
     suspend fun acquire(id: String): LocalDocument? = io {
+        val coordinator = coordinator(id)
         synchronized(coordinator) { acquireLocked(id) }
     }
 
@@ -37,8 +43,20 @@ class LocalDocumentStore(
     ): LocalDocument = io {
         val coroutine = currentCoroutineContext()
         DocumentCatalog.validate(DocumentCatalogData(1, listOf(descriptor)))
+        val coordinator = coordinator(descriptor.documentId)
         synchronized(coordinator) {
             coroutine.ensureActive()
+            // Reuse only a hash-verified active pair with exactly the same metadata.
+            // No streams are opened and no staging directory is created in this case.
+            val existing = try { acquireLocked(descriptor.documentId) } catch (_: IOException) { null }
+            if (existing != null) {
+                if (descriptor.pdfSha256 == existing.pdfSha256 &&
+                    descriptor.searchIndexSha256 == existing.searchIndexSha256 &&
+                    descriptor.revision == existing.revision) {
+                    return@synchronized existing
+                }
+                existing.close()
+            }
             val directory = directory(descriptor.documentId)
             if (!directory.isDirectory && !directory.mkdirs()) throw IOException("Cannot create document directory")
             val generation = UUID.randomUUID().toString()
@@ -79,6 +97,7 @@ class LocalDocumentStore(
 
     /** Explicit cleanup only: never touches the current generation or an active viewer lease. */
     suspend fun pruneUnused(id: String): Int = io {
+        val coordinator = coordinator(id)
         synchronized(coordinator) {
             val directory = directory(id)
             val current = currentGeneration(directory)
@@ -120,6 +139,7 @@ class LocalDocumentStore(
     }
 
     private fun lease(id: String, folder: File, revision: String?, pdfHash: String, indexHash: String): LocalDocument {
+        val coordinator = coordinator(id)
         coordinator.leases[folder.absolutePath] = coordinator.leases[folder.absolutePath].orZero() + 1
         return LocalDocument(id, revision, File(folder, "document.pdf"), File(folder, "search.json"), pdfHash, indexHash) {
             synchronized(coordinator) {
