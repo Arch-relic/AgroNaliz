@@ -1,0 +1,285 @@
+{
+  "schemaVersion": 1,
+  "documents": [
+    {
+      "documentId": "nova_340_manual",
+      "title": "NOVA 340 — Руководство по эксплуатации",
+      "revision": null,
+      "pdfSha256": null,
+      "searchIndexSha256": "f5e7c5287e77b0fe21f53df1c1b8ea3a8fca773819aeff99a816662182ebacea",
+      "sources": [
+        {
+          "type": "assets",
+          "pdfPath": "manuals/nova_340_manual.pdf",
+          "searchIndexPath": "manuals/nova_340_manual_search.json"
+        }
+      ]
+    },
+    {
+      "documentId": "lada_vesta_sw_manual",
+      "title": "LADA Vesta — Руководство по эксплуатации",
+      "revision": null,
+      "pdfSha256": null,
+      "searchIndexSha256": "710c9a540dd8a7d672a738d3c006c800f22d660a28cb6e78e90946873e41e6e7",
+      "sources": [
+        {
+          "type": "assets",
+          "pdfPath": "manuals/lada_vesta_sw_manual.pdf",
+          "searchIndexPath": "manuals/lada_vesta_sw_manual_search.json"
+        }
+      ]
+    },
+    {
+      "documentId": "kirovets_k424_manual",
+      "title": "КИРОВЕЦ К-424 — Инструкция по эксплуатации",
+      "revision": null,
+      "pdfSha256": null,
+      "searchIndexSha256": "f7ab654f94b12b92382c38e3df0e6f8cf620c7ec20eda5ddec8f3e037417cd95",
+      "sources": [
+        {
+          "type": "assets",
+          "pdfPath": "manuals/kirovets_k424_manual.pdf",
+          "searchIndexPath": "manuals/kirovets_k424_manual_search.json"
+        }
+      ]
+    },
+    {
+      "documentId": "belarus_1021_3_manual",
+      "title": "БЕЛАРУС 1021.3 — Руководство по эксплуатации",
+      "revision": null,
+      "pdfSha256": null,
+      "searchIndexSha256": "df39987e39ad0d7a7d4471f58ed6def94752d24795fbfc798e936ca4738b2b91",
+      "sources": [
+        {
+          "type": "assets",
+          "pdfPath": "manuals/belarus_1021_3_manual.pdf",
+          "searchIndexPath": "manuals/belarus_1021_3_manual_search.json"
+        }
+      ]
+    },
+    {
+      "documentId": "ymz_5340_536_diagnostics",
+      "title": "ЯМЗ-5340 / ЯМЗ-536 — Инструкция по диагностике",
+      "revision": null,
+      "pdfSha256": null,
+      "searchIndexSha256": "cd4e23478e99025c1cf0a5b40e4799c20b98ff361bd7f45e5c82dbaf1ffd6f0d",
+      "sources": [
+        {
+          "type": "assets",
+          "pdfPath": "manuals/engines/ymz_5340_536_diagnostics.pdf",
+          "searchIndexPath": "manuals/engines/ymz_5340_536_diagnostics_search.json"
+        }
+      ]
+    },
+    {
+      "documentId": "s300_19_be",
+      "title": "S300.19 БЭ — Замена колес",
+      "revision": null,
+      "pdfSha256": null,
+      "searchIndexSha256": "7c49062858debc07a35d93b860b6d3336ba1f6c1a576cce77b1c0d663f726099",
+      "sources": [
+        {
+          "type": "assets",
+          "pdfPath": "manuals/bulletins/s300_19_be.pdf",
+          "searchIndexPath": "manuals/bulletins/s300_19_be_search.json"
+        }
+      ]
+    },
+    {
+      "documentId": "s300_20_be",
+      "title": "S300.20 БЭ — Смазка кардана выгрузного шнека. Антифриз",
+      "revision": null,
+      "pdfSha256": null,
+      "searchIndexSha256": "b1c89fbd8abf9680437151a9e18ea1c2b733fbcccdc840f885d6e3c0e7254b47",
+      "sources": [
+        {
+          "type": "assets",
+          "pdfPath": "manuals/bulletins/s300_20_be.pdf",
+          "searchIndexPath": "manuals/bulletins/s300_20_be_search.json"
+        }
+      ]
+    },
+    {
+      "documentId": "s300_21_be",
+      "title": "S300.21 БЭ — Аппликация РСМ-10Б.22.01.009",
+      "revision": null,
+      "pdfSha256": null,
+      "searchIndexSha256": "37d3ea03594d23ea9f6875ca130ac7e5c1539c4b545343ffc05ff6ea3a09f59a",
+      "sources": [
+        {
+          "type": "assets",
+          "pdfPath": "manuals/bulletins/s300_21_be.pdf",
+          "searchIndexPath": "manuals/bulletins/s300_21_be_search.json"
+        }
+      ]
+    },
+    {
+      "documentId": "s300_24_be",
+      "title": "S300.24 БЭ — Тормозная система с МВК Lovol",
+      "revision": null,
+      "pdfSha256": null,
+      "searchIndexSha256": "80ab14c1ca53150cd75faa79cc2ddc5fca3b986f707d6476b3122886761b80dd",
+      "sources": [
+        {
+          "type": "assets",
+          "pdfPath": "manuals/bulletins/s300_24_be.pdf",
+          "searchIndexPath": "manuals/bulletins/s300_24_be_search.json"
+        }
+      ]
+    },
+    {
+      "documentId": "s300_26_be",
+      "title": "S300.26 БЭ — Смазка обоймы наклонной камеры",
+      "revision": null,
+      "pdfSha256": null,
+      "searchIndexSha256": "b156ecec66a1e99826172d2c6dee5c721ac8748519e890fe96c6a926fe1a3f75",
+      "sources": [
+        {
+          "type": "assets",
+          "pdfPath": "manuals/bulletins/s300_26_be.pdf",
+          "searchIndexPath": "manuals/bulletins/s300_26_be_search.json"
+        }
+      ]
+    },
+    {
+      "documentId": "s300_27_be",
+      "title": "S300.27 БЭ — Сертификация",
+      "revision": null,
+      "pdfSha256": null,
+      "searchIndexSha256": "df5c4ba2a48ee5777ddbf3ada9982d93048082df9bea898e0951a203d0e7ba10",
+      "sources": [
+        {
+          "type": "assets",
+          "pdfPath": "manuals/bulletins/s300_27_be.pdf",
+          "searchIndexPath": "manuals/bulletins/s300_27_be_search.json"
+        }
+      ]
+    },
+    {
+      "documentId": "s300_29_be",
+      "title": "S300.29 БЭ — Зарядка и обслуживание АКБ",
+      "revision": null,
+      "pdfSha256": null,
+      "searchIndexSha256": "607e422544033bdcdb569d75e6f40a9158d34bf93d3ac703d3176db7abe5bfae",
+      "sources": [
+        {
+          "type": "assets",
+          "pdfPath": "manuals/bulletins/s300_29_be.pdf",
+          "searchIndexPath": "manuals/bulletins/s300_29_be_search.json"
+        }
+      ]
+    },
+    {
+      "documentId": "s300_31_be",
+      "title": "S300.31 БЭ — Технические характеристики",
+      "revision": null,
+      "pdfSha256": null,
+      "searchIndexSha256": "8e65c7497d7205bf8160efca2d1f98b29b0d4d40aa0fa61a51c5428b96765383",
+      "sources": [
+        {
+          "type": "assets",
+          "pdfPath": "manuals/bulletins/s300_31_be.pdf",
+          "searchIndexPath": "manuals/bulletins/s300_31_be_search.json"
+        }
+      ]
+    },
+    {
+      "documentId": "s300_32_be",
+      "title": "S300.32 БЭ — Мост управляемых колес ведущий",
+      "revision": null,
+      "pdfSha256": null,
+      "searchIndexSha256": "0ea07a47bc73eb28f24cb114ae1608463ba011ae81335a97b3235794e6225ab3",
+      "sources": [
+        {
+          "type": "assets",
+          "pdfPath": "manuals/bulletins/s300_32_be.pdf",
+          "searchIndexPath": "manuals/bulletins/s300_32_be_search.json"
+        }
+      ]
+    },
+    {
+      "documentId": "s300_33_be",
+      "title": "S300.33 БЭ — Идентификационный номер комбайна на паспортной табличке",
+      "revision": null,
+      "pdfSha256": null,
+      "searchIndexSha256": "1e49f37c256e874771a89c375f7af6f44138dbcc916eedc945697c6ca178b97e",
+      "sources": [
+        {
+          "type": "assets",
+          "pdfPath": "manuals/bulletins/s300_33_be.pdf",
+          "searchIndexPath": "manuals/bulletins/s300_33_be_search.json"
+        }
+      ]
+    },
+    {
+      "documentId": "s300_34_be",
+      "title": "S300.34 БЭ — Система дистанционного мониторинга",
+      "revision": null,
+      "pdfSha256": null,
+      "searchIndexSha256": "b59bfe544a713a993b8fb054370315d145f1a7dc3f7dc47c9c9ae3e9651ba67a",
+      "sources": [
+        {
+          "type": "assets",
+          "pdfPath": "manuals/bulletins/s300_34_be.pdf",
+          "searchIndexPath": "manuals/bulletins/s300_34_be_search.json"
+        }
+      ]
+    },
+    {
+      "documentId": "s300_35_be",
+      "title": "S300.35 БЭ — Техническое обслуживание датчика системы оценки возврата на домолот",
+      "revision": null,
+      "pdfSha256": null,
+      "searchIndexSha256": "2c09a58d7798f8c96dca276fc8c177903981e2d9458faa54fd53df9a9f387068",
+      "sources": [
+        {
+          "type": "assets",
+          "pdfPath": "manuals/bulletins/s300_35_be.pdf",
+          "searchIndexPath": "manuals/bulletins/s300_35_be_search.json"
+        }
+      ]
+    },
+    {
+      "documentId": "s300_36_be",
+      "title": "S300.36 БЭ — Заглушки. Гидрооборудование наклонной камеры",
+      "revision": null,
+      "pdfSha256": null,
+      "searchIndexSha256": "5f53e9960384c4c7ba27d8fb1e74d5dd4f5e09cdb15931e5ed393f0fce856a0e",
+      "sources": [
+        {
+          "type": "assets",
+          "pdfPath": "manuals/bulletins/s300_36_be.pdf",
+          "searchIndexPath": "manuals/bulletins/s300_36_be_search.json"
+        }
+      ]
+    },
+    {
+      "documentId": "s300_37_be",
+      "title": "S300.37 БЭ — Крепление первичных средств пожаротушения",
+      "revision": null,
+      "pdfSha256": null,
+      "searchIndexSha256": "c52f623105ef6769c29a6344f3e7ac100b77a5fd864699f0f8ac9efc603ae48f",
+      "sources": [
+        {
+          "type": "assets",
+          "pdfPath": "manuals/bulletins/s300_37_be.pdf",
+          "searchIndexPath": "manuals/bulletins/s300_37_be_search.json"
+        }
+      ]
+    },
+    {
+      "documentId": "s300_38_be",
+      "title": "S300.38 БЭ — Очистка датчика сигнализатора засоренности",
+      "revision": null,
+      "pdfSha256": null,
+      "searchIndexSha256": "f21ea14d0251ba135734e6f0db34b55301d2be1274e6d29ab00b215ad512c6d3",
+      "sources": [
+        {
+          "type": "assets",
+          "pdfPath": "manuals/bulletins/s300_38_be.pdf",
+          "searchIndexPath": "manuals/bulletins/s300_38_be_search.json"
+        }
+      ]
+    }
+  ]
+}
