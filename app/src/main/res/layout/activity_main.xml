@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Рабочий журнал"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:paddingBottom="32dp" />
+
+    <Button
+        android:id="@+id/buttonMachines"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Список техники" />
+
+    <Button
+        android:id="@+id/buttonFields"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Список полей"
+        android:layout_marginTop="16dp" />
+
+    <Button
+        android:id="@+id/buttonWorkNotes"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Рабочие записи"
+        android:layout_marginTop="16dp" />
+		
+		<Space
+    android:layout_width="match_parent"
+    android:layout_height="56dp" />
+		
+		<Button
+    android:id="@+id/buttonOptions"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="16dp"
+    android:text="Опции" />
+
+    <Space
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1" />
+
+<View
+    android:layout_width="match_parent"
+    android:layout_height="1dp"
+    android:background="#808080"
+    android:layout_marginBottom="12dp" />
+
+<TextView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="Для разработчика"
+    android:textStyle="bold"
+    android:textSize="14sp"
+    android:gravity="center"
+    android:layout_marginBottom="8dp" />
+
+<Button
+    android:id="@+id/buttonDeveloperCatalog"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="Справочник техники" />
+	
+	<Button
+    android:id="@+id/buttonBackupRestore"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="Резервное копирование" />
+	
+</LinearLayout>

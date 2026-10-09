@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Все уборочные работы"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:paddingBottom="28dp" />
+
+        <TextView
+            android:id="@+id/textHarvestEmpty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Список пуст"
+            android:textSize="18sp"
+            android:paddingTop="16dp"
+            android:paddingBottom="24dp" />
+
+        <LinearLayout
+            android:id="@+id/harvestProcessList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+        <Button
+            android:id="@+id/buttonStartHarvestProcess"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Начать уборочный процесс" />
+
+    </LinearLayout>
+
+</ScrollView>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Список техники"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:paddingBottom="32dp" />
+
+    <Button
+        android:id="@+id/buttonTractors"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Тракторы и автомобили" />
+
+    <Button
+        android:id="@+id/buttonImplements"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Агрегаты"
+        android:layout_marginTop="16dp" />
+
+    <Button
+        android:id="@+id/buttonMaintenance"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="ТО и ремонты"
+        android:layout_marginTop="16dp" />
+
+</LinearLayout>

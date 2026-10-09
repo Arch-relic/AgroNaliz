@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:id="@+id/textHarvestProcessTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:paddingBottom="10dp" />
+
+        <TextView
+            android:id="@+id/textHarvestProcessStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textSize="17sp"
+            android:paddingBottom="22dp" />
+
+        <TextView
+            android:id="@+id/textHarvestProcessStartDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:padding="6dp" />
+
+        <TextView
+            android:id="@+id/textHarvestProcessCombine"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:padding="6dp"
+            android:paddingBottom="18dp" />
+
+        <TextView
+            android:id="@+id/textHarvestProcessBunkerVolume"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Рабочий объём бункера: не задан"
+            android:textSize="18sp"
+            android:padding="6dp"
+            android:paddingBottom="18dp" />
+
+        <Button
+            android:id="@+id/buttonEditHarvestProcess"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Редактировать карточку" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:text="Рабочие дни"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:paddingBottom="8dp" />
+
+        <TextView
+            android:id="@+id/textHarvestTotalBunkers"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Всего за все дни: 0 бункеров"
+            android:textSize="19sp"
+            android:textStyle="bold"
+            android:paddingBottom="14dp" />
+
+        <TextView
+            android:id="@+id/textHarvestTotalVolume"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Расчётный объём за все дни: не настроен"
+            android:textSize="18sp"
+            android:paddingBottom="6dp" />
+
+        <TextView
+            android:id="@+id/textHarvestAverageBunkerVolume"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Средний объём бункера: не настроен"
+            android:textSize="18sp"
+            android:paddingBottom="14dp" />
+
+        <TextView
+            android:id="@+id/textHarvestDaysEmpty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Рабочих дней пока нет"
+            android:textSize="17sp"
+            android:padding="16dp" />
+
+        <LinearLayout
+            android:id="@+id/harvestDayList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+        <Button
+            android:id="@+id/buttonNewHarvestDay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="Новый день"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+</ScrollView>

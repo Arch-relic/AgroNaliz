@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="Что происходит дальше?"
+        android:textSize="23sp"
+        android:textStyle="bold"
+        android:paddingBottom="8dp" />
+
+    <TextView
+        android:id="@+id/textPostBunkerBaseInterval"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="Работа: 30 мин • Разгрузка: 5 мин"
+        android:textSize="15sp"
+        android:paddingBottom="14dp" />
+
+    <RadioGroup
+        android:id="@+id/radioGroupPostBunkerState"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <RadioButton
+            android:id="@+id/radioPostBunkerContinue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:minHeight="52dp"
+            android:text="Продолжение рабочего процесса"
+            android:textSize="17sp" />
+
+        <RadioButton
+            android:id="@+id/radioPostBunkerLunch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="52dp"
+            android:text="Обед"
+            android:textSize="17sp" />
+
+        <RadioButton
+            android:id="@+id/radioPostBunkerDinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="52dp"
+            android:text="Ужин"
+            android:textSize="17sp" />
+
+        <RadioButton
+            android:id="@+id/radioPostBunkerWaitingTransport"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="52dp"
+            android:text="Ожидание транспорта"
+            android:textSize="17sp" />
+
+    </RadioGroup>
+
+    <TextView
+        android:id="@+id/textPostBunkerResult"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:gravity="center"
+        android:text="Следующее напоминание через 35 мин"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/buttonConfirmPostBunkerState"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Подтвердить" />
+
+</LinearLayout>

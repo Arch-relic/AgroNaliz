@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Техническое обслуживание"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:paddingBottom="24dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Техника"
+            android:textSize="16sp" />
+
+        <Spinner
+            android:id="@+id/spinnerMaintenanceVehicle"
+            android:layout_width="match_parent"
+            android:layout_height="48dp" />
+
+        <Button
+            android:id="@+id/buttonMaintenanceDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Выбрать дату ТО"
+            android:layout_marginTop="16dp" />
+
+        <EditText
+            android:id="@+id/editMeterValue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Пробег / моточасы"
+            android:inputType="number"
+            android:layout_marginTop="16dp" />
+
+        <Spinner
+            android:id="@+id/spinnerMeterType"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp" />
+
+        <EditText
+            android:id="@+id/editMaintenanceWork"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:hint="Выполненные работы"
+            android:gravity="top"
+            android:inputType="textMultiLine"
+            android:padding="12dp"
+            android:layout_marginTop="16dp" />
+
+        <EditText
+            android:id="@+id/editMaintenanceNote"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:hint="Примечание"
+            android:gravity="top"
+            android:inputType="textMultiLine"
+            android:padding="12dp"
+            android:layout_marginTop="16dp" />
+
+        <Button
+            android:id="@+id/buttonSaveMaintenance"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Сохранить ТО"
+            android:layout_marginTop="24dp" />
+			
+			<TextView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="История ТО"
+    android:textSize="22sp"
+    android:textStyle="bold"
+    android:layout_marginTop="32dp"
+    android:paddingBottom="12dp" />
+
+<TextView
+    android:id="@+id/textEmptyMaintenance"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="Записей ТО пока нет"
+    android:textSize="16sp"
+    android:gravity="center"
+    android:padding="20dp" />
+
+<LinearLayout
+    android:id="@+id/maintenanceHistoryContainer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical" />
+
+    </LinearLayout>
+
+</ScrollView>

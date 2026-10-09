@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="Рабочие записи"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:paddingBottom="24dp" />
+
+    <Button
+        android:id="@+id/buttonEventJournal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Журнал событий" />
+
+    <Button
+        android:id="@+id/buttonSeasonWorks"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Сезонные работы" />
+
+    <Button
+        android:id="@+id/buttonHarvest"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Уборка урожая" />
+
+</LinearLayout>

@@ -1,0 +1,89 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="ru.fo6osik.workjournal">
+<uses-permission
+    android:name="android.permission.POST_NOTIFICATIONS" />
+<uses-permission
+    android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <application
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+		<activity
+    android:name=".DeveloperCatalogActivity"
+    android:exported="false" />
+	<activity
+    android:name=".PdfViewerActivity"
+    android:exported="false" />
+	<activity
+    android:name=".Nova340BulletinsActivity"
+    android:exported="false" />
+		<activity android:name=".MaintenanceDetailsActivity" />
+		<activity android:name=".MaintenanceActivity" />
+		<activity android:name=".VehicleDetailsActivity" />
+		<activity android:name=".AddVehicleActivity" />
+		<activity android:name=".VehiclesActivity" />
+		<activity android:name=".MachinesActivity" />
+		<activity
+    android:name=".Nova340EngineActivity"
+    android:exported="false" />
+        <activity android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+		<activity
+    android:name=".FieldsActivity"
+    android:exported="false" />
+	<activity
+    android:name=".FieldDetailsActivity"
+    android:exported="false" />
+	<activity
+    android:name=".WorkRecordsActivity"
+    android:exported="false" />
+
+<activity
+    android:name=".SeasonWorksActivity"
+    android:exported="false" />
+	<activity
+    android:name=".AddSeasonWorkActivity"
+    android:exported="false" />
+	<activity
+    android:name=".FieldHistoryActivity"
+    android:exported="false" />
+	<activity
+    android:name=".OptionsActivity"
+    android:exported="false" />
+<activity
+    android:name=".DataBackupActivity"
+    android:exported="false" />
+	<activity
+    android:name=".BackupRestoreActivity"
+    android:exported="false" />
+	<activity
+    android:name=".EventJournalActivity"
+    android:exported="false" />
+	<activity
+    android:name=".AggregateDetailsActivity"
+    android:exported="false" />
+<activity
+    android:name=".AggregatesActivity"
+    android:exported="false" />
+	<activity
+    android:name=".HarvestActivity"
+    android:exported="false" />
+	<activity
+    android:name=".HarvestProcessActivity"
+    android:exported="false" />
+	<activity
+    android:name=".HarvestDayActivity"
+    android:exported="false" />
+	<receiver
+    android:name=".HarvestReminderReceiver"
+    android:exported="false" />
+	
+    </application>
+
+</manifest>
+

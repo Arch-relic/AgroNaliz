@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:id="@+id/textVehicleTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:paddingBottom="32dp" />
+
+        <TextView
+            android:id="@+id/textVehicleType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:padding="8dp" />
+
+        <TextView
+            android:id="@+id/textVehicleBrand"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:padding="8dp" />
+
+        <TextView
+            android:id="@+id/textVehicleModel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:padding="8dp" />
+			
+			<TextView
+    android:id="@+id/textVehicleEngine"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="Двигатель: Не указан"
+    android:textSize="18sp"
+    android:padding="8dp" />
+
+<TextView
+    android:id="@+id/textVehicleEngineSpecs"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:textSize="16sp"
+    android:padding="8dp"
+    android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/textVehicleNumber"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:padding="8dp" />
+
+        <TextView
+            android:id="@+id/textVehicleYear"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:padding="8dp" />
+
+        <TextView
+            android:id="@+id/textVehicleNote"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:padding="8dp" />
+			
+			<LinearLayout
+    android:id="@+id/documentationSection"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:visibility="gone">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Документация"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:layout_marginTop="32dp"
+        android:paddingBottom="12dp" />
+
+    <Button
+        android:id="@+id/buttonVehicleManual"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Руководство по эксплуатации"
+        android:enabled="false" />
+
+    <Button
+        android:id="@+id/buttonVehicleBulletins"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Эксплуатационные бюллетени"
+        android:layout_marginTop="8dp"
+        android:enabled="false" />
+
+    <Button
+        android:id="@+id/buttonEngineDiagnostics"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Диагностика двигателя ЯМЗ"
+        android:layout_marginTop="8dp"
+        android:enabled="false" />
+
+</LinearLayout>
+			
+			<TextView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="Состояние и обслуживание"
+    android:textSize="22sp"
+    android:textStyle="bold"
+    android:layout_marginTop="32dp"
+    android:paddingBottom="12dp" />
+
+<TextView
+    android:id="@+id/textVehicleLastMeter"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="Последние показания: нет данных"
+    android:textSize="18sp"
+    android:padding="8dp" />
+
+<TextView
+    android:id="@+id/textVehicleLastMaintenance"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="Последнее ТО: нет данных"
+    android:textSize="18sp"
+    android:padding="8dp" />
+
+<TextView
+    android:id="@+id/textVehicleMaintenanceCount"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="ТО за год: 0"
+    android:textSize="18sp"
+    android:padding="8dp" />
+
+<TextView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="История ТО"
+    android:textSize="22sp"
+    android:textStyle="bold"
+    android:layout_marginTop="28dp"
+    android:paddingBottom="12dp" />
+
+<TextView
+    android:id="@+id/textVehicleMaintenanceEmpty"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="История ТО отсутствует"
+    android:textSize="16sp"
+    android:gravity="center"
+    android:padding="16dp" />
+
+<LinearLayout
+    android:id="@+id/vehicleMaintenanceHistory"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical" />
+			
+			<Button
+    android:id="@+id/buttonDeleteVehicle"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="Удалить технику"
+    android:layout_marginTop="12dp" />
+	
+	<Button
+    android:id="@+id/buttonEditVehicle"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="Редактировать"
+    android:layout_marginTop="32dp" />
+
+    </LinearLayout>
+
+</ScrollView>

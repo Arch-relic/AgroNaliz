@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="Опции"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:paddingBottom="28dp" />
+
+    <Button
+        android:id="@+id/buttonDataBackup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Данные и резервные копии" />
+
+</LinearLayout>

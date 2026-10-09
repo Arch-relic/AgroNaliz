@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:id="@+id/textHarvestDayProcessTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:paddingBottom="18dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Рабочий день"
+            android:textSize="18sp"
+            android:paddingBottom="8dp" />
+
+        <TextView
+            android:id="@+id/textHarvestDayDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:paddingBottom="18dp" />
+
+        <TextView
+            android:id="@+id/textHarvestDayTime"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Начало: —&#10;Конец: —"
+            android:textSize="18sp"
+            android:padding="8dp"
+            android:paddingBottom="16dp" />
+
+        <Button
+            android:id="@+id/buttonEditHarvestDay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Редактировать день" />
+
+        <TextView
+            android:id="@+id/textHarvestDayBunkerCount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="26dp"
+            android:text="Бункеров за день: 0"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:paddingBottom="6dp" />
+
+        <TextView
+            android:id="@+id/textHarvestDayEstimatedVolume"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Расчётный объём: пока не настроен"
+            android:textSize="18sp"
+            android:paddingBottom="18dp" />
+
+        <TextView
+            android:id="@+id/textHarvestDayAverageVolume"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Средний объём бункера: пока не настроен"
+            android:textSize="18sp"
+            android:paddingBottom="18dp" />
+
+        <Button
+            android:id="@+id/buttonAddHarvestDayBunker"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="+ Добавить бункер" />
+
+
+        <TextView
+            android:id="@+id/textHarvestReminderStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:gravity="center"
+            android:text="Напоминание: 50 мин"
+            android:textSize="16sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:text="Список бункеров"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:paddingBottom="8dp" />
+
+        <TextView
+            android:id="@+id/textHarvestDayBunkersEmpty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Список пуст"
+            android:textSize="17sp"
+            android:padding="16dp" />
+
+        <LinearLayout
+            android:id="@+id/harvestDayBunkerList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+        <Button
+            android:id="@+id/buttonFinishHarvestDay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:text="Рабочий день окончен" />
+
+    </LinearLayout>
+
+</ScrollView>

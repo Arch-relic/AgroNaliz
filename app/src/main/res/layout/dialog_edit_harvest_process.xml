@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Редактировать уборочную запись"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:paddingBottom="20dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Дата начала"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:paddingBottom="6dp" />
+
+        <TextView
+            android:id="@+id/textEditHarvestStartDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="12dp"
+            android:textSize="18sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Поле"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:paddingBottom="6dp" />
+
+        <Spinner
+            android:id="@+id/spinnerEditHarvestField"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Тип культуры"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:paddingBottom="6dp" />
+
+        <Spinner
+            android:id="@+id/spinnerEditHarvestCrop"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Комбайн"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:paddingBottom="6dp" />
+
+        <Spinner
+            android:id="@+id/spinnerEditHarvestCombine"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp" />
+
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Рабочий объём бункера, м³"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:paddingBottom="6dp" />
+
+        <EditText
+            android:id="@+id/editHarvestBunkerVolume"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Например: 4,5"
+            android:inputType="numberDecimal"
+            android:singleLine="true" />
+
+        <Button
+            android:id="@+id/buttonConfirmEditHarvestProcess"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Сохранить" />
+
+        <Button
+            android:id="@+id/buttonCancelEditHarvestProcess"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Отмена" />
+
+    </LinearLayout>
+
+</ScrollView>

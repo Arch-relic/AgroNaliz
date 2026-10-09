@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Настройки рабочего дня"
+            android:textSize="23sp"
+            android:textStyle="bold"
+            android:gravity="center" />
+
+        <TextView
+            android:id="@+id/textHarvestDaySettingsDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:gravity="center"
+            android:textSize="15sp" />
+
+        <Switch
+            android:id="@+id/switchHarvestReminderEnabled"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="Напоминания включены"
+            android:textSize="17sp"
+            android:thumbTint="@color/harvest_switch_thumb_tint"
+            android:trackTint="@color/harvest_switch_track_tint" />
+
+        <!-- Работа -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="Интервал работы"
+            android:textStyle="bold"
+            android:textSize="17sp" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingTop="6dp">
+                <TextView android:id="@+id/optionWork30" style="@style/IntervalOption" android:text="30" />
+                <TextView android:id="@+id/optionWork40" style="@style/IntervalOption" android:text="40" />
+                <TextView android:id="@+id/optionWork50" style="@style/IntervalOption" android:text="50" />
+                <TextView android:id="@+id/optionWork60" style="@style/IntervalOption" android:text="60" />
+                <TextView android:id="@+id/optionWorkCustom" style="@style/IntervalOption" android:text="Своё" />
+            </LinearLayout>
+        </HorizontalScrollView>
+        <EditText
+            android:id="@+id/inputWorkCustom"
+            style="@style/IntervalCustomInput"
+            android:hint="Своё значение, мин" />
+
+        <!-- Разгрузка -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Разгрузка бункера"
+            android:textStyle="bold"
+            android:textSize="17sp" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingTop="6dp">
+            <TextView android:id="@+id/optionUnload5" style="@style/IntervalOption" android:text="5" />
+            <TextView android:id="@+id/optionUnloadCustom" style="@style/IntervalOption" android:text="Своё" />
+        </LinearLayout>
+        <EditText
+            android:id="@+id/inputUnloadCustom"
+            style="@style/IntervalCustomInput"
+            android:hint="Своё значение, мин" />
+
+        <!-- Обед -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Обед"
+            android:textStyle="bold"
+            android:textSize="17sp" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingTop="6dp">
+            <TextView android:id="@+id/optionLunch10" style="@style/IntervalOption" android:text="10" />
+            <TextView android:id="@+id/optionLunch15" style="@style/IntervalOption" android:text="15" />
+            <TextView android:id="@+id/optionLunch20" style="@style/IntervalOption" android:text="20" />
+            <TextView android:id="@+id/optionLunchCustom" style="@style/IntervalOption" android:text="Своё" />
+        </LinearLayout>
+        <EditText
+            android:id="@+id/inputLunchCustom"
+            style="@style/IntervalCustomInput"
+            android:hint="Своё значение, мин" />
+
+        <!-- Ужин -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Ужин"
+            android:textStyle="bold"
+            android:textSize="17sp" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingTop="6dp">
+            <TextView android:id="@+id/optionDinner10" style="@style/IntervalOption" android:text="10" />
+            <TextView android:id="@+id/optionDinner15" style="@style/IntervalOption" android:text="15" />
+            <TextView android:id="@+id/optionDinner20" style="@style/IntervalOption" android:text="20" />
+            <TextView android:id="@+id/optionDinnerCustom" style="@style/IntervalOption" android:text="Своё" />
+        </LinearLayout>
+        <EditText
+            android:id="@+id/inputDinnerCustom"
+            style="@style/IntervalCustomInput"
+            android:hint="Своё значение, мин" />
+
+        <!-- Ожидание транспорта -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Ожидание транспорта"
+            android:textStyle="bold"
+            android:textSize="17sp" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingTop="6dp">
+            <TextView android:id="@+id/optionWaiting30" style="@style/IntervalOption" android:text="30" />
+            <TextView android:id="@+id/optionWaiting40" style="@style/IntervalOption" android:text="40" />
+            <TextView android:id="@+id/optionWaiting60" style="@style/IntervalOption" android:text="60" />
+            <TextView android:id="@+id/optionWaitingCustom" style="@style/IntervalOption" android:text="Своё" />
+        </LinearLayout>
+        <EditText
+            android:id="@+id/inputWaitingCustom"
+            style="@style/IntervalCustomInput"
+            android:hint="Своё значение, мин" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="28dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Расчёт напоминания"
+            android:textStyle="bold"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/textReminderSettingsExample"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textSize="15sp"
+            android:lineSpacingExtra="2dp" />
+
+        <TextView
+            android:id="@+id/textReminderSettingsApplyHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Изменения применятся со следующего бункера."
+            android:textSize="13sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="horizontal">
+            <Button
+                android:id="@+id/buttonCancelHarvestDaySettings"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Отмена" />
+            <Button
+                android:id="@+id/buttonSaveHarvestDaySettings"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="Сохранить" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

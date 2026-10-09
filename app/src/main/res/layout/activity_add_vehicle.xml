@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+		android:id="@+id/textVehicleFormTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Добавление техники"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:paddingBottom="32dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Тип техники"
+            android:textSize="16sp" />
+
+        <Spinner
+            android:id="@+id/spinnerVehicleType"
+            android:layout_width="match_parent"
+            android:layout_height="48dp" />
+			
+
+<AutoCompleteTextView
+            android:id="@+id/editBrand"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Марка"
+            android:inputType="text"
+            android:layout_marginTop="16dp" />
+
+<AutoCompleteTextView
+            android:id="@+id/editModel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Модель"
+            android:inputType="text"
+            android:layout_marginTop="16dp" />
+			
+			<AutoCompleteTextView
+    android:id="@+id/editEngine"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:hint="Двигатель"
+    android:inputType="text"
+    android:completionThreshold="1"
+    android:layout_marginTop="16dp" />
+
+<TextView
+    android:id="@+id/textEngineSpecs"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:textSize="16sp"
+    android:padding="12dp"
+    android:visibility="gone" />
+
+        <EditText
+            android:id="@+id/editNumber"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Госномер"
+            android:inputType="text"
+            android:layout_marginTop="16dp" />
+
+        <EditText
+            android:id="@+id/editYear"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Год выпуска"
+            android:inputType="number"
+            android:maxLength="4"
+            android:layout_marginTop="16dp" />
+
+        <EditText
+            android:id="@+id/editNote"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:hint="Примечание"
+            android:gravity="top"
+            android:inputType="textMultiLine"
+            android:padding="12dp"
+            android:layout_marginTop="16dp" />
+
+        <Button
+            android:id="@+id/buttonSaveVehicle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Сохранить"
+            android:layout_marginTop="24dp" />
+
+    </LinearLayout>
+
+</ScrollView>
+

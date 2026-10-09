@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="NOVA 340 —\nЭксплуатационные бюллетени"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:paddingBottom="20dp" />
+
+        <Button
+            android:id="@+id/buttonBulletin19"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="S300.19 — Замена колес"
+            android:layout_marginTop="8dp" />
+
+        <Button
+            android:id="@+id/buttonBulletin20"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="S300.20 — Смазка кардана выгрузного шнека. Антифриз"
+            android:layout_marginTop="8dp" />
+
+        <Button
+            android:id="@+id/buttonBulletin21"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="S300.21 — Аппликация РСМ-10Б.22.01.009"
+            android:layout_marginTop="8dp" />
+
+        <Button
+            android:id="@+id/buttonBulletin24"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="S300.24 — Тормозная система с МВК Lovol"
+            android:layout_marginTop="8dp" />
+
+        <Button
+            android:id="@+id/buttonBulletin26"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="S300.26 — Смазка обоймы наклонной камеры"
+            android:layout_marginTop="8dp" />
+
+        <Button
+            android:id="@+id/buttonBulletin27"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="S300.27 — Сертификация"
+            android:layout_marginTop="8dp" />
+
+        <Button
+            android:id="@+id/buttonBulletin29"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="S300.29 — Зарядка и обслуживание АКБ"
+            android:layout_marginTop="8dp" />
+
+        <Button
+            android:id="@+id/buttonBulletin31"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="S300.31 — Технические характеристики"
+            android:layout_marginTop="8dp" />
+
+        <Button
+            android:id="@+id/buttonBulletin32"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="S300.32 — Мост управляемых колес ведущий"
+            android:layout_marginTop="8dp" />
+
+        <Button
+            android:id="@+id/buttonBulletin33"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="S300.33 — Идентификационный номер комбайна на паспортной табличке"
+            android:layout_marginTop="8dp" />
+
+        <Button
+            android:id="@+id/buttonBulletin34"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="S300.34 — Система дистанционного мониторинга"
+            android:layout_marginTop="8dp" />
+
+        <Button
+            android:id="@+id/buttonBulletin35"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="S300.35 — ТО датчика системы оценки возврата на домолот"
+            android:layout_marginTop="8dp" />
+
+        <Button
+            android:id="@+id/buttonBulletin36"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="S300.36 — Заглушки. Гидрооборудование наклонной камеры"
+            android:layout_marginTop="8dp" />
+
+        <Button
+            android:id="@+id/buttonBulletin37"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="S300.37 — Крепление первичных средств пожаротушения"
+            android:layout_marginTop="8dp" />
+
+        <Button
+            android:id="@+id/buttonBulletin38"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="S300.38 — Очистка датчика сигнализатора засоренности"
+            android:layout_marginTop="8dp" />
+
+    </LinearLayout>
+
+</ScrollView>

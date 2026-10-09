@@ -1,0 +1,34 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches/build_file_checksums.ser
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+
+
+# Additional Android exclusions
+**/build/
+.kotlin/
+.cxx/
+*.apk
+*.aab
+*.jks
+*.keystore
+*.p12
+*.pem
+key.properties
+keystore.properties
+secrets.properties
+.env
+.env.*
+
+# PDF manuals stored in Google Drive
+/app/src/main/assets/manuals/**/*.pdf
+
+# Temporary PDF parts
+/nova_parts/

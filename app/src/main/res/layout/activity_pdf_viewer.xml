@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/textPdfTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:padding="12dp" />
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical">
+
+    <TextView
+        android:id="@+id/textPdfPage"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_weight="1"
+        android:text="Загрузка документа..."
+        android:textSize="14sp"
+        android:gravity="center" />
+
+    <ImageButton
+        android:id="@+id/buttonPdfSearch"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@android:drawable/ic_menu_search"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Поиск по документу"
+        android:padding="12dp" />
+
+</LinearLayout>
+
+<LinearLayout
+    android:id="@+id/searchNavigationBar"
+    android:layout_width="match_parent"
+    android:layout_height="48dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:visibility="gone">
+
+    <ImageButton
+        android:id="@+id/buttonSearchPrevious"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@android:drawable/ic_media_previous"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Предыдущий результат"
+        android:padding="12dp" />
+
+    <TextView
+        android:id="@+id/textSearchPosition"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="1 из 1"
+        android:textSize="15sp"
+        android:textStyle="bold"
+		android:maxLines="1"
+android:ellipsize="end" />
+
+    <ImageButton
+        android:id="@+id/buttonSearchNext"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@android:drawable/ic_media_next"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Следующий результат"
+        android:padding="12dp" />
+
+    <ImageButton
+        android:id="@+id/buttonSearchClose"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@android:drawable/ic_menu_close_clear_cancel"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Закрыть поиск"
+        android:padding="12dp" />
+
+</LinearLayout>
+
+    <com.infomaniak.lib.pdfview.PDFView
+        android:id="@+id/pdfView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+</LinearLayout>
