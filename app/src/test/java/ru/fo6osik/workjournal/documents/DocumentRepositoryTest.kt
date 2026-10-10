@@ -213,6 +213,53 @@ class DocumentRepositoryTest {
         repo(store, source).download("example").close()
     }
 
+    @Test fun largePdfIsReadInBoundedBlocksOffCallerThread() = runBlocking {
+        val caller = Thread.currentThread()
+        val block = ByteArray(8192) { (it % 251).toByte() }
+        val blocks = 2048 // 16 MiB, generated as a stream instead of a whole-file allocation.
+        val digest = MessageDigest.getInstance("SHA-256")
+        repeat(blocks) { digest.update(block) }
+        val expected = digest.digest().joinToString("") { "%02x".format(it.toInt() and 255) }
+        var reads = 0
+        var closed = false
+        val source = object : Source() {
+            override fun openPdf(location: DocumentSource): InputStream = object : InputStream() {
+                override fun read(): Int = throw AssertionError("Expected block reads")
+                override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
+                    assertNotSame(caller, Thread.currentThread())
+                    assertTrue(length <= block.size)
+                    if (reads == blocks) return -1
+                    assertEquals(block.size, length)
+                    block.copyInto(buffer, offset)
+                    reads++
+                    return block.size
+                }
+                override fun close() { closed = true }
+            }
+        }
+        val store = LocalDocumentStore(temp.newFolder(), DocumentIntegrityValidator { pdfFile, _ ->
+            assertNotSame(caller, Thread.currentThread())
+            assertEquals(block.size.toLong() * blocks, pdfFile.length())
+        })
+        repo(store, source, descriptor.copy(pdfSha256 = expected)).download("example").use {
+            assertEquals(expected, it.pdfSha256)
+        }
+        store.acquire("example")!!.use { assertEquals(expected, it.pdfSha256) }
+        assertEquals(blocks, reads)
+        assertTrue(closed)
+    }
+
+    @Test fun matchingHashesStillRequireIntegrityValidatorBeforeActivation() = runBlocking {
+        var validated = false
+        val store = LocalDocumentStore(temp.newFolder(), DocumentIntegrityValidator { _, _ ->
+            validated = true
+            throw IOException("PDF/index pair rejected")
+        })
+        assertTrue(fails { repo(store, Source()).download("example") } is IOException)
+        assertTrue(validated)
+        assertNull(store.acquire("example"))
+    }
+
     @Test fun corruptedCurrentPreventsPruningRecoveryCopyAndCanBeRepaired() = runBlocking {
         val store = store()
         val old = store.install(descriptor, { ByteArrayInputStream(pdf) }, { ByteArrayInputStream(index) })

@@ -28,6 +28,17 @@ class DocumentCatalogTest {
         assertNull(document.pdfSha256)
     }
 
+    @Test fun acceptsKnownPdfHashWithUnknownRevisionWithoutOpeningPdf() {
+        val bytes = "index".toByteArray()
+        val hash = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it.toInt() and 255) }
+        val known = document.copy(pdfSha256 = "a".repeat(64), searchIndexSha256 = hash)
+        DocumentCatalog.verifyAssetIndexes(catalog(known)) { path ->
+            assertEquals(source.searchIndexPath, path)
+            ByteArrayInputStream(bytes)
+        }
+        assertNull(known.revision)
+    }
+
     @Test fun rejectsDuplicateIds() = rejects {
         val other = document.copy(sources = listOf(
             source.copy(pdfPath = "manuals/other.pdf", searchIndexPath = "manuals/other_search.json")
@@ -52,7 +63,7 @@ class DocumentCatalogTest {
     }
 
     @Test fun rejectsInvalidHashesAndEmptyRevision() {
-        for (hash in listOf("", "abc", "g".repeat(64))) {
+        for (hash in listOf("", "abc", "g".repeat(64), "A".repeat(64), "a".repeat(63), "a".repeat(65))) {
             rejects { DocumentCatalog.validate(catalog(document.copy(pdfSha256 = hash))) }
             rejects { DocumentCatalog.validate(catalog(document.copy(searchIndexSha256 = hash))) }
         }
