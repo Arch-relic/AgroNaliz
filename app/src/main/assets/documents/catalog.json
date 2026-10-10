@@ -5,7 +5,7 @@
       "documentId": "nova_340_manual",
       "title": "NOVA 340 — Руководство по эксплуатации",
       "revision": null,
-      "pdfSha256": null,
+      "pdfSha256": "39e2feb8c20522c036cb84a8aacf688f789001b7a6d821da4d4bbea0c473085a",
       "searchIndexSha256": "f5e7c5287e77b0fe21f53df1c1b8ea3a8fca773819aeff99a816662182ebacea",
       "sources": [
         {
@@ -19,7 +19,7 @@
       "documentId": "lada_vesta_sw_manual",
       "title": "LADA Vesta — Руководство по эксплуатации",
       "revision": null,
-      "pdfSha256": null,
+      "pdfSha256": "b7bb7640d99f187d82d075eac1578be42e9f63158967749868acd93af759f4b5",
       "searchIndexSha256": "710c9a540dd8a7d672a738d3c006c800f22d660a28cb6e78e90946873e41e6e7",
       "sources": [
         {
@@ -33,7 +33,7 @@
       "documentId": "kirovets_k424_manual",
       "title": "КИРОВЕЦ К-424 — Инструкция по эксплуатации",
       "revision": null,
-      "pdfSha256": null,
+      "pdfSha256": "464e361262abd8d06bc159ed63e47979bc2bc1867acaf4887aebbdba764d561c",
       "searchIndexSha256": "f7ab654f94b12b92382c38e3df0e6f8cf620c7ec20eda5ddec8f3e037417cd95",
       "sources": [
         {
@@ -47,7 +47,7 @@
       "documentId": "belarus_1021_3_manual",
       "title": "БЕЛАРУС 1021.3 — Руководство по эксплуатации",
       "revision": null,
-      "pdfSha256": null,
+      "pdfSha256": "3efb3166cb0eb4d0aae45ff1eb07a4aa86f4705b8e457bc5a0298e100836066c",
       "searchIndexSha256": "df39987e39ad0d7a7d4471f58ed6def94752d24795fbfc798e936ca4738b2b91",
       "sources": [
         {
@@ -61,7 +61,7 @@
       "documentId": "ymz_5340_536_diagnostics",
       "title": "ЯМЗ-5340 / ЯМЗ-536 — Инструкция по диагностике",
       "revision": null,
-      "pdfSha256": null,
+      "pdfSha256": "7c3e1fdc1261b9f11246dd74b571b14d935b5d62787904964773e7245159fa8b",
       "searchIndexSha256": "cd4e23478e99025c1cf0a5b40e4799c20b98ff361bd7f45e5c82dbaf1ffd6f0d",
       "sources": [
         {
@@ -75,7 +75,7 @@
       "documentId": "s300_19_be",
       "title": "S300.19 БЭ — Замена колес",
       "revision": null,
-      "pdfSha256": null,
+      "pdfSha256": "258a83f2290d3e8240024ddb68390e53eadf715f4f40002c26953b7565a8058d",
       "searchIndexSha256": "7c49062858debc07a35d93b860b6d3336ba1f6c1a576cce77b1c0d663f726099",
       "sources": [
         {
@@ -89,7 +89,7 @@
       "documentId": "s300_20_be",
       "title": "S300.20 БЭ — Смазка кардана выгрузного шнека. Антифриз",
       "revision": null,
-      "pdfSha256": null,
+      "pdfSha256": "c273401d28052538ac538bb92e7aeb51feecaf7b0549d73dc12ccf7c6cc4f8bb",
       "searchIndexSha256": "b1c89fbd8abf9680437151a9e18ea1c2b733fbcccdc840f885d6e3c0e7254b47",
       "sources": [
         {
@@ -103,7 +103,7 @@
       "documentId": "s300_21_be",
       "title": "S300.21 БЭ — Аппликация РСМ-10Б.22.01.009",
       "revision": null,
-      "pdfSha256": null,
+      "pdfSha256": "3519ff73f39eeee6b25b0701a0010744a689b85ad393d5c83003cec894f3792c",
       "searchIndexSha256": "37d3ea03594d23ea9f6875ca130ac7e5c1539c4b545343ffc05ff6ea3a09f59a",
       "sources": [
         {
@@ -117,7 +117,7 @@
       "documentId": "s300_24_be",
       "title": "S300.24 БЭ — Тормозная система с МВК Lovol",
       "revision": null,
-      "pdfSha256": null,
+      "pdfSha256": "2beac65bbd298b7ce4376cca2b68f383bd84f55ffc7ac40cb0d3d749d0d70540",
       "searchIndexSha256": "80ab14c1ca53150cd75faa79cc2ddc5fca3b986f707d6476b3122886761b80dd",
       "sources": [
         {
@@ -131,7 +131,7 @@
       "documentId": "s300_26_be",
       "title": "S300.26 БЭ — Смазка обоймы наклонной камеры",
       "revision": null,
-      "pdfSha256": null,
+      "pdfSha256": "1b2e5169303502c8fc8288fc884505837ed9a304d6a11ee23b73fd04cf3dd861",
       "searchIndexSha256": "b156ecec66a1e99826172d2c6dee5c721ac8748519e890fe96c6a926fe1a3f75",
       "sources": [
         {
@@ -145,7 +145,7 @@
       "documentId": "s300_27_be",
       "title": "S300.27 БЭ — Сертификация",
       "revision": null,
-      "pdfSha256": null,
+      "pdfSha256": "d4066e5ea7aca13c8659bf7a68195c7189772385af3581cbff988bb8678d7d99",
       "searchIndexSha256": "df5c4ba2a48ee5777ddbf3ada9982d93048082df9bea898e0951a203d0e7ba10",
       "sources": [
         {
@@ -159,7 +159,7 @@
       "documentId": "s300_29_be",
       "title": "S300.29 БЭ — Зарядка и обслуживание АКБ",
       "revision": null,
-      "pdfSha256": null,
+      "pdfSha256": "afacab63dd608cc8248ea9a0de7471372936d65ac082e832bcaa526aca553d24",
       "searchIndexSha256": "607e422544033bdcdb569d75e6f40a9158d34bf93d3ac703d3176db7abe5bfae",
       "sources": [
         {
@@ -173,7 +173,7 @@
       "documentId": "s300_31_be",
       "title": "S300.31 БЭ — Технические характеристики",
       "revision": null,
-      "pdfSha256": null,
+      "pdfSha256": "810a60c640d22e2622a44efd32e11c4bb7eef8a631c66d9a166eaabebed77d18",
       "searchIndexSha256": "8e65c7497d7205bf8160efca2d1f98b29b0d4d40aa0fa61a51c5428b96765383",
       "sources": [
         {
@@ -187,7 +187,7 @@
       "documentId": "s300_32_be",
       "title": "S300.32 БЭ — Мост управляемых колес ведущий",
       "revision": null,
-      "pdfSha256": null,
+      "pdfSha256": "ba2a383d7f4f279e07f060061ca9df9ee2de041ee4659566159ead7caff1f136",
       "searchIndexSha256": "0ea07a47bc73eb28f24cb114ae1608463ba011ae81335a97b3235794e6225ab3",
       "sources": [
         {
@@ -201,7 +201,7 @@
       "documentId": "s300_33_be",
       "title": "S300.33 БЭ — Идентификационный номер комбайна на паспортной табличке",
       "revision": null,
-      "pdfSha256": null,
+      "pdfSha256": "7c4c8a5ab0c2b9f5d203c45f6210f1617f923d0f9f7216e972b88a01f9dec5e4",
       "searchIndexSha256": "1e49f37c256e874771a89c375f7af6f44138dbcc916eedc945697c6ca178b97e",
       "sources": [
         {
@@ -215,7 +215,7 @@
       "documentId": "s300_34_be",
       "title": "S300.34 БЭ — Система дистанционного мониторинга",
       "revision": null,
-      "pdfSha256": null,
+      "pdfSha256": "64fd5c9a71a3bbfb1e2d959ef0f134bb3a9789b38d508fead21d3fb87aadf15c",
       "searchIndexSha256": "b59bfe544a713a993b8fb054370315d145f1a7dc3f7dc47c9c9ae3e9651ba67a",
       "sources": [
         {
@@ -229,7 +229,7 @@
       "documentId": "s300_35_be",
       "title": "S300.35 БЭ — Техническое обслуживание датчика системы оценки возврата на домолот",
       "revision": null,
-      "pdfSha256": null,
+      "pdfSha256": "4de3f7e58817507ee1883adebbc1b92e54a2228be457208352aee436eccaa9e9",
       "searchIndexSha256": "2c09a58d7798f8c96dca276fc8c177903981e2d9458faa54fd53df9a9f387068",
       "sources": [
         {
@@ -243,7 +243,7 @@
       "documentId": "s300_36_be",
       "title": "S300.36 БЭ — Заглушки. Гидрооборудование наклонной камеры",
       "revision": null,
-      "pdfSha256": null,
+      "pdfSha256": "6bb0c8badb52c5a752ca5bc440acb6eab1ecd08e9925301b6988cac048ffd433",
       "searchIndexSha256": "5f53e9960384c4c7ba27d8fb1e74d5dd4f5e09cdb15931e5ed393f0fce856a0e",
       "sources": [
         {
@@ -257,7 +257,7 @@
       "documentId": "s300_37_be",
       "title": "S300.37 БЭ — Крепление первичных средств пожаротушения",
       "revision": null,
-      "pdfSha256": null,
+      "pdfSha256": "94daa4a53ee6d416022c86a171e772625e5aa01b77543148d4ef1594b38e8e8f",
       "searchIndexSha256": "c52f623105ef6769c29a6344f3e7ac100b77a5fd864699f0f8ac9efc603ae48f",
       "sources": [
         {
@@ -271,7 +271,7 @@
       "documentId": "s300_38_be",
       "title": "S300.38 БЭ — Очистка датчика сигнализатора засоренности",
       "revision": null,
-      "pdfSha256": null,
+      "pdfSha256": "47dde471686af3440091dbefc80ccd612a1f8aa6c279cf35d49f3a513e33c48c",
       "searchIndexSha256": "f21ea14d0251ba135734e6f0db34b55301d2be1274e6d29ab00b215ad512c6d3",
       "sources": [
         {
