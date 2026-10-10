@@ -48,6 +48,7 @@ internal class GoogleDriveCredentialStore(context: Context) {
     @Synchronized
     fun readRefreshToken(): String? {
         if (!file.exists()) return null
+        if (file.length() > 16 * 1024) throw IOException("Encrypted credential exceeds size limit")
         val bytes = file.readBytes()
         if (bytes.size < 30 || bytes[0] != 1.toByte()) throw IOException("Invalid encrypted credential format")
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
