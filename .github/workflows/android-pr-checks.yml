@@ -20,14 +20,17 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
       - name: Install Android API 36
-        run: sdkmanager "platforms;android-36" "build-tools;35.0.0"
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER="$(command -v sdkmanager)"
+          fi
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platforms;android-36" "build-tools;35.0.0"
       - name: Configure CI-only AAPT2
         run: |
-          # AndroidIDE pins /usr/bin/aapt2; GitHub-hosted Ubuntu does not have that binary.
-          # Override only in the CI workspace; do not change the repository configuration.
           sed -i '/^android\.aapt2FromMavenOverride=/d' gradle.properties
       - name: Make wrapper executable
         run: chmod +x ./gradlew
