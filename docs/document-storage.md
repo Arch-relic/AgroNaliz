@@ -152,3 +152,12 @@ PDF остаются исключёнными из Git. Токены, SAF-при
 Независимый DocumentRepository и постоянное хранилище реализованы отдельно
 от действующих экранов. Контракт, атомарная запись, leases, ревизии и ограничения
 описаны в [document-repository.md](document-repository.md).
+
+
+## Первый этап Google Drive
+
+Добавлен GoogleDriveDocumentSource с внедряемым GoogleDriveTransport, без OAuth,
+SDK и реальных привязок. Каталожный тип GoogleDrive с двумя file ID сохранён;
+рабочий каталог не изменён. Метаданные пары, потоки и ограничения главного потока
+описаны в [document-repository.md](document-repository.md#google-drive--первый-этап-источника).
+Фабрика остаётся только с AssetsDocumentSource до отдельной интеграции авторизации.
