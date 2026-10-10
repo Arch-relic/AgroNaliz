@@ -3,7 +3,6 @@ package ru.fo6osik.workjournal.documents.sources
 import java.net.URLEncoder
 import java.security.MessageDigest
 import java.security.SecureRandom
-import java.util.Base64
 
 /**
  * OAuth authorization-code + PKCE request preparation only.
@@ -51,6 +50,21 @@ internal object GoogleDriveOAuthPkce {
     }
 
     private fun randomUrlSafe(size: Int): String = ByteArray(size).also(random::nextBytes).let(::base64Url)
-    private fun base64Url(bytes: ByteArray): String = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
+    // Pure JVM implementation: java.util.Base64 is unavailable below Android API 26.
+    private fun base64Url(bytes: ByteArray): String {
+        val alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+        val out = StringBuilder((bytes.size * 4 + 2) / 3)
+        var index = 0
+        while (index < bytes.size) {
+            val first = bytes[index++].toInt() and 255
+            val second = if (index < bytes.size) bytes[index++].toInt() and 255 else -1
+            val third = if (index < bytes.size) bytes[index++].toInt() and 255 else -1
+            out.append(alphabet[first ushr 2])
+            out.append(alphabet[((first and 3) shl 4) or (if (second < 0) 0 else second ushr 4)])
+            if (second >= 0) out.append(alphabet[((second and 15) shl 2) or (if (third < 0) 0 else third ushr 6)])
+            if (third >= 0) out.append(alphabet[third and 63])
+        }
+        return out.toString()
+    }
     private fun encode(value: String): String = URLEncoder.encode(value, "UTF-8")
 }
