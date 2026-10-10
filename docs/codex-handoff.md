@@ -4,8 +4,9 @@
 
 10 октября 2026 года. Первый этап Google Drive как источника PDF/индексов:
 внедряемый транспорт и opt-in адаптер без OAuth, SDK и реальных аккаунтов.
-Реализация готова к ревью. JVM-проверки прошли; Android-сборка заблокирована
-ошибкой запуска Gradle. Проверка с реальным Drive и Android runtime не выполнена.
+Реализация готова к ревью. GitHub Actions успешно выполнил штатную Android Debug-сборку,
+63 JVM-теста и тесты валидатора каталога 10.10.2026 (коммит 1d5368b).
+Проверка с реальным Drive и Android runtime не выполнена.
 Открыт отдельный Draft PR №6 в main, автоматического слияния нет.
 
 ## Изменения и архитектурные решения
@@ -83,6 +84,17 @@ DocumentRepositoryFactory, каталог, build-файлы и зависимо�
   После финального сохранения реквизитов незакоммиченных изменений нет.
   Финальное содержимое отчёта сверено с GitHub.
 
+## Актуальная проверка GitHub Actions (10.10.2026)
+
+- Workflow: `.github/workflows/android-pr-checks.yml`, PR №6, коммит `1d5368b0a525d4f39622e63465959eab5ab92b84`.
+- GitHub Actions: **SUCCESS**, 3 мин 3 сек (подтверждено в Checks).
+- Java 17, Android API 36, Gradle Wrapper 8.13; `:app:assembleDebug` и `:app:testDebugUnitTest` выполнены успешно с проектными Kotlin 2.2.20 и AGP 8.12.0.
+- **63 JUnit-теста прошли** после исправления двух тестовых проверок идентичности IOException, которые были нестабильны при передаче исключений через корутины.
+- Шаг `Validate document catalog tests` прошёл успешно. Диагностические отчёты загружены как artifact.
+- В workflow настройка `android.aapt2FromMavenOverride=/usr/bin/aapt2` удаляется **только в CI workspace**, без изменения настройки AndroidIDE в репозитории.
+- Скрипт `docs/run-document-jvm-tests.py` теперь использует `GRADLE_USER_HOME` и `ANDROID_HOME` / `ANDROID_SDK_ROOT`, а не жёсткие пути `/workspace`.
+- Это подтверждает сборку и JVM-тесты, **но не Android instrumented/runtime tests, OAuth или работу с настоящим Google Drive**.
+
 ## Команды и результаты тестов/сборки
 
 1. `python3 docs/run-document-jvm-tests.py`: новый запуск, **63 JUnit-теста**,
@@ -111,16 +123,17 @@ DocumentRepositoryFactory, каталог, build-файлы и зависимо�
 5. `git diff --check`: успешно. Итоговый список файлов проверен;
    запрещённых изменений/секретов и добавленных PDF нет.
 
+Примечание: приведённая выше ошибка `agrogradle` описывает **исходную среду Codex** до настройки GitHub Actions; она больше не блокирует проверку PR в CI.
+
 ## Совместимость и ограничения среды
 
 Проект настроен на Kotlin 2.2.20, AGP 8.12.0, KSP 2.2.20-2.0.4,
 Gradle 8.13, compileSdk 36, minSdk 23, targetSdk 35 и JVM 1.8.
 Новых зависимостей/плагинов нет; используются существующие coroutines и
 платформенный Looper (доступен на minSdk). Kotlin-код компилируется доступным
-более старым компилятором 2.0.21 с JVM 1.8. **Сборка именно проектным Kotlin
-2.2.20 через AGP/KSP не подтверждена** из-за ошибки старта Gradle.
+более старым компилятором 2.0.21 с JVM 1.8. **Сборка проектным Kotlin 2.2.20 через AGP/KSP теперь подтверждена GitHub Actions**.
 Fallback проверяет Kotlin/JVM-логику, но не сборку APK, Android runtime или OAuth.
-Файл run-document-jvm-tests.py рассчитан на подготовленный кеш /workspace;
+Файл run-document-jvm-tests.py рассчитан на подготовленный локальный Gradle-кеш;
 при отсутствии кеша нужны штатная среда/Gradle, зависимости он не скачивает.
 
 Тесты используют синтетические байты и подменённый integrity validator в
@@ -138,8 +151,7 @@ Drive revision-pinning; несоответствие байтов вызывае
 
 ## Следующий этап и ручные проверки
 
-1. Восстановить запуск Gradle в облаке и выполнить предусмотренную сборку и
-   тесты проектным Kotlin/AGP; записать SHA и фактические результаты до merge.
+1. **Выполнено в GitHub Actions:** штатная Debug-сборка и JVM-тесты проектным Kotlin/AGP; успешный SHA `1d5368b0a525d4f39622e63465959eab5ab92b84`.
 2. Выбрать Google OAuth flow/scopes, реализовать безопасное хранение,
    обновление и отзыв токенов без account bindings/секретов в Git.
 3. Реализовать авторизованный GoogleDriveTransport: получение достоверного
