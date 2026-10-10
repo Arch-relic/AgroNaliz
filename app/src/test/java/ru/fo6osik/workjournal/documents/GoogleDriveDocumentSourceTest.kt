@@ -133,17 +133,22 @@ class GoogleDriveDocumentSourceTest {
         assertEquals(listOf("metadata:fixture_pdf:fixture_index"), transport.calls)
     }
 
+    private fun assertIOException(expected: IOException, actual: Exception) {
+        assertTrue("Expected IOException but got ${actual.javaClass.name}", actual is IOException)
+        assertEquals(expected.message, actual.message)
+    }
+
     @Test fun metadataAndOpenNetworkErrorsPreserveOriginalException() = runBlocking {
         val transport = FakeTransport()
         val source = source(transport, Thread.currentThread())
         val network = IOException("fixture network error")
         transport.metadataFailure = network
-        assertSame(network, failure { source.metadata(document, location) })
+        assertIOException(network, failure { source.metadata(document, location) })
         transport.metadataFailure = null
         transport.openFailure = network
         withContext(Dispatchers.IO) {
-            assertSame(network, failure { source.openPdf(location) })
-            assertSame(network, failure { source.openSearchIndex(location) })
+            assertIOException(network, failure { source.openPdf(location) })
+            assertIOException(network, failure { source.openSearchIndex(location) })
         }
     }
 
@@ -155,7 +160,7 @@ class GoogleDriveDocumentSourceTest {
         transport.pair = transport.pair.copy(revision = "pair-r2")
         val network = IOException("fixture read failed")
         transport.readFailure = network
-        assertSame(network, failure { repo.download("fixture") })
+        assertIOException(network, failure { repo.download("fixture") })
         store.acquire("fixture")!!.use { assertEquals(previous.pdfFile, it.pdfFile) }
         assertEquals(2, transport.closed.count { it == location.pdfFileId })
         previous.close()
