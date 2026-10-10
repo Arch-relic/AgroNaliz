@@ -18,18 +18,29 @@ internal class GoogleDriveHttpTokenExchange(
         require(endpoint.startsWith("https://")) { "Token endpoint must use HTTPS" }
     }
 
+    suspend fun refresh(clientId: String, refreshToken: String): GoogleDriveTokenExchange.Tokens {
+        require(refreshToken.isNotBlank()) { "Missing refresh token" }
+        return requestTokens(linkedMapOf(
+            "client_id" to clientId,
+            "refresh_token" to refreshToken,
+            "grant_type" to "refresh_token"
+        ))
+    }
+
     override suspend fun exchange(
         clientId: String,
         request: GoogleDriveOAuthAttempt.ExchangeRequest
-    ): GoogleDriveTokenExchange.Tokens = withContext(Dispatchers.IO) {
-        require(clientId.isNotBlank()) { "Missing OAuth client ID" }
-        val body = linkedMapOf(
-            "client_id" to clientId,
-            "code" to request.code,
-            "code_verifier" to request.codeVerifier,
-            "redirect_uri" to request.redirectUri,
-            "grant_type" to "authorization_code"
-        ).entries.joinToString("&") {
+    ): GoogleDriveTokenExchange.Tokens = requestTokens(linkedMapOf(
+        "client_id" to clientId,
+        "code" to request.code,
+        "code_verifier" to request.codeVerifier,
+        "redirect_uri" to request.redirectUri,
+        "grant_type" to "authorization_code"
+    ))
+
+    private suspend fun requestTokens(parameters: Map<String, String>): GoogleDriveTokenExchange.Tokens = withContext(Dispatchers.IO) {
+        require(!parameters["client_id"].isNullOrBlank()) { "Missing OAuth client ID" }
+        val body = parameters.entries.joinToString("&") {
             URLEncoder.encode(it.key, "UTF-8") + "=" + URLEncoder.encode(it.value, "UTF-8")
         }.toByteArray(Charsets.UTF_8)
 
