@@ -17,6 +17,8 @@ def instrument(test_class, method=None, count=1):
                  "ru.fo6osik.workjournal.debugtest.test/androidx.test.runner.AndroidJUnitRunner")
     expected = rf"OK \({count} test{'s' if count != 1 else ''}\)"
     if not re.search(expected, output) or "FAILURES!!!" in output:
+        adb("shell", "dumpsys", "window", "displays")
+        adb("shell", "dumpsys", "power")
         raise RuntimeError("Harvest instrumentation failed: " + selector)
 
 
@@ -27,6 +29,12 @@ def main():
     packages = set(adb("shell", "pm", "list", "packages").splitlines())
     if "package:" + test_id in packages:
         raise RuntimeError("Refusing to replace an existing TEST installation")
+    # Non-UI isolation/migration checks may outlast Android's default screen timeout.
+    # Keep the disposable emulator awake; never alter application permission/UI logic.
+    adb("shell", "settings", "put", "system", "screen_off_timeout", "2147483647")
+    adb("shell", "svc", "power", "stayon", "true")
+    adb("shell", "input", "keyevent", "KEYCODE_WAKEUP")
+    adb("shell", "wm", "dismiss-keyguard")
     legacy = Path(".migration-v20/app/build/outputs/apk/debugTest/app-debugTest.apk")
     assert legacy.is_file(), legacy
     adb("install", str(legacy))
