@@ -3131,7 +3131,7 @@ class HarvestDayActivity : AppCompatActivity() {
         if (day.status != "COMPLETED") return
         val view = layoutInflater.inflate(R.layout.dialog_harvest_number, null)
         val input = view.findViewById<EditText>(R.id.editHarvestNumber)
-        input.hint = getString(R.string.harvest_area_optional)
+        input.hint = getString(R.string.harvest_area_label)
         input.setText(day.harvestedAreaHa?.let { java.math.BigDecimal.valueOf(it).toPlainString() } ?: "")
         val dialog = AlertDialog.Builder(this)
             .setTitle(if (day.harvestedAreaHa == null) R.string.harvest_add_area else R.string.harvest_change_area)

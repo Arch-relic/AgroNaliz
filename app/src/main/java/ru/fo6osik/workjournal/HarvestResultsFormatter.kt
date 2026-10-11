@@ -4,8 +4,14 @@ import java.util.Locale
 
 /** Presentation only: every numeric result comes from HarvestCalculator. */
 object HarvestResultsFormatter {
-    fun number(value: Double): String = String.format(Locale("ru", "RU"), "%.2f", value)
-        .trimEnd('0').trimEnd(',').trimEnd('.')
+    fun number(value: Double): String {
+        // A positive fractional area must never be presented as a stored zero.
+        if (value > 0 && value < 0.005) {
+            return java.math.BigDecimal.valueOf(value).stripTrailingZeros().toPlainString().replace('.', ',')
+        }
+        return String.format(Locale.forLanguageTag("ru-RU"), "%.2f", value)
+            .trimEnd('0').trimEnd(',').trimEnd('.')
+    }
 
     fun range(value: HarvestCalculator.Range, units: String): String =
         if (value.min == value.max) "${number(value.min)} $units"

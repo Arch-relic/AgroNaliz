@@ -62,11 +62,15 @@ TEST, зависимости и облачные интеграции не из�
   `Could not determine a usable wildcard IP for this machine`.
 - Прямой запуск cached Kotlin 2.0.21 / JVM 1.8 / JUnit 4.13.2 для
   HarvestCalculatorTest и HarvestBackupCompatibilityTest: новый запуск,
-  27 тестов, 0 ошибок. Это не Android-сборка на Kotlin 2.2.20.
+  28 тестов, 0 ошибок. Это не Android-сборка на Kotlin 2.2.20.
 - `python3 -m unittest discover -s docs -p 'test_validate_document_catalog.py' -v`:
   13 тестов, 0 ошибок.
 - XML разобран стандартным XML parser; Python-скрипт проверен py_compile.
 - Android API 35 UI/Room/backup/изоляция и две APK: ожидают запуска GitHub Actions.
+
+Первый запуск Actions #43 (38175943332) обнаружил несовместимость `RoomDatabase.use`
+в новых инструментальных тестах; исправлено на явный try/finally/close.
+Повторная проверка всего workflow ожидается.
 
 ## Ограничения и ручные проверки
 

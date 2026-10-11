@@ -135,4 +135,9 @@ class HarvestCalculatorTest {
         assertTrue(text.contains("Урожайность: Не рассчитана"))
         assertTrue(text.contains("плотность культуры"))
     }
+    @Test fun smallPositiveAreaIsNotDisplayedAsZero() {
+        assertEquals("0,001", HarvestResultsFormatter.number(0.001))
+        assertTrue(HarvestResultsFormatter.results(day(listOf("FULL"), 0.001), false)
+            .contains("Фактически убранная площадь: 0,001 га"))
+    }
 }

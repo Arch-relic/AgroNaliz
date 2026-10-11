@@ -15,6 +15,10 @@ class HarvestPersistenceTest {
         check(context.packageName == "ru.fo6osik.workjournal.debugtest")
         return Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).build()
     }
+    private fun withDatabase(block: (AppDatabase) -> Unit) {
+        val db = database()
+        try { block(db) } finally { db.close() }
+    }
     private fun process(dao: HarvestDao): Int = dao.insertProcess(HarvestProcess(
         processUid = UUID.randomUUID().toString(), startDate = "2026-10-11", fieldId = null,
         fieldNameSnapshot = "synthetic", crop = "Пшеница", combineVehicleId = null,
@@ -26,7 +30,7 @@ class HarvestPersistenceTest {
     )).toInt()
 
     @Test fun completeWithoutAreaPreservesBunkersEventsAndTimer() {
-        database().use { db ->
+        withDatabase { db ->
             val dao = db.harvestDao()
             val process = process(dao)
             val day = day(dao, process)
@@ -42,7 +46,7 @@ class HarvestPersistenceTest {
     }
 
     @Test fun completeWithFractionalAreaIsAtomicWithCampaignCompletion() {
-        database().use { db ->
+        withDatabase { db ->
             val dao = db.harvestDao()
             val process = process(dao)
             val day = day(dao, process)
@@ -57,7 +61,7 @@ class HarvestPersistenceTest {
     }
 
     @Test fun areaCanBeAddedChangedAndClearedWithoutReopeningCompletedCampaign() {
-        database().use { db ->
+        withDatabase { db ->
             val dao = db.harvestDao()
             val process = process(dao)
             val day = day(dao, process)
@@ -74,7 +78,7 @@ class HarvestPersistenceTest {
     }
 
     @Test fun areaEditorCannotModifyActiveDayAndTransactionRollbackPreservesData() {
-        database().use { db ->
+        withDatabase { db ->
             val dao = db.harvestDao()
             val process = process(dao)
             val day = day(dao, process)
@@ -91,7 +95,7 @@ class HarvestPersistenceTest {
     }
 
     @Test fun densityOverridePersistsAndChangingCropResetsIt() {
-        database().use { db ->
+        withDatabase { db ->
             val dao = db.harvestDao()
             val process = process(dao)
             dao.completeProcess(process, "2026-10-11")
