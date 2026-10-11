@@ -114,7 +114,12 @@ internal class DriveSettingsModel(application: Application) : AndroidViewModel(a
     private var resolution: Pair<PendingIntent, Int>? = null
     private var selectedPdf: Pair<String, String>? = null
     private var job: Job? = null
-    init { work { services.initialize(); catalog = withContext(Dispatchers.IO) { DocumentCatalog.load(application.assets).documents }; summary() } }
+    init { work {
+        // Offline selection stays available even if encrypted Drive settings cannot be read.
+        catalog = withContext(Dispatchers.IO) { DocumentCatalog.load(application.assets).documents }
+        services.initialize()
+        summary()
+    } }
     fun selectedDocument() = catalog.getOrNull(selected)
     fun select(position: Int) {
         if (selected != position) {
