@@ -1,100 +1,98 @@
 # Передача результатов Codex — «АгроНализ»
 
-## Дата, этап, цель и статус
+## Дата, цель и статус
 
-11 октября 2026 года. Публикация тестовой app-debug.apk через GitHub Actions.
-Workflow реализован. GitHub Actions успешно выполнил сборку, тесты и публикацию.
-ZIP скачан, APK и подпись проверены. Открыт Draft PR №21.
-Приложение и интеграции не изменялись.
+11 октября 2026. Отдельная безопасная TEST-сборка с applicationId
+ru.fo6osik.workjournal.debugtest и названием «АгроНализ TEST».
+Реализация подготовлена; штатная CI-сборка и эмуляторная проверка ожидаются.
+Основной applicationId ru.fo6osik.workjournal сохранён.
 
-## Изменения и решения
+## Решения и изоляция
 
-Существующие Android-сборка, JVM-тесты, проверка каталога и always-публикация
-диагностики сохранены. Добавлен push в main; workflow_dispatch использует
-штатный выбор ветки GitHub без жёсткого checkout main. PR продолжает собирать
-merge-коммит. После успешных проверок APK публикуется отдельным артефактом
-app-debug-<безопасное имя ветки>-<12 символов фактического checkout SHA>.
-Upload завершается ошибкой при отсутствии файла. Срок хранения APK 14 дней.
-Ветка передаётся через env, не вставляется в исполняемый shell-код.
+Добавлен build type debugTest, наследующий debug с отдельным applicationIdSuffix,
+без изменения namespace и обычных debug/release. Room 20, миграции и бизнес-логика
+сохранены. Android разделяет UID, базу, prefs, files/cache/noBackup и app-scoped
+external-files. Проверены все записи через File/contentResolver, манифест,
+reminder prefs и LocalDocumentStore. Общих фиксированных внешних путей нет.
+В main отсутствовал FileProvider; TEST получает приватный provider с authority
+${applicationId}.testbackups и доступом только к filesDir/test-backups.
+TEST экспорт не выбирает общий SAF-файл и дополнительно отвергает чужие URI в
+DatabaseBackupManager до открытия БД. Основной SAF-экспорт сохранён.
+Автоматическое резервирование и device transfer TEST исключены.
+Импорт/restore читает выбранный файл и пишет только в текущую базу; автоматического
+переноса данных основной версии нет. TEST-копии приватные, получение через ADB
+описано в docs/test-apk.md. Варианты могут быть установлены одновременно.
 
 ## Файлы
 
 Изменены:
+- app/build.gradle.kts
+- app/src/main/java/ru/fo6osik/workjournal/BackupRestoreActivity.kt
+- app/src/main/java/ru/fo6osik/workjournal/DatabaseBackupManager.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/ExampleInstrumentedTest.kt
 - .github/workflows/android-pr-checks.yml
 - docs/codex-handoff.md
 
-Создан:
-- docs/debug-apk.md
+Созданы:
+- app/src/debug/AndroidManifest.xml
+- app/src/debugTest/AndroidManifest.xml
+- app/src/debugTest/res/values/strings.xml
+- app/src/debugTest/res/xml/test_backup_paths.xml
+- app/src/debugTest/res/xml/test_data_extraction_rules.xml
+- app/src/main/java/ru/fo6osik/workjournal/BackupStoragePolicy.kt
+- app/src/main/java/ru/fo6osik/workjournal/PrivateTestBackups.kt
+- app/src/test/java/ru/fo6osik/workjournal/BackupStoragePolicyTest.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/BuildVariantIsolationTest.kt
+- docs/run-build-isolation-checks.py
+- docs/verify-build-variants.py
+- docs/test-apk.md
 
-Удалений нет. Android-код, Room, зависимости, PDF, индексы и данные не изменены.
-Ключи, токены, PDF и APK в Git не добавлены. Новых облачных интеграций нет.
+Удалений нет. PDF не возвращались, каталоги/индексы и облачные интеграции не
+изменялись. Секреты/APK/ключи не добавлены в Git. Debug queries между двумя
+пакетами нужны только для проверки совместной установки; release не затрагиваются.
 
-## Ветка и коммиты
+## Ветка и SHA
 
-Ветка feature/debug-apk-artifacts создана GitHub API непосредственно от актуального
-main 2c0f6cb21acae3b60a25f45ecef447a67df25b4e. main не изменяется.
-Коммит реализации workflow: 6634b407b0fd5071262bc901e646484543f35751.
-Коммит с инструкцией: 67926191b8ebee33ee9608dd1d47597ea85eae6a.
-Проверенный head PR: da3a597f9e1cb2dc338ecb994218b6c6dce527f2.
-Фактически собранный PR merge SHA: 2c603a5476290bc4d860c3f072550283b4ec4801.
-Этот отчёт сохраняется следующим коммитом документации; указанные SHA обозначают
-реально проверенный результат, а не хеш самого содержащего отчёт коммита.
-Все изменения опубликованы в отдельной ветке, незакоммиченных изменений проекта нет.
-Предыдущая локальная рабочая ветка сохранена; устаревший локальный origin/main
-не использован для создания опубликованной ветки.
+Ветка feature/safe-test-apk создана GitHub API от актуального main
+e97063cece9b66062ad1cfd4190f7e1cedb3fbf0. main не изменяется.
+Предыдущая ветка сохранена; отдельный локальный worktree восстановлен из
+сохранённого snapshot и точных файлов актуального main через API.
+GitHub-ветка имеет настоящий parent main, а не локальную историю зеркала.
+SHA проверенного результата будет записан после CI, не как хеш этого отчёта.
 
 ## Проверки
 
-GitHub Actions run 38127076784: SUCCESS, все шаги завершились успешно.
-https://github.com/Arch-relic/AgroNaliz/actions/runs/38127076784
-Штатные команды существующего workflow:
-- ./gradlew :app:assembleDebug :app:testDebugUnitTest --no-daemon --stacktrace --console=plain
-- python3 -m unittest discover -s docs -p 'test_validate_document_catalog.py' -v
+- git diff --check: успешно.
+- YAML через PyYAML BaseLoader: успешно.
+- python3 docs/run-document-jvm-tests.py: новый fallback запуск, 63 JUnit-теста,
+  0 ошибок, 0 failures; Kotlin 2.0.21/JVM 1.8. Новая backup-политика этим скриптом
+  не проверяется; штатные unit tests обоих вариантов ожидаются.
+- python3 -m unittest discover -s docs -p 'test_validate_document_catalog.py' -v:
+  новый запуск, 13 тестов, все прошли.
+- source /workspace/agronaliz-env.sh; agrogradle :app:assembleDebug :app:assembleDebugTest :app:test:
+  FAILED до компиляции: Could not determine a usable wildcard IP for this machine.
+  Локальная штатная сборка не объявляется успешной.
 
-Gradle: BUILD SUCCESSFUL in 2m 19s. Debug-сборка и testDebugUnitTest выполнены
-новым запуском, не UP-TO-DATE (вспомогательные preBuild/preDebugBuild/
-generateDebugAssets/preDebugUnitTestBuild были UP-TO-DATE).
-JUnit XML скачанного diagnostics artifact: 4 suites, 63 tests,
-0 failures, 0 errors, 0 skipped. Каталог: Ran 13 tests, OK, новый запуск.
-Java 17, API 36, штатные проектные Kotlin/AGP и Gradle Wrapper сохранены.
-Локальная Android-сборка в этой задаче не запускалась: проверка выполнена
-в GitHub Actions, а не объявлена успешной на основании прежних результатов.
+CI сохранит существующие проверки, соберёт Debug/TEST и instrumented APK,
+запустит JVM-тесты обоих вариантов, проверит фактические APK ID и manifest,
+установит оба варианта на одноразовый API 35 эмулятор. Синтетические записи в
+Room/prefs/files/cache/documents/external-files проверяются до/после TEST и его
+удаления. Проверяются UID, отказ чтения main, ограничение provider и чужого URI.
+APK публикуются только после успешных проверок изоляции.
 
-Локальная статическая проверка через Python/PyYAML BaseLoader: YAML корректен,
-каждый существовавший шаг сохранён (только название checkout обобщено),
-проверены push/main, workflow_dispatch, success-only upload после тестов
-и if-no-files-found:error. Доступного actionlint нет.
-GitHub changed-files подтверждает только три перечисленных файла.
+## Риски и ручные проверки
 
-Artifact ID 11696774195:
-app-debug-feature-debug-apk-artifacts-2c603a547629,
-ZIP 26295413 байт, app-debug.apk 38096438 байт, срок до 25.10.2026.
-ZIP скачан через GitHub artifact API; zipfile.testzip() успешен для ZIP и APK,
-архив содержит ровно app-debug.apk, APK содержит AndroidManifest.xml/classes.dex.
-SHA-256 ZIP совпал с GitHub digest:
-c5a82462fdfd1ae6eebc5f6356132380ec038a40f90c575bb0be64126b36bee3.
-SHA-256 самой APK:
-26ad31d644724056c7f68aafa267f4473fd1c21bb83759db2c34e88aa8875194.
-Команда apksigner verify app-debug.apk: exit 0. Выданы предупреждения об
-элементах META-INF вне защиты JAR-подписи; APK не модифицировалась.
-Существующий android-pr6-diagnostics также успешно опубликован и скачан.
-
-## Ограничения и ручные действия
-
-До слияния владельцем новые push/main настройки не действуют в main.
-Проверка APK из PR доказывает путь сборки/публикации; ручной dispatch main с
-новой версией workflow и push main потребуют слияния. Автоматического слияния нет.
-Ручная установка на Android и работа экранов не проверяются облачной сборкой.
-Debug-подпись может отличаться между runners: не удалять приложение с данными
-при конфликте подписи, использовать тестовое устройство/профиль.
-Не добавлены отсутствующие исходные PDF; проверка содержимого документов
-не входит в этот этап. Инструкция: docs/debug-apk.md.
+Реальная установка на телефон/OEM не проверена. Debug-подпись между CI runners
+может отличаться; конфликт обновления TEST не требует удаления основной версии.
+TEST backup хранится приватно; его удаление удалит только TEST-копии.
+Автоматическое main-поведение обновится лишь после слияния владельцем.
+PDF-байты и совместимость содержания PDF/индексов не проверяются в этом этапе.
+Перед установкой использовать только artifact app-TEST-..., не app-debug-....
+Не выбирать для импорта реальные рабочие данные; использовать синтетические.
+См. docs/test-apk.md для проверки двух иконок/настроек/записей/удаления TEST.
 
 ## Pull Request
 
-[PR №21](https://github.com/Arch-relic/AgroNaliz/pull/21): Draft, открыт,
-base main, head feature/debug-apk-artifacts, не объединён.
-Отчёт и результаты добавлены в эту же ветку после создания PR.
-Решение о слиянии принимает владелец; затем проверить ручной запуск из main
-и первый автоматический push/main. Для скачивания на телефон следовать
-инструкции docs/debug-apk.md; требуется вход в GitHub с доступом к репозиторию.
+Отдельный Draft PR в main будет создан после публикации реализации.
+Номер, URL и подтверждённые результаты будут записаны следующим коммитом.
+Автоматическое слияние запрещено; main не изменяется.

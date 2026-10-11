@@ -8,6 +8,10 @@ android {
     namespace = "ru.fo6osik.workjournal"
     compileSdk = 36
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "ru.fo6osik.workjournal"
         minSdk = 23
@@ -19,6 +23,11 @@ android {
     }
 
     buildTypes {
+        create("debugTest") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".debugtest"
+            matchingFallbacks += listOf("debug")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(

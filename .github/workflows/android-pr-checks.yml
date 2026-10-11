@@ -37,9 +37,23 @@ jobs:
       - name: Make wrapper executable
         run: chmod +x ./gradlew
       - name: Build debug APK and run JVM tests
-        run: ./gradlew :app:assembleDebug :app:testDebugUnitTest --no-daemon --stacktrace --console=plain
+        run: ./gradlew :app:assembleDebug :app:assembleDebugTest :app:testDebugUnitTest :app:testDebugTestUnitTest :app:assembleDebugAndroidTest :app:assembleDebugTestAndroidTest --no-daemon --stacktrace --console=plain
       - name: Validate document catalog tests
         run: python3 -m unittest discover -s docs -p 'test_validate_document_catalog.py' -v
+      - name: Verify APK identifiers and provider isolation
+        run: python3 docs/verify-build-variants.py
+      - name: Enable emulator KVM
+        run: sudo chmod 666 /dev/kvm
+      - name: Verify data isolation on Android
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: python3 docs/run-build-isolation-checks.py
       - name: Name debug APK artifact
         id: apk
         env:
@@ -53,12 +67,20 @@ jobs:
           sha = subprocess.check_output(["git", "rev-parse", "--short=12", "HEAD"], text=True).strip()
           with open(os.environ["GITHUB_OUTPUT"], "a") as output:
               output.write(f"name=app-debug-{branch}-{sha}\n")
+              output.write(f"test_name=app-TEST-{branch}-{sha}\n")
           PY
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.apk.outputs.name }}
           path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload isolated TEST APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.apk.outputs.test_name }}
+          path: app/build/outputs/apk/debugTest/app-debugTest.apk
           if-no-files-found: error
           retention-days: 14
       - name: Upload test reports and build diagnostics
