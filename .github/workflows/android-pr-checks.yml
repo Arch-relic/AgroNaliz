@@ -1,6 +1,8 @@
 name: Android PR checks
 
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -13,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
-      - name: Checkout PR
+      - name: Checkout selected revision
         uses: actions/checkout@v4
       - name: Set up Java 17
         uses: actions/setup-java@v4
@@ -38,6 +40,27 @@ jobs:
         run: ./gradlew :app:assembleDebug :app:testDebugUnitTest --no-daemon --stacktrace --console=plain
       - name: Validate document catalog tests
         run: python3 -m unittest discover -s docs -p 'test_validate_document_catalog.py' -v
+      - name: Name debug APK artifact
+        id: apk
+        env:
+          SOURCE_BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          import subprocess
+          branch = re.sub(r"[^A-Za-z0-9_.-]", "-", os.environ["SOURCE_BRANCH"])
+          sha = subprocess.check_output(["git", "rev-parse", "--short=12", "HEAD"], text=True).strip()
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              output.write(f"name=app-debug-{branch}-{sha}\n")
+          PY
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.apk.outputs.name }}
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
       - name: Upload test reports and build diagnostics
         if: always()
         uses: actions/upload-artifact@v4
