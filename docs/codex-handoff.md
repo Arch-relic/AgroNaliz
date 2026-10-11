@@ -74,6 +74,11 @@ Actions #45 (38176250072) собрал обе APK, прошёл JVM/catalog/iden
 существующую изоляцию и реальные Room20→21/legacy-backup/persistence тесты.
 UI получил RootViewWithoutFocusException на эмуляторе; в CI-скрипт добавлены
 явное пробуждение/снятие keyguard/stay-on и диагностика окна/питания.
+Actions #46 (38177055407): Room/legacy backup/persistence прошли вновь;
+4 из 5 UI-тестов дня прошли. Последний scrollTo/click попал на системную
+навигацию Android 15 (insets/nav boundary), диалог не открылся.
+В обеих карточках уборки добавлен корневой FrameLayout с fitsSystemWindows,
+чтобы ScrollView/нижние кнопки находились внутри безопасной области.
 Полный повторный запуск ожидается.
 
 ## Ограничения и ручные проверки
