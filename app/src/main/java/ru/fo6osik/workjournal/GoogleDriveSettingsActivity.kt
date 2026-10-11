@@ -71,6 +71,10 @@ class GoogleDriveSettingsActivity : AppCompatActivity() {
             }
         }
         button("Сбросить повреждённые настройки") { model.reset() }
+        content.addView(Button(this).apply {
+            text = "Отменить текущую операцию"
+            setOnClickListener { model.cancelWork() }
+        })
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 model.ui.collect { state ->
@@ -155,7 +159,7 @@ internal class DriveSettingsModel(application: Application) : AndroidViewModel(a
         }
     }
     fun beginAccountChoice(): Boolean {
-        if (ui.value.busy || services.state.pendingRevoke != null) return false
+        if (ui.value.busy || job?.isActive == true || services.state.pendingRevoke != null) return false
         attempts.begin(Purpose(null, null, null, true)); ui.value = DriveSettingsUi("Выберите аккаунт Google…", true)
         return true
     }
@@ -167,6 +171,10 @@ internal class DriveSettingsModel(application: Application) : AndroidViewModel(a
             if (old != null && old != account && !services.disconnect()) return@work summary()
             authorize(Purpose(account, null, null))
         }
+    }
+    fun cancelWork() {
+        job?.cancel(); attempts.cancel(); resolution = null; selectedPdf = null
+        ui.value = DriveSettingsUi("Операция отменена. Проверенная локальная копия сохранена.", false)
     }
     fun cancelAuthorization() { attempts.cancel(); resolution = null; selectedPdf = null; ui.value = DriveSettingsUi("Выбор отменён. " + summary(), false) }
     fun takeResolution(): PendingIntent? = resolution.also { resolution = null }

@@ -27,7 +27,7 @@ def main():
     android = android_home / "platforms/android-36/android.jar"
     json = first(cache.glob("org.json/json/20240303/*/*.jar"), "JVM org.json 20240303")
     required = [lib / "kotlin-stdlib-2.0.21.jar", lib / "junit-4.13.2.jar",
-                lib / "hamcrest-core-1.3.jar", android, annotations, coroutines, json]
+                lib / "hamcrest-core-1.3.jar", json, android, annotations, coroutines]
     missing = [str(path) for path in required if not path.is_file()]
     if missing:
         raise RuntimeError("Missing required cached files: {}. Use Gradle tests instead.".format(", ".join(missing)))

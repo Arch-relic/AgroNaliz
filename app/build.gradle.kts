@@ -39,7 +39,7 @@ android {
 dependencies {
     implementation("androidx.activity:activity-ktx:1.9.3")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
-    implementation("com.google.android.gms:play-services-auth:22.0.0")
+    implementation("com.google.android.gms:play-services-auth:21.6.0")
     testImplementation("org.json:json:20240303")
 	implementation("androidx.room:room-runtime:2.8.5")
 ksp("androidx.room:room-compiler:2.8.5")
