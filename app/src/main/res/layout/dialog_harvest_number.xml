@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="vertical" android:padding="20dp">
+    <EditText android:id="@+id/editHarvestNumber"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:inputType="numberDecimal" android:digits="0123456789,."
+        android:singleLine="true" android:minHeight="48dp" />
+    <TextView android:id="@+id/textHarvestNumberNote"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="@string/harvest_area_note" android:paddingTop="8dp" />
+</LinearLayout>

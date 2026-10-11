@@ -55,6 +55,8 @@ class HarvestDayActivity : AppCompatActivity() {
     private lateinit var textBunkerCount: TextView
     private lateinit var textEstimatedVolume: TextView
     private lateinit var textAverageVolume: TextView
+    private lateinit var textHarvestResults: TextView
+    private lateinit var buttonEditArea: Button
     private lateinit var textBunkersEmpty: TextView
     private lateinit var bunkerList: LinearLayout
     private lateinit var buttonEditDay: Button
@@ -130,6 +132,10 @@ class HarvestDayActivity : AppCompatActivity() {
                 EXTRA_OPEN_ADD_BUNKER,
                 false
             )
+
+        textHarvestResults = findViewById(R.id.textHarvestDayResults)
+        buttonEditArea = findViewById(R.id.buttonEditHarvestArea)
+        buttonEditArea.setOnClickListener { showAreaDialog() }
 
         textProcessTitle =
             findViewById(
@@ -526,6 +532,16 @@ class HarvestDayActivity : AppCompatActivity() {
                 bunkers =
                     bunkers
             )
+
+        val result = HarvestCalculator.day(
+            process.bunkerVolumeM3,
+            HarvestDensityCatalog.effective(process.crop, process.bulkDensityKgM3),
+            HarvestCalculator.DayInput(bunkers.map { it.fillLevel }, day.harvestedAreaHa)
+        )
+        textHarvestResults.text = HarvestResultsFormatter.density(process.crop, process.bulkDensityKgM3) +
+            "\n" + HarvestResultsFormatter.results(result, campaign = false)
+        buttonEditArea.visibility = if (day.status == "COMPLETED") View.VISIBLE else View.GONE
+        buttonEditArea.setText(if (day.harvestedAreaHa == null) R.string.harvest_add_area else R.string.harvest_change_area)
 
         val isActive =
             day.status ==
@@ -3110,6 +3126,44 @@ class HarvestDayActivity : AppCompatActivity() {
         dialog.show()
     }
 
+    private fun showAreaDialog() {
+        val day = currentDay ?: return
+        if (day.status != "COMPLETED") return
+        val view = layoutInflater.inflate(R.layout.dialog_harvest_number, null)
+        val input = view.findViewById<EditText>(R.id.editHarvestNumber)
+        input.hint = getString(R.string.harvest_area_optional)
+        input.setText(day.harvestedAreaHa?.let { java.math.BigDecimal.valueOf(it).toPlainString() } ?: "")
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(if (day.harvestedAreaHa == null) R.string.harvest_add_area else R.string.harvest_change_area)
+            .setView(view).setPositiveButton(R.string.harvest_save, null)
+            .setNegativeButton(R.string.harvest_cancel, null).create()
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val area = try {
+                    HarvestCalculator.parseOptionalPositive(input.text.toString())
+                } catch (_: IllegalArgumentException) {
+                    input.error = getString(R.string.harvest_positive_number)
+                    return@setOnClickListener
+                }
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false
+                Thread {
+                    try {
+                        val updated = DatabaseProvider.getDatabase(applicationContext).harvestDao()
+                            .updateHarvestedArea(day.id, area)
+                        check(updated == 1) { "Рабочий день не завершён или удалён" }
+                        runOnUiThread { dialog.dismiss(); loadDay() }
+                    } catch (e: Exception) {
+                        runOnUiThread {
+                            dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true
+                            Toast.makeText(this, "Не удалось сохранить площадь: ${e.message}", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }.start()
+            }
+        }
+        dialog.show()
+    }
+
     private fun showFinishDayDialog() {
         val day =
             currentDay
@@ -3134,6 +3188,8 @@ class HarvestDayActivity : AppCompatActivity() {
             dialogView.findViewById<TextView>(
                 R.id.textFinishHarvestDayTime
             )
+
+        val editArea = dialogView.findViewById<EditText>(R.id.editFinishHarvestDayArea)
 
         val buttonConfirm =
             dialogView.findViewById<Button>(
@@ -3178,6 +3234,12 @@ class HarvestDayActivity : AppCompatActivity() {
         }
 
         buttonConfirm.setOnClickListener {
+            val area = try {
+                HarvestCalculator.parseOptionalPositive(editArea.text.toString())
+            } catch (_: IllegalArgumentException) {
+                editArea.error = getString(R.string.harvest_positive_number)
+                return@setOnClickListener
+            }
             val endTime =
                 textEndTime
                     .text
@@ -3187,7 +3249,8 @@ class HarvestDayActivity : AppCompatActivity() {
 
             showCampaignFinishedDialog(
                 day,
-                endTime
+                endTime,
+                area
             )
         }
 
@@ -3196,7 +3259,8 @@ class HarvestDayActivity : AppCompatActivity() {
 
     private fun showCampaignFinishedDialog(
         day: HarvestDay,
-        endTime: String
+        endTime: String,
+        harvestedAreaHa: Double?
     ) {
         AlertDialog
             .Builder(this)
@@ -3212,7 +3276,8 @@ class HarvestDayActivity : AppCompatActivity() {
                 finishDay(
                     day,
                     endTime,
-                    true
+                    true,
+                    harvestedAreaHa
                 )
             }
             .setNegativeButton(
@@ -3221,7 +3286,8 @@ class HarvestDayActivity : AppCompatActivity() {
                 finishDay(
                     day,
                     endTime,
-                    false
+                    false,
+                    harvestedAreaHa
                 )
             }
             .setNeutralButton(
@@ -3234,7 +3300,8 @@ class HarvestDayActivity : AppCompatActivity() {
     private fun finishDay(
         day: HarvestDay,
         endTime: String,
-        finishProcess: Boolean
+        finishProcess: Boolean,
+        harvestedAreaHa: Double?
     ) {
         Thread {
             try {
@@ -3249,7 +3316,8 @@ class HarvestDayActivity : AppCompatActivity() {
                         .harvestDao()
                         .completeDay(
                             day.id,
-                            endTime
+                            endTime,
+                            harvestedAreaHa
                         )
 
                     if (
@@ -3420,69 +3488,12 @@ class HarvestDayActivity : AppCompatActivity() {
         }
     }
 
-    private fun coefficientRange(
-        fillLevel: String
-    ): Pair<Double, Double> {
-        return when (
-            fillLevel
-        ) {
-            "FULL" ->
-                1.0 to 1.0
-
-            "HALF" ->
-                0.5 to 0.5
-
-            "MORE_THAN_HALF" ->
-                0.5 to 1.0
-
-            "LESS_THAN_HALF" ->
-                0.0 to 0.5
-
-            else ->
-                0.0 to 0.0
-        }
-    }
-
     private fun totalVolumeRange(
         bunkerVolumeM3: Double?,
         bunkers: List<HarvestBunker>
-    ): Pair<Double, Double>? {
-        if (
-            bunkerVolumeM3 ==
-            null
-        ) {
-            return null
-        }
-
-        var minEquivalent =
-            0.0
-
-        var maxEquivalent =
-            0.0
-
-        bunkers.forEach {
-            bunker ->
-
-            val range =
-                coefficientRange(
-                    bunker.fillLevel
-                )
-
-            minEquivalent +=
-                range.first
-
-            maxEquivalent +=
-                range.second
-        }
-
-        return (
-            minEquivalent *
-                bunkerVolumeM3
-            ) to (
-            maxEquivalent *
-                bunkerVolumeM3
-            )
-    }
+    ): Pair<Double, Double>? = HarvestCalculator.volume(
+        bunkerVolumeM3, bunkers.map { it.fillLevel }
+    )?.asPair()
 
     private fun calculationText(
         label: String,
@@ -3510,45 +3521,11 @@ class HarvestDayActivity : AppCompatActivity() {
         }
     }
 
-    private fun averageText(
-        bunkerVolumeM3: Double?,
-        bunkers: List<HarvestBunker>
-    ): String {
-        if (
-            bunkers.isEmpty()
-        ) {
-            return "Средний объём бункера: —"
-        }
-
-        val range =
-            totalVolumeRange(
-                bunkerVolumeM3,
-                bunkers
-            )
-                ?: return "Средний объём бункера: не настроен"
-
-        val minAverage =
-            range.first /
-                bunkers.size
-
-        val maxAverage =
-            range.second /
-                bunkers.size
-
-        return if (
-            kotlin.math.abs(
-                minAverage -
-                    maxAverage
-            ) <
-            0.0001
-        ) {
-            "Средний объём бункера: " +
-                "${formatNumber(minAverage)} м³"
-        } else {
-            "Средний объём бункера: " +
-                "${formatNumber(minAverage)}–" +
-                "${formatNumber(maxAverage)} м³"
-        }
+    private fun averageText(bunkerVolumeM3: Double?, bunkers: List<HarvestBunker>): String {
+        if (bunkers.isEmpty()) return "Средний объём бункера: —"
+        val average = HarvestCalculator.averageVolume(bunkerVolumeM3, bunkers.map { it.fillLevel })
+            ?: return "Средний объём бункера: не настроен"
+        return "Средний объём бункера: ${HarvestResultsFormatter.range(average, "м³")}"
     }
 
     private fun formatNumber(

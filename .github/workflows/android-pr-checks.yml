@@ -44,6 +44,16 @@ jobs:
         run: python3 -m unittest discover -s docs -p 'test_validate_document_catalog.py' -v
       - name: Verify APK identifiers and provider isolation
         run: python3 docs/verify-build-variants.py
+      - name: Checkout real Room v20 migration baseline
+        uses: actions/checkout@v4
+        with:
+          ref: c0ea3d01a97dd0eb4814b59307b44169916821bc
+          path: .migration-v20
+      - name: Build baseline TEST APK for real database upgrade
+        run: |
+          sed -i '/^android\.aapt2FromMavenOverride=/d' .migration-v20/gradle.properties
+          chmod +x .migration-v20/gradlew
+          .migration-v20/gradlew -p .migration-v20 :app:assembleDebugTest --no-daemon --stacktrace --console=plain
       - name: Enable emulator KVM
         run: sudo chmod 666 /dev/kvm
       - name: Verify data isolation on Android
@@ -55,7 +65,9 @@ jobs:
           profile: pixel_2
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: python3 docs/run-build-isolation-checks.py
+          script: |
+            python3 docs/run-build-isolation-checks.py
+            python3 docs/run-harvest-checks.py
       - name: Name debug APK artifact
         id: apk
         env:

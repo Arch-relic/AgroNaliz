@@ -51,6 +51,19 @@
             android:padding="6dp"
             android:paddingBottom="18dp" />
 
+        <TextView
+            android:id="@+id/textHarvestDensity"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:padding="6dp" />
+
+        <Button
+            android:id="@+id/buttonEditHarvestDensity"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/harvest_density_edit" />
+
         <Button
             android:id="@+id/buttonEditHarvestProcess"
             android:layout_width="match_parent"
@@ -61,7 +74,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="28dp"
-            android:text="Рабочие дни"
+            android:text="@string/harvest_results_title"
             android:textSize="22sp"
             android:textStyle="bold"
             android:paddingBottom="8dp" />
@@ -90,6 +103,21 @@
             android:text="Средний объём бункера: не настроен"
             android:textSize="18sp"
             android:paddingBottom="14dp" />
+
+        <TextView
+            android:id="@+id/textHarvestCampaignResults"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:paddingBottom="14dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Рабочие дни"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:paddingBottom="8dp" />
 
         <TextView
             android:id="@+id/textHarvestDaysEmpty"

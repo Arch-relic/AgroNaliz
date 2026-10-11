@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="harvest_results_title">Результаты уборки</string>
+    <string name="harvest_area_label">Убранная площадь, га</string>
+    <string name="harvest_area_optional">Необязательно: например, 12,5</string>
+    <string name="harvest_area_note">Пустое поле — площадь неизвестна. Можно добавить или изменить её после завершения дня.</string>
+    <string name="harvest_positive_number">Введите положительное число, например 12,5 или 12.5</string>
+    <string name="harvest_add_area">Добавить площадь</string>
+    <string name="harvest_change_area">Изменить площадь</string>
+    <string name="harvest_save">Сохранить</string>
+    <string name="harvest_cancel">Отмена</string>
+    <string name="harvest_density_title">Насыпная плотность культуры</string>
+    <string name="harvest_density_hint">Плотность, кг/м³</string>
+    <string name="harvest_density_edit">Задать / изменить плотность</string>
+    <string name="harvest_density_reference">По справочнику</string>
+    <string name="harvest_density_note">Положительное значение в кг/м³ применяется только к этой кампании. Влажность, засорённость и состояние зерна влияют на плотность. Для «Другое» справочного значения нет: введите его вручную.</string>
+</resources>

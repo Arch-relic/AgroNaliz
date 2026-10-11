@@ -81,6 +81,7 @@ object DataImportManager {
                 sourceDatabaseVersion != 16 &&
                 sourceDatabaseVersion != 18 &&
                 sourceDatabaseVersion != 19 &&
+                sourceDatabaseVersion != 20 &&
                 sourceDatabaseVersion != database.version
             ) {
                 error(
@@ -4129,6 +4130,12 @@ private fun importHarvestProcesses(
                     )
                 }
 
+                val harvestValue = jsonNullableDouble(row, "bulkDensityKgM3")
+                require(harvestValue == null || HarvestCalculator.positive(harvestValue) != null) {
+                    "Некорректное значение bulkDensityKgM3 в файле импорта"
+                }
+                if (harvestValue == null) putNull("bulkDensityKgM3") else put("bulkDensityKgM3", harvestValue)
+
                 put(
                     "createdAt",
                     row.optLong(
@@ -4436,6 +4443,12 @@ private fun importHarvestDays(
                         0
                     }
                 )
+
+                val harvestValue = jsonNullableDouble(row, "harvestedAreaHa")
+                require(harvestValue == null || HarvestCalculator.positive(harvestValue) != null) {
+                    "Некорректное значение harvestedAreaHa в файле импорта"
+                }
+                if (harvestValue == null) putNull("harvestedAreaHa") else put("harvestedAreaHa", harvestValue)
 
                 put(
                     "createdAt",

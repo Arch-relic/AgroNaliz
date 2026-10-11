@@ -63,5 +63,8 @@ data class HarvestProcess(
     // Пока может быть null; позже будет заполняться из ТТХ комбайна.
     val bunkerVolumeM3: Double? = null,
 
+    // Ручная корректировка кг/м³; null = справочная плотность выбранной культуры.
+    val bulkDensityKgM3: Double? = null,
+
     val createdAt: Long = System.currentTimeMillis()
 )

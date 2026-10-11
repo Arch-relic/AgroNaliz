@@ -52,6 +52,14 @@
             android:text="Редактировать день" />
 
         <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/harvest_results_title"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <TextView
             android:id="@+id/textHarvestDayBunkerCount"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -76,6 +84,20 @@
             android:text="Средний объём бункера: пока не настроен"
             android:textSize="18sp"
             android:paddingBottom="18dp" />
+
+        <TextView
+            android:id="@+id/textHarvestDayResults"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:paddingBottom="12dp" />
+
+        <Button
+            android:id="@+id/buttonEditHarvestArea"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/harvest_add_area"
+            android:visibility="gone" />
 
         <Button
             android:id="@+id/buttonAddHarvestDayBunker"
