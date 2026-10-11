@@ -2,174 +2,62 @@
 
 ## Дата, этап, цель и статус
 
-10 октября 2026 года. Первый этап Google Drive как источника PDF/индексов:
-внедряемый транспорт и opt-in адаптер без OAuth, SDK и реальных аккаунтов.
-Реализация готова к ревью. GitHub Actions успешно выполнил штатную Android Debug-сборку,
-63 JVM-теста и тесты валидатора каталога 10.10.2026 (коммит 1d5368b).
-Проверка с реальным Drive и Android runtime не выполнена.
-Открыт отдельный Draft PR №6 в main, автоматического слияния нет.
+11 октября 2026 года. Публикация тестовой app-debug.apk через GitHub Actions.
+Workflow реализован; проверка реального запуска и загрузки артефакта ожидается.
+Приложение и интеграции не изменялись.
 
-## Изменения и архитектурные решения
+## Изменения и решения
 
-GoogleDriveDocumentSource реализует sources.DocumentSource и поддерживает
-каталожный DocumentSource.GoogleDrive с двумя точными file ID. Отдельный
-GoogleDriveTransport предоставляет блокирующие metadata/openFile. Метаданные
-GoogleDrivePairMetadata описывают согласованную пару: ID PDF/индекса,
-непрозрачную ревизию и ожидаемые SHA-256. Проверяются совпадение обоих ID,
-принадлежность расположения документу, непустая объявленная ревизия и формат
-lowercase SHA-256. Объявленная ревизия требует обоих хешей. Неизвестные значения
-остаются null; вычисленные байты, Drive MD5 и отдельная file version не подставляются
-вместо ожидаемых хешей или ревизии пары. Достоверность manifest обязан обеспечить
-будущий авторизованный транспорт; сам адаптер не доказывает совместимость текста.
+Существующие Android-сборка, JVM-тесты, проверка каталога и always-публикация
+диагностики сохранены. Добавлен push в main; workflow_dispatch использует
+штатный выбор ветки GitHub без жёсткого checkout main. PR продолжает собирать
+merge-коммит. После успешных проверок APK публикуется отдельным артефактом
+app-debug-<безопасное имя ветки>-<12 символов фактического checkout SHA>.
+Upload завершается ошибкой при отсутствии файла. Срок хранения APK 14 дней.
+Ветка передаётся через env, не вставляется в исполняемый shell-код.
 
-metadata переключает блокирующий транспорт на Dispatchers.IO. Синхронные
-openPdf/openSearchIndex проверяют Android main looper до вызова транспорта и
-выдают IllegalStateException при прямом вызове на главном потоке. Возвращённый
-InputStream также проверяет поток при read/skip/available/mark/reset/close.
-Не буферизуется весь PDF. При прямом использовании открытие, чтение и закрытие
-должны происходить внутри withContext(Dispatchers.IO); через store это уже так.
-Внутренний конструктор с внедряемой проверкой потока используется JVM-тестами
-без Android Looper. Public-конструктор использует настоящий Android main looper.
-
-Транспорт обязан быть thread-safe, использовать таймауты и освобождать сетевой
-ответ при закрытии потока, включая сбой чтения. FileNotFoundException/IOException
-не скрываются. Metadata не хранится в изменяемом общем кеше адаптера. Изменение
-байтов после metadata обнаруживается существующей проверкой SHA-256 в store.
-Все прежние проверки ревизий, атомарная активация, offline open, leases и
-дедупликация сохранены; production-код репозитория и хранилища не изменён.
-
-DocumentRepositoryFactory остаётся с AssetsDocumentSource. Новый адаптер не
-зарегистрирован автоматически, Activity и рабочий каталог не менялись.
-Ручная композиция с поддельным транспортом проверена рядом с Assets.
-Порядок источников и отсутствие неявного fallback после ошибки не изменены.
-
-## Файлы относительно репозитория
-
-Созданы:
-
-- app/src/main/java/ru/fo6osik/workjournal/documents/sources/GoogleDriveTransport.kt
-- app/src/main/java/ru/fo6osik/workjournal/documents/sources/GoogleDriveDocumentSource.kt
-- app/src/test/java/ru/fo6osik/workjournal/documents/GoogleDriveDocumentSourceTest.kt
-- docs/run-document-jvm-tests.py
+## Файлы
 
 Изменены:
-
-- docs/document-repository.md
-- docs/document-storage.md
+- .github/workflows/android-pr-checks.yml
 - docs/codex-handoff.md
 
-Удалены: нет. PDF и индексы не удалялись/не перемещались. PDF, токены, ключи,
-приватные конфигурации, реальные file ID и account bindings в Git не добавлены.
-Activity, PDFView, поиск/подсветка/масштабирование, Room/версия БД,
-DocumentRepositoryFactory, каталог, build-файлы и зависимости не изменены.
+Создан:
+- docs/debug-apk.md
 
-## Ветка, main и проверенный результат
+Удалений нет. Android-код, Room, зависимости, PDF, индексы и данные не изменены.
+Ключи, токены, PDF и APK в Git не добавлены. Новых облачных интеграций нет.
 
-- Ветка: feature/google-drive-source-stage1.
-- Опорный актуальный GitHub main: ad2c8b4621f725ee616417d59623ee51933cc95d
-  (включает merge PR №5), подтверждён GitHub-коннектором до изменений.
-- GitHub feature-ветка создана непосредственно от этого main. Shell git fetch
-  не подключается к proxy:8080; локальный origin/main остаётся устаревшим.
-  Локальная рабочая ветка создана от сохранённого snapshot 016f86f; GitHub compare
-  подтвердил отсутствие различий файлов между эквивалентным опубликованным
-  snapshot d1b1307 и актуальным main. Незавершённая предыдущая работа сохранена.
-- Проверенный локальный коммит кода: 5a8337493fad53f3bb26b88de24ee680df15ceaa.
-- Проверенный tree кода: 614ce7242a1e46a4ad373e61777812cf9b34449c.
-- Опубликованный эквивалентный коммит кода: c5c35f705b6870dfd237ecc7516c6a9b2c62d342.
-  Его tree точно совпадает с проверенным локальным tree. Различаются реквизиты
-  коммита/локальная история; GitHub-коммит имеет parent актуального main.
-- Отчёт сохраняется следующим отдельным коммитом. Указанный SHA обозначает
-  проверенный код до отчёта, не хеш самого содержащего его коммита.
-- Код и отчёт закоммичены локально и опубликованы в feature-ветке.
-  После финального сохранения реквизитов незакоммиченных изменений нет.
-  Финальное содержимое отчёта сверено с GitHub.
+## Ветка и коммиты
 
-## Актуальная проверка GitHub Actions (10.10.2026)
+Ветка feature/debug-apk-artifacts создана GitHub API непосредственно от актуального
+main 2c0f6cb21acae3b60a25f45ecef447a67df25b4e. main не изменяется.
+Коммит реализации workflow: 6634b407b0fd5071262bc901e646484543f35751.
+Коммит с инструкцией: 67926191b8ebee33ee9608dd1d47597ea85eae6a.
+SHA реально проверенного результата будет записан после GitHub Actions.
+Предыдущая локальная рабочая ветка сохранена; устаревший локальный origin/main
+не использован для создания опубликованной ветки.
 
-- Workflow: `.github/workflows/android-pr-checks.yml`, PR №6, коммит `1d5368b0a525d4f39622e63465959eab5ab92b84`.
-- GitHub Actions: **SUCCESS**, 3 мин 3 сек (подтверждено в Checks).
-- Java 17, Android API 36, Gradle Wrapper 8.13; `:app:assembleDebug` и `:app:testDebugUnitTest` выполнены успешно с проектными Kotlin 2.2.20 и AGP 8.12.0.
-- **63 JUnit-теста прошли** после исправления двух тестовых проверок идентичности IOException, которые были нестабильны при передаче исключений через корутины.
-- Шаг `Validate document catalog tests` прошёл успешно. Диагностические отчёты загружены как artifact.
-- В workflow настройка `android.aapt2FromMavenOverride=/usr/bin/aapt2` удаляется **только в CI workspace**, без изменения настройки AndroidIDE в репозитории.
-- Скрипт `docs/run-document-jvm-tests.py` теперь использует `GRADLE_USER_HOME` и `ANDROID_HOME` / `ANDROID_SDK_ROOT`, а не жёсткие пути `/workspace`.
-- Это подтверждает сборку и JVM-тесты, **но не Android instrumented/runtime tests, OAuth или работу с настоящим Google Drive**.
+## Проверки
 
-## Команды и результаты тестов/сборки
+Предстоят штатные команды существующего workflow:
+- ./gradlew :app:assembleDebug :app:testDebugUnitTest --no-daemon --stacktrace --console=plain
+- python3 -m unittest discover -s docs -p 'test_validate_document_catalog.py' -v
 
-1. `python3 docs/run-document-jvm-tests.py`: новый запуск, **63 JUnit-теста**,
-   0 failures, 0 errors, 0 skipped, около 0.58 секунды выполнения JUnit
-   (без времени компиляции). Состав: 18 новых Drive, 29 repository,
-   15 catalog, 1 исходный ExampleUnitTest. Не UP-TO-DATE.
-   Все documents/*.kt скомпилированы напрямую: кешированный Kotlin 2.0.21,
-   target JVM 1.8, Android 36 stubs, coroutines 1.9.0, JUnit 4.13.2.
-   Проверяются правильные ID и потоки, закрытие ответов, offline open,
-   пропавшие файлы (включая индекс после metadata), сеть на metadata/open/read,
-   неверные хеши/ревизии/ID, UNKNOWN, main-thread отказ до транспорта,
-   чтение потока на неправильном потоке, обновления и старое поколение при сбое,
-   конфликт каталога и сохранение AssetsDocumentSource.
-2. `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s docs -p 'test_validate_document_catalog.py'`:
-   новый запуск, 13 тестов, 0 failures, 0 errors, 0 skipped.
-3. `PYTHONDONTWRITEBYTECODE=1 python3 docs/validate-document-catalog.py`:
-   успешно, все 20 путей/хешей; 1535 страниц индексов и 309111 слов.
-   Каталог и индексы не изменены. PDF-байты проверены 0/20, совместимость
-   содержимого оригиналов с индексами не доказана.
-4. `source /workspace/agronaliz-env.sh`, затем
-   `agrogradle :app:assembleDebug :app:test`: **FAILED до компиляции**, exit 1.
-   Could not create service of type FileLockContentionHandler;
-   Could not determine a usable wildcard IP for this machine.
-   Повтор после реализации дал ту же ошибку. Это не успешная Android-сборка
-   и не выполненные Gradle Debug/Release unit tests.
-5. `git diff --check`: успешно. Итоговый список файлов проверен;
-   запрещённых изменений/секретов и добавленных PDF нет.
+Пока результаты не подтверждены; сборка и тесты не объявляются успешными.
+Следующий шаг: создать Draft PR, дождаться CI, скачать ZIP и проверить APK.
 
-Примечание: приведённая выше ошибка `agrogradle` описывает **исходную среду Codex** до настройки GitHub Actions; она больше не блокирует проверку PR в CI.
+## Ограничения и ручные действия
 
-## Совместимость и ограничения среды
-
-Проект настроен на Kotlin 2.2.20, AGP 8.12.0, KSP 2.2.20-2.0.4,
-Gradle 8.13, compileSdk 36, minSdk 23, targetSdk 35 и JVM 1.8.
-Новых зависимостей/плагинов нет; используются существующие coroutines и
-платформенный Looper (доступен на minSdk). Kotlin-код компилируется доступным
-более старым компилятором 2.0.21 с JVM 1.8. **Сборка проектным Kotlin 2.2.20 через AGP/KSP теперь подтверждена GitHub Actions**.
-Fallback проверяет Kotlin/JVM-логику, но не сборку APK, Android runtime или OAuth.
-Файл run-document-jvm-tests.py рассчитан на подготовленный локальный Gradle-кеш;
-при отсутствии кеша нужны штатная среда/Gradle, зависимости он не скачивает.
-
-Тесты используют синтетические байты и подменённый integrity validator в
-TemporaryFolder, не исходные документы. Production main-looper guard
-скомпилирован, но на устройстве не запускался; JVM-тесты внедряют эквивалентную
-проверку caller-потока. PdfRenderer и реальная подсветка не проверены.
-
-Реального транспорта нет: Google Drive остаётся недоступен через стандартную
-фабрику до следующего этапа. Изменение между metadata/download не фиксируется
-Drive revision-pinning; несоответствие байтов вызывает отказ по SHA-256.
-Блокирующий транспорт должен иметь таймауты: coroutine cancellation не обязана
-мгновенно прерывать сетевое чтение. Совместимость текста PDF и индекса требует
-проверки publisher пары и оригиналов, не только метаданных/хешей.
-Прежние ограничения LocalDocumentStore остаются без изменений.
-
-## Следующий этап и ручные проверки
-
-1. **Выполнено в GitHub Actions:** штатная Debug-сборка и JVM-тесты проектным Kotlin/AGP; успешный SHA `1d5368b0a525d4f39622e63465959eab5ab92b84`.
-2. Выбрать Google OAuth flow/scopes, реализовать безопасное хранение,
-   обновление и отзыв токенов без account bindings/секретов в Git.
-3. Реализовать авторизованный GoogleDriveTransport: получение достоверного
-   manifest согласованной пары с SHA-256/ревизией, потоковое скачивание
-   бинарного PDF/JSON, обработку 401/403/404/сетевых сбоев, таймауты и закрытие
-   ответов. Не заменять SHA-256 на MD5 и ревизию пары на version одного файла.
-4. Проверить реальные права и private/shared файлы, удаление индекса,
-   смену байтов между metadata/download, отмену и сохранение старого поколения.
-5. На Android проверить main-thread отказ до сети, чтение/закрытие на IO,
-   отзывчивость при больших PDF, PdfRenderer, offline open и ошибки хешей.
-6. После отдельной проверки оригинальных PDF/индексов вручную зарегистрировать
-   адаптер с авторизованным транспортом. Изменения фабрики и подключение к UI
-   выполняются отдельной задачей с сохранением просмотра, поиска и Room.
-7. Ревью Draft PR; решение о слиянии принимает владелец.
+До слияния владельцем новые push/main настройки не действуют в main.
+Проверка APK из PR доказывает путь сборки/публикации; ручной dispatch main с
+новой версией workflow и push main потребуют слияния. Автоматического слияния нет.
+Ручная установка на Android и работа экранов не проверяются облачной сборкой.
+Debug-подпись может отличаться между runners: не удалять приложение с данными
+при конфликте подписи, использовать тестовое устройство/профиль.
+Не добавлены отсутствующие исходные PDF; проверка содержимого документов
+не входит в этот этап. Инструкция: docs/debug-apk.md.
 
 ## Pull Request
 
-[PR №6](https://github.com/Arch-relic/AgroNaliz/pull/6): **Draft**, открыт,
-base main, head feature/google-drive-source-stage1; не объединён.
-Реквизиты добавлены отдельным коммитом документации после создания PR.
-Читать отчёт из head feature-ветки, пока PR не объединён. main не изменён.
+Draft PR будет создан в main; номер и URL будут записаны после создания.
