@@ -21,6 +21,11 @@ def instrument(app_id, method):
 def main():
     main_id = "ru.fo6osik.workjournal"
     test_id = main_id + ".debugtest"
+    if adb("shell", "getprop", "ro.kernel.qemu").strip() != "1":
+        raise RuntimeError("Isolation checks require a disposable emulator, never a physical device")
+    installed = set(adb("shell", "pm", "list", "packages").splitlines())
+    if any("package:" + name in installed for name in [main_id, test_id, main_id + ".test", test_id + ".test"]):
+        raise RuntimeError("Refusing to replace existing main/TEST packages; use a fresh emulator")
     for path in [
         "app/build/outputs/apk/debug/app-debug.apk",
         "app/build/outputs/apk/debugTest/app-debugTest.apk",
@@ -28,7 +33,7 @@ def main():
         "app/build/outputs/apk/androidTest/debugTest/app-debugTest-androidTest.apk",
     ]:
         assert Path(path).is_file(), path
-        adb("install", "-r", path)
+        adb("install", path)
     packages = adb("shell", "pm", "list", "packages")
     for app_id in [main_id, test_id]:
         assert "package:" + app_id in packages.splitlines()
