@@ -36,13 +36,24 @@ jobs:
         run: chmod +x ./gradlew
       - name: Build debug APK and run JVM tests
         run: ./gradlew :app:assembleDebug :app:testDebugUnitTest --no-daemon --stacktrace --console=plain
+      - name: Count JVM test results
+        if: always()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from xml.etree import ElementTree as ET
+          roots = [ET.parse(p).getroot() for p in Path("app/build/test-results/testDebugUnitTest").glob("TEST-*.xml")]
+          print("JUnit suites:", len(roots))
+          for key in ("tests", "failures", "errors", "skipped"):
+              print(key, sum(int(r.attrib.get(key, 0)) for r in roots))
+          PY
       - name: Validate document catalog tests
         run: python3 -m unittest discover -s docs -p 'test_validate_document_catalog.py' -v
       - name: Upload test reports and build diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: android-pr6-diagnostics
+          name: android-pr7-diagnostics
           if-no-files-found: warn
           retention-days: 7
           path: |

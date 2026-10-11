@@ -16,6 +16,10 @@ class OptionsActivity : AppCompatActivity() {
             R.layout.activity_options
         )
 
+        findViewById<Button>(R.id.buttonGoogleDrive).setOnClickListener {
+            startActivity(Intent(this, GoogleDriveSettingsActivity::class.java))
+        }
+
         findViewById<Button>(
             R.id.buttonDataBackup
         ).setOnClickListener {

@@ -1,6 +1,13 @@
 package ru.fo6osik.workjournal
 
 import android.os.Bundle
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import ru.fo6osik.workjournal.documents.LocalDocument
+import ru.fo6osik.workjournal.documents.sources.GoogleDriveServices
 import android.text.InputType
 import android.view.WindowManager
 import android.widget.EditText
@@ -27,6 +34,14 @@ import android.widget.ListView
 import android.widget.LinearLayout
 
 class PdfViewerActivity : AppCompatActivity() {
+    @Volatile private var localDocument: LocalDocument? = null
+
+    override fun onDestroy() {
+        findViewById<PDFView>(R.id.pdfView)?.recycle()
+        localDocument?.let { lease -> CoroutineScope(Dispatchers.IO).launch { lease.close() } }
+        localDocument = null
+        super.onDestroy()
+    }
 
     private data class SearchWord(
         val start: Int,
@@ -372,10 +387,8 @@ buttonSearchClose.setOnClickListener {
         /*
          * ЗАГРУЗКА PDF
          */
-        pdfView
-            .fromAsset(
-                assetPath
-            )
+        fun loadDocument() {
+        (localDocument?.let { pdfView.fromFile(it.pdfFile) } ?: pdfView.fromAsset(assetPath))
             .enableSwipe(
                 true
             )
@@ -512,6 +525,22 @@ buttonSearchClose.setOnClickListener {
                 ).show()
             }
             .load()
+        }
+        val localId = intent.getStringExtra("localDocumentId")
+        if (localId == null) loadDocument() else {
+            buttonPdfSearch.isEnabled = false
+            lifecycleScope.launch {
+                try {
+                    localDocument = GoogleDriveServices.get(applicationContext).openCached(localId)
+                    loadDocument()
+                    buttonPdfSearch.isEnabled = true
+                } catch (cancelled: CancellationException) { throw cancelled }
+                catch (_: Exception) {
+                    Toast.makeText(this@PdfViewerActivity, "Скачанный документ недоступен. Выполните синхронизацию в настройках Google Drive.", Toast.LENGTH_LONG).show()
+                    finish()
+                }
+            }
+        }
     }
 
 
@@ -859,10 +888,7 @@ val snippet =
 
 
         val jsonText =
-            assets
-                .open(
-                    searchIndexPath
-                )
+            (localDocument?.searchIndexFile?.inputStream() ?: assets.open(searchIndexPath))
                 .bufferedReader()
                 .use {
                     it.readText()

@@ -25,16 +25,20 @@ def main():
     coroutines = first(cache.glob("org.jetbrains.kotlinx/kotlinx-coroutines-core-jvm/1.9.0/*/*.jar"), "coroutines 1.9.0")
     annotations = first(cache.glob("org.jetbrains/annotations/13.0/*/*.jar"), "annotations 13.0")
     android = android_home / "platforms/android-36/android.jar"
+    json = first(cache.glob("org.json/json/20240303/*/*.jar"), "JVM org.json 20240303")
     required = [lib / "kotlin-stdlib-2.0.21.jar", lib / "junit-4.13.2.jar",
-                lib / "hamcrest-core-1.3.jar", android, annotations, coroutines]
+                lib / "hamcrest-core-1.3.jar", json, android, annotations, coroutines]
     missing = [str(path) for path in required if not path.is_file()]
     if missing:
         raise RuntimeError("Missing required cached files: {}. Use Gradle tests instead.".format(", ".join(missing)))
     classpath = os.pathsep.join(str(path) for path in required)
     sources = list((root / "app/src/main/java/ru/fo6osik/workjournal/documents").rglob("*.kt"))
+    # Native SDK composition requires Gradle/CI; this fallback only compiles pure adapters.
+    sources = [p for p in sources if p.name not in {"GoogleDriveNativeAuthorization.kt", "GoogleDriveServices.kt", "DocumentRepositoryFactory.kt"}]
     sources += list((root / "app/src/test/java/ru/fo6osik/workjournal/documents").rglob("*.kt"))
     sources.append(root / "app/src/test/java/ru/fo6osik/workjournal/ExampleUnitTest.kt")
     classes = [
+        "ru.fo6osik.workjournal.documents.sources.GoogleDriveStage2Test",
         "ru.fo6osik.workjournal.documents.GoogleDriveDocumentSourceTest",
         "ru.fo6osik.workjournal.documents.DocumentCatalogTest",
         "ru.fo6osik.workjournal.documents.DocumentRepositoryTest",

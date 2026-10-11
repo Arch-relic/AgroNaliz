@@ -33,8 +33,8 @@ class DefaultDocumentRepository(
             ?: fetch(descriptor(documentId))
     }
 
-    override suspend fun download(documentId: String): LocalDocument = operation(documentId) {
-        fetch(descriptor(documentId))
+    override suspend fun download(documentId: String, forceRefresh: Boolean): LocalDocument = operation(documentId) {
+        fetch(descriptor(documentId), forceRefresh)
     }
 
     override suspend fun checkForUpdate(documentId: String): UpdateStatus = operation(documentId) {
@@ -61,7 +61,7 @@ class DefaultDocumentRepository(
         }
     }
 
-    private suspend fun fetch(document: DocumentDescriptor): LocalDocument {
+    private suspend fun fetch(document: DocumentDescriptor, forceRefresh: Boolean = false): LocalDocument {
         state(document.documentId).value = DocumentState.Loading
         val (adapter, location) = selectSource(document)
         val target = effectiveDescriptor(document, adapter.metadata(document, location))
@@ -73,7 +73,7 @@ class DefaultDocumentRepository(
                 throw IOException("Source changed content without changing revision")
             }
         }
-        return store.install(target, { adapter.openPdf(location) }, { adapter.openSearchIndex(location) }).also {
+        return store.install(target, { adapter.openPdf(location) }, { adapter.openSearchIndex(location) }, forceRefresh).also {
             state(document.documentId).value = DocumentState.ReadyOffline(it.revision)
         }
     }

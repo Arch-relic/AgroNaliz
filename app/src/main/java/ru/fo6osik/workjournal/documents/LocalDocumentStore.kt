@@ -28,7 +28,10 @@ class LocalDocumentStore(
         require(Regex("[a-z][a-z0-9_]*").matches(id)) { "Invalid documentId" }
         return coordinators.getOrPut(storageKey + ":" + id) { Coordinator() }
     }
-    private class Coordinator { val leases = mutableMapOf<String, Int>() }
+    private class Coordinator {
+        val leases = mutableMapOf<String, Int>()
+        val leaseLock = Any() // Releasing a viewer must never wait for a long copy/hash.
+    }
     companion object { private val coordinators = ConcurrentHashMap<String, Coordinator>() }
 
     suspend fun acquire(id: String): LocalDocument? = io {
@@ -39,7 +42,8 @@ class LocalDocumentStore(
     suspend fun install(
         descriptor: DocumentDescriptor,
         pdf: () -> InputStream,
-        index: () -> InputStream
+        index: () -> InputStream,
+        forceRefresh: Boolean = false
     ): LocalDocument = io {
         val coroutine = currentCoroutineContext()
         DocumentCatalog.validate(DocumentCatalogData(1, listOf(descriptor)))
@@ -50,7 +54,7 @@ class LocalDocumentStore(
             // No streams are opened and no staging directory is created in this case.
             val existing = try { acquireLocked(descriptor.documentId) } catch (_: IOException) { null }
             if (existing != null) {
-                if (descriptor.pdfSha256 == existing.pdfSha256 &&
+                if (!forceRefresh && descriptor.pdfSha256 == existing.pdfSha256 &&
                     descriptor.searchIndexSha256 == existing.searchIndexSha256 &&
                     descriptor.revision == existing.revision) {
                     return@synchronized existing
@@ -105,7 +109,7 @@ class LocalDocumentStore(
             acquireLocked(id)?.close() ?: return@synchronized 0
             var deleted = 0
             directory.listFiles()?.filter { it.isDirectory && generationPattern.matches(it.name) }?.forEach { file ->
-                if (file.name != current && coordinator.leases[file.absolutePath].orZero() == 0) {
+                if (file.name != current && synchronized(coordinator.leaseLock) { coordinator.leases[file.absolutePath].orZero() } == 0) {
                     if (!file.deleteRecursively()) throw IOException("Cannot remove unused generation")
                     deleted++
                 }
@@ -140,9 +144,11 @@ class LocalDocumentStore(
 
     private fun lease(id: String, folder: File, revision: String?, pdfHash: String, indexHash: String): LocalDocument {
         val coordinator = coordinator(id)
-        coordinator.leases[folder.absolutePath] = coordinator.leases[folder.absolutePath].orZero() + 1
+        synchronized(coordinator.leaseLock) {
+            coordinator.leases[folder.absolutePath] = coordinator.leases[folder.absolutePath].orZero() + 1
+        }
         return LocalDocument(id, revision, File(folder, "document.pdf"), File(folder, "search.json"), pdfHash, indexHash) {
-            synchronized(coordinator) {
+            synchronized(coordinator.leaseLock) {
                 val count = coordinator.leases[folder.absolutePath].orZero() - 1
                 if (count <= 0) coordinator.leases.remove(folder.absolutePath) else coordinator.leases[folder.absolutePath] = count
             }

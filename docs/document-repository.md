@@ -233,3 +233,12 @@ withContext(Dispatchers.IO). Через LocalDocumentStore всё это уже 
 Kotlin 2.0.21, coroutines 1.9.0, JUnit 4.13.2 и Android 36 stubs, target JVM 1.8;
 не выполняет AGP/KSP, сборку APK или Android runtime. Обязательная проверка
 проектным Kotlin 2.2.20 остаётся `agrogradle :app:assembleDebug :app:test`.
+
+## Google Drive opt-in интеграция (PR #7)
+
+Текущие авторизация/HTTP/UI: [google-drive-stage2.md](google-drive-stage2.md).
+Ограничения отсутствия авторизации выше относятся к предыдущему этапу.
+create сохраняет Assets; createWithGoogleDrive использует приватные Picker-привязки.
+download(documentId, forceRefresh=true) и install(..., forceRefresh=true) проверяют
+источник даже при совпадении кеша; default сохраняет прежнюю дедупликацию.
+Drive versions не превращаются в доверенную ревизию пары.
