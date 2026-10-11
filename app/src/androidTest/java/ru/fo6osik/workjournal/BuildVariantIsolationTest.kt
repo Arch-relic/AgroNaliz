@@ -45,7 +45,9 @@ class BuildVariantIsolationTest {
         db.vehicleDao().insert(Vehicle(type="probe", brand=marker, model="synthetic", number=marker,
             year=null, note="Synthetic isolation test"))
         assertEquals(marker, db.vehicleDao().getAll().single().number)
-        assertTrue(context.getDatabasePath("agrouchet_database").canonicalPath.startsWith(context.applicationInfo.dataDir))
+        val databasePath = context.getDatabasePath("agrouchet_database").canonicalPath
+        val sandboxPath = File(context.applicationInfo.dataDir).canonicalPath + File.separator
+        assertTrue("Database outside own sandbox: $databasePath", databasePath.startsWith(sandboxPath))
         db.close()
     }
 
