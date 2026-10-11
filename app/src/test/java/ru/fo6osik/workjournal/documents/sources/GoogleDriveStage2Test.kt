@@ -248,7 +248,7 @@ class GoogleDriveStage2Test {
             assertEquals(listOf("settings.enc"), file.parentFile!!.list()!!.toList())
         } finally { executor.shutdownNow() }
     }
-    @Test fun forceRefreshVerifiesRemoteDespiteMatchingLocalHashesAndPreservesOfflineCopy() = runBlocking {
+    @Test fun forceRefreshVerifiesRemoteDespiteMatchingLocalHashesAndPreservesOfflineCopy() = runBlocking<Unit> {
         val store = LocalDocumentStore(temporary.newFolder(), DocumentIntegrityValidator { _, _ -> })
         val http = Http(); val transport = transport(http)
         val adapter = GoogleDriveDocumentSource(transport) { }
@@ -261,7 +261,7 @@ class GoogleDriveStage2Test {
         repository.open("fixture").use { assertArrayEquals(index, it.searchIndexFile.readBytes()) }
         previous.close()
     }
-    @Test fun closingViewerLeaseDoesNotWaitForAnotherDownload() = runBlocking {
+    @Test fun closingViewerLeaseDoesNotWaitForAnotherDownload() = runBlocking<Unit> {
         val store = LocalDocumentStore(temporary.newFolder(), DocumentIntegrityValidator { _, _ -> })
         val previous = store.install(descriptor, { ByteArrayInputStream(pdf) }, { ByteArrayInputStream(index) })
         val entered = CountDownLatch(1); val release = CountDownLatch(1)
