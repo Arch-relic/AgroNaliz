@@ -39,7 +39,8 @@ class LocalDocumentStore(
     suspend fun install(
         descriptor: DocumentDescriptor,
         pdf: () -> InputStream,
-        index: () -> InputStream
+        index: () -> InputStream,
+        forceRefresh: Boolean = false
     ): LocalDocument = io {
         val coroutine = currentCoroutineContext()
         DocumentCatalog.validate(DocumentCatalogData(1, listOf(descriptor)))
@@ -50,7 +51,7 @@ class LocalDocumentStore(
             // No streams are opened and no staging directory is created in this case.
             val existing = try { acquireLocked(descriptor.documentId) } catch (_: IOException) { null }
             if (existing != null) {
-                if (descriptor.pdfSha256 == existing.pdfSha256 &&
+                if (!forceRefresh && descriptor.pdfSha256 == existing.pdfSha256 &&
                     descriptor.searchIndexSha256 == existing.searchIndexSha256 &&
                     descriptor.revision == existing.revision) {
                     return@synchronized existing

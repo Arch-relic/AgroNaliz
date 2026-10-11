@@ -1,61 +1,72 @@
 package ru.fo6osik.workjournal.documents.sources
 
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import java.io.IOException
 
-/**
- * In-memory access-token lifecycle. Never persists or logs access tokens.
- * Refresh operations are serialized so concurrent requests cannot rotate the
- * same refresh credential independently.
- */
+internal const val DRIVE_FILE_SCOPE = "https://www.googleapis.com/auth/drive.file"
+internal class DriveAuthorizationRequired : IOException("Google Drive authorization required")
+
+/** Tokens never leave process memory; refresh credentials belong to Google Play services. */
+internal class DriveGrant(val accessToken: String, val scopes: Set<String>, val pickedIds: String? = null) {
+    init {
+        require(accessToken.isNotBlank() && accessToken.length <= 16384 && accessToken.none { it.isWhitespace() || it.code < 32 }) { "Invalid authorization result" }
+        require(scopes == setOf(DRIVE_FILE_SCOPE)) { "Unexpected authorization scopes" }
+    }
+    override fun toString() = "DriveGrant(redacted)"
+}
+
+internal interface DriveAuthorizationBackend {
+    fun authorize(account: String): DriveGrant
+    fun clearToken(token: String)
+    fun revoke(account: String)
+}
+internal interface DriveTokenProvider {
+    fun accessToken(): String
+    fun invalidate(rejectedToken: String)
+}
+
+/** Blocking worker-thread session; refresh/invalidation/sign-out are serialized. */
 internal class GoogleDriveTokenSession(
-    private val credentials: RefreshCredentialStorage,
-    private val refresher: suspend (String) -> GoogleDriveTokenExchange.Tokens,
-    private val nowMillis: () -> Long = System::currentTimeMillis
-) {
-    interface RefreshCredentialStorage {
-        fun read(): String?
-        fun save(token: String)
-        fun clear()
+    private val backend: DriveAuthorizationBackend,
+    private val currentAccount: () -> String?,
+    private val elapsedMillis: () -> Long,
+) : DriveTokenProvider {
+    private var token: String? = null
+    private var account: String? = null
+    private var acceptedAt = 0L
+    private val lock = Any()
+
+    fun accept(accountName: String, grant: DriveGrant) = synchronized(lock) {
+        require(currentAccount() == accountName) { "Account changed" }
+        account = accountName
+        token = grant.accessToken
+        acceptedAt = elapsedMillis()
     }
 
-    private val mutex = Mutex()
-    private var access: String? = null
-    private var expiresAtMillis: Long = 0
-    private val earlyRefreshMillis = 60_000L
-
-    suspend fun accept(tokens: GoogleDriveTokenExchange.Tokens) = mutex.withLock {
-        tokens.refreshToken?.let(credentials::save)
-        setAccess(tokens)
+    override fun accessToken(): String = synchronized(lock) {
+        val selected = currentAccount() ?: throw DriveAuthorizationRequired()
+        val now = elapsedMillis()
+        val age = now - acceptedAt
+        if (account == selected && token != null && now >= acceptedAt && age in 0 until 300_000L) return@synchronized token!!
+        token = null
+        val grant = backend.authorize(selected) // SDK manages expiry/refresh, never a custom refresh grant.
+        if (currentAccount() != selected) throw DriveAuthorizationRequired()
+        accept(selected, grant)
+        grant.accessToken
     }
 
-    suspend fun accessToken(): String = mutex.withLock {
-        val current = access
-        if (current != null && expiresAtMillis - nowMillis() > earlyRefreshMillis) {
-            return@withLock current
+    override fun invalidate(rejectedToken: String) = synchronized(lock) {
+        // Another concurrent 401 must not discard a token already renewed by a peer.
+        if (token == rejectedToken) {
+            token = null
+            backend.clearToken(rejectedToken)
         }
-        val refresh = credentials.read() ?: throw IllegalStateException("Google Drive authorization required")
-        val renewed = refresher(refresh)
-        renewed.refreshToken?.let(credentials::save)
-        setAccess(renewed)
-        access ?: throw IllegalStateException("Missing access token")
     }
 
-    suspend fun invalidateAccessToken() = mutex.withLock {
-        access = null
-        expiresAtMillis = 0
-    }
-
-    suspend fun signOut() = mutex.withLock {
-        credentials.clear()
-        access = null
-        expiresAtMillis = 0
-    }
-
-    private fun setAccess(tokens: GoogleDriveTokenExchange.Tokens) {
-        val lifetime = tokens.expiresInSeconds.coerceAtMost(Long.MAX_VALUE / 1000L) * 1000L
-        access = tokens.accessToken
-        expiresAtMillis = if (Long.MAX_VALUE - nowMillis() < lifetime) Long.MAX_VALUE
-        else nowMillis() + lifetime
+    fun disconnect(accountName: String?) = synchronized(lock) {
+        val old = token
+        token = null
+        account = null
+        if (accountName != null) backend.revoke(accountName)
+        if (old != null) backend.clearToken(old)
     }
 }

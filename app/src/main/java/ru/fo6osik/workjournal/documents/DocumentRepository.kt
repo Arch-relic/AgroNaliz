@@ -32,7 +32,7 @@ enum class UpdateStatus { CURRENT, AVAILABLE, UNKNOWN }
 interface DocumentRepository {
     fun observeState(documentId: String): StateFlow<DocumentState>
     suspend fun open(documentId: String): LocalDocument
-    suspend fun download(documentId: String): LocalDocument
+    suspend fun download(documentId: String, forceRefresh: Boolean = false): LocalDocument
     suspend fun checkForUpdate(documentId: String): UpdateStatus
 }
 

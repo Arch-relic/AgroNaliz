@@ -161,3 +161,9 @@ SDK и реальных привязок. Каталожный тип GoogleDriv
 рабочий каталог не изменён. Метаданные пары, потоки и ограничения главного потока
 описаны в [document-repository.md](document-repository.md#google-drive--первый-этап-источника).
 Фабрика остаётся только с AssetsDocumentSource до отдельной интеграции авторизации.
+
+## Google Drive, PR #7
+
+Текущее подключение: [google-drive-stage2.md](google-drive-stage2.md).
+Bundled catalog, 20 пар SHA-256, пути и ревизии не изменены. Приватные Picker-привязки
+добавляются в runtime catalog. Отсутствие UI/SDK в начале — исторический первый этап.
