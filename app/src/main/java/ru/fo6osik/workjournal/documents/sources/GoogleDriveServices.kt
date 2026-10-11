@@ -20,13 +20,17 @@ internal class GoogleDriveServices private constructor(private val context: Cont
             instance ?: GoogleDriveServices(context.applicationContext).also { instance = it }
         }
     }
-    val authorization = GoogleDriveNativeAuthorization(context)
+    val authorization by lazy { GoogleDriveNativeAuthorization(context) }
     private val storage = GoogleDriveCredentialStore(context)
     private val operations = Mutex()
     @Volatile private var loaded = false
     @Volatile var state = DrivePrivateState(); private set
     @Volatile private var generation = 0L
-    private val session = GoogleDriveTokenSession(authorization, { state.account }, SystemClock::elapsedRealtime)
+    private val session = GoogleDriveTokenSession(object : DriveAuthorizationBackend {
+        override fun authorize(account: String) = authorization.authorize(account)
+        override fun clearToken(token: String) = authorization.clearToken(token)
+        override fun revoke(account: String) = authorization.revoke(account)
+    }, { state.account }, SystemClock::elapsedRealtime)
     private fun save(value: DrivePrivateState) { storage.write(value); state = value }
     suspend fun initialize() = withContext(Dispatchers.IO) {
         operations.withLock {

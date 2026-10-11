@@ -261,4 +261,33 @@ class GoogleDriveStage2Test {
         repository.open("fixture").use { assertArrayEquals(index, it.searchIndexFile.readBytes()) }
         previous.close()
     }
+    @Test fun closingViewerLeaseDoesNotWaitForAnotherDownload() = runBlocking {
+        val store = LocalDocumentStore(temporary.newFolder(), DocumentIntegrityValidator { _, _ -> })
+        val previous = store.install(descriptor, { ByteArrayInputStream(pdf) }, { ByteArrayInputStream(index) })
+        val entered = CountDownLatch(1); val release = CountDownLatch(1)
+        val executor = Executors.newFixedThreadPool(2)
+        try {
+            val installing = executor.submit {
+                runBlocking {
+                    store.install(descriptor, {
+                        entered.countDown()
+                        check(release.await(5, TimeUnit.SECONDS))
+                        ByteArrayInputStream(pdf)
+                    }, { ByteArrayInputStream(index) }, forceRefresh = true).close()
+                }
+            }
+            assertTrue(entered.await(5, TimeUnit.SECONDS))
+            executor.submit { previous.close() }.get(1, TimeUnit.SECONDS)
+            release.countDown(); installing.get(5, TimeUnit.SECONDS)
+        } finally { release.countDown(); executor.shutdownNow(); previous.close() }
+    }
+
+    @Test fun callbackFromPreviousAttemptCannotConsumeNewAttempt() {
+        val gate = DriveAuthorizationAttempt<String>({ 0L })
+        val previous = gate.begin("old"); assertEquals("old", gate.consume(previous))
+        val current = gate.begin("new")
+        assertThrows(DriveAuthorizationRequired::class.java) { gate.consume(previous) }
+        assertTrue(gate.isPending()); assertEquals("new", gate.consume(current))
+    }
+
 }

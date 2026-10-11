@@ -51,10 +51,11 @@ class GoogleDriveSettingsActivity : AppCompatActivity() {
             controls += Button(this).apply { text = label; setOnClickListener { action() }; content.addView(this) }
         }
         button("Подключить / восстановить доступ") {
-            if (model.beginAccountChoice()) {
+            val requestCode = model.beginAccountChoice()
+            if (requestCode != null) {
                 @Suppress("DEPRECATION")
                 val chooser = AccountPicker.newChooseAccountIntent(null, null, arrayOf("com.google"), false, null, null, null, null)
-                try { startActivityForResult(chooser, ACCOUNT_REQUEST) } catch (_: Exception) { model.cancelAuthorization() }
+                try { startActivityForResult(chooser, requestCode) } catch (_: Exception) { model.cancelAuthorization() }
             }
         }
         button("Отключить и отозвать доступ") { model.disconnect() }
@@ -87,7 +88,7 @@ class GoogleDriveSettingsActivity : AppCompatActivity() {
                         documents.setSelection(model.selected)
                     }
                     model.takeResolution()?.let { pending ->
-                        try { startIntentSenderForResult(pending.intentSender, AUTH_REQUEST, null, 0, 0, 0) }
+                        try { startIntentSenderForResult(pending.first.intentSender, pending.second, null, 0, 0, 0) }
                         catch (_: Exception) { model.cancelAuthorization() }
                     }
                 }
@@ -97,13 +98,9 @@ class GoogleDriveSettingsActivity : AppCompatActivity() {
     @Deprecated("Activity result is routed to a retained one-use authorization attempt")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        when (requestCode) {
-            ACCOUNT_REQUEST -> model.accountChosen(if (resultCode == RESULT_OK && data?.getStringExtra(AccountManager.KEY_ACCOUNT_TYPE) == "com.google")
-                data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME) else null)
-            AUTH_REQUEST -> model.authorizationResult(if (resultCode == RESULT_OK) data else null)
-        }
+        if (requestCode in 6100..65000) model.result(requestCode, if (resultCode == RESULT_OK) data else null)
     }
-    companion object { private const val ACCOUNT_REQUEST = 5101; private const val AUTH_REQUEST = 5102 }
+
 }
 
 internal data class DriveSettingsUi(val message: String = "Загрузка настроек…", val busy: Boolean = true)
@@ -114,7 +111,7 @@ internal class DriveSettingsModel(application: Application) : AndroidViewModel(a
     var selected = 0; private set
     private data class Purpose(val account: String?, val documentId: String?, val pdf: Boolean?, val chooser: Boolean = false)
     private val attempts = DriveAuthorizationAttempt<Purpose>(SystemClock::elapsedRealtime)
-    private var resolution: PendingIntent? = null
+    private var resolution: Pair<PendingIntent, Int>? = null
     private var selectedPdf: Pair<String, String>? = null
     private var job: Job? = null
     init { work { services.initialize(); catalog = withContext(Dispatchers.IO) { DocumentCatalog.load(application.assets).documents }; summary() } }
@@ -158,14 +155,14 @@ internal class DriveSettingsModel(application: Application) : AndroidViewModel(a
             }
         }
     }
-    fun beginAccountChoice(): Boolean {
-        if (ui.value.busy || job?.isActive == true || services.state.pendingRevoke != null) return false
-        attempts.begin(Purpose(null, null, null, true)); ui.value = DriveSettingsUi("Выберите аккаунт Google…", true)
-        return true
+    fun beginAccountChoice(): Int? {
+        if (ui.value.busy || job?.isActive == true || services.state.pendingRevoke != null) return null
+        val code = attempts.begin(Purpose(null, null, null, true))
+        ui.value = DriveSettingsUi("Выберите аккаунт Google…", true)
+        return code
     }
-    fun accountChosen(account: String?) {
-        val purpose = runCatching { attempts.consume() }.getOrNull()
-        if (purpose?.chooser != true || account.isNullOrBlank() || account.length > 320 || account.any { it.code < 32 }) { cancelAuthorization(); return }
+    private fun accountChosen(account: String?) {
+        if (account.isNullOrBlank() || account.length > 320 || account.any { it.code < 32 }) { cancelAuthorization(); return }
         work {
             val old = services.state.account
             if (old != null && old != account && !services.disconnect()) return@work summary()
@@ -177,7 +174,7 @@ internal class DriveSettingsModel(application: Application) : AndroidViewModel(a
         ui.value = DriveSettingsUi("Операция отменена. Проверенная локальная копия сохранена.", false)
     }
     fun cancelAuthorization() { attempts.cancel(); resolution = null; selectedPdf = null; ui.value = DriveSettingsUi("Выбор отменён. " + summary(), false) }
-    fun takeResolution(): PendingIntent? = resolution.also { resolution = null }
+    fun takeResolution(): Pair<PendingIntent, Int>? = resolution.also { resolution = null }
     fun pick(pdf: Boolean) {
         val document = selectedDocument() ?: return
         val account = services.state.account ?: run { ui.value = DriveSettingsUi("Сначала подключите Google Drive.", false); return }
@@ -188,15 +185,21 @@ internal class DriveSettingsModel(application: Application) : AndroidViewModel(a
         val mime = when (purpose.pdf) { true -> "application/pdf"; false -> "application/json,text/json,text/plain,application/octet-stream"; null -> null }
         val result = withContext(Dispatchers.IO) { services.authorization.request(purpose.account!!, mime) }
         if (result.hasResolution()) {
-            attempts.begin(purpose)
-            resolution = result.pendingIntent ?: run { attempts.cancel(); throw DriveAuthorizationRequired() }
+            val code = attempts.begin(purpose)
+            resolution = (result.pendingIntent ?: run { attempts.cancel(); throw DriveAuthorizationRequired() }) to code
             return "Подтвердите доступ и выбор файла в Google Drive…"
         }
         return accept(purpose, services.authorization.grant(result))
     }
-    fun authorizationResult(data: Intent?) {
-        val purpose = runCatching { attempts.consume() }.getOrNull()
-        if (data == null || purpose == null) { cancelAuthorization(); return }
+    fun result(requestCode: Int, data: Intent?) {
+        val purpose = runCatching { attempts.consume(requestCode) }.getOrNull()
+        if (purpose == null) { if (!attempts.isPending()) cancelAuthorization(); return }
+        if (data == null) { cancelAuthorization(); return }
+        if (purpose.chooser) {
+            accountChosen(if (data.getStringExtra(AccountManager.KEY_ACCOUNT_TYPE) == "com.google")
+                data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME) else null)
+            return
+        }
         work {
             val grant = withContext(Dispatchers.IO) { services.authorization.grant(services.authorization.callback(data)) }
             accept(purpose, grant)

@@ -45,12 +45,16 @@ internal class DriveAuthorizationAttempt<T>(
 ) {
     private var value: T? = null
     private var started = 0L
-    @Synchronized fun begin(request: T) {
+    private var requestCode = 6100
+    @Synchronized fun begin(request: T): Int {
         check(value == null) { "Authorization already pending" }
         value = request
         started = elapsedMillis()
+        requestCode = if (requestCode >= 65000) 6100 else requestCode + 1
+        return requestCode
     }
-    @Synchronized fun consume(): T {
+    @Synchronized fun consume(expectedCode: Int? = null): T {
+        if (expectedCode != null && expectedCode != requestCode) throw DriveAuthorizationRequired()
         val pending = value ?: throw DriveAuthorizationRequired()
         value = null
         val now = elapsedMillis()

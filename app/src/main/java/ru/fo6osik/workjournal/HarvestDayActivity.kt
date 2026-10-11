@@ -275,17 +275,11 @@ class HarvestDayActivity : AppCompatActivity() {
 
 
     override fun onNewIntent(
-        intent: android.content.Intent?
+        intent: android.content.Intent
     ) {
         super.onNewIntent(
             intent
         )
-
-        if (
-            intent == null
-        ) {
-            return
-        }
 
         setIntent(
             intent
