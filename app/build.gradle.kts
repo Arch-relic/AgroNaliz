@@ -7,6 +7,12 @@ plugins {
 android {
     namespace = "ru.fo6osik.workjournal"
     compileSdk = 36
+    // AGP creates instrumented tests for one build type per invocation.
+    testBuildType = providers.gradleProperty("testBuildType").getOrElse("debug")
+
+    buildFeatures {
+        buildConfig = true
+    }
 
     defaultConfig {
         applicationId = "ru.fo6osik.workjournal"
@@ -19,6 +25,11 @@ android {
     }
 
     buildTypes {
+        create("debugTest") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".debugtest"
+            matchingFallbacks += listOf("debug")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -50,7 +61,7 @@ implementation(
     implementation("com.google.android.material:material:1.2.1")
     implementation("androidx.constraintlayout:constraintlayout:2.0.4")
     testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.2")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.3.0")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
 }
 

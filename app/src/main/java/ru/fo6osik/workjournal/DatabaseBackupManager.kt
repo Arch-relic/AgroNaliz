@@ -29,6 +29,7 @@ object DatabaseBackupManager {
 
         runCatching {
 
+            BackupStoragePolicy.requireSafeWrite(context.packageName, uri.scheme, uri.authority)
             val roomDatabase = DatabaseProvider.getDatabase(context)
             val database = roomDatabase.openHelper.readableDatabase
 

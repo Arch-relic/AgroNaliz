@@ -1,0 +1,18 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <queries>
+        <package android:name="ru.fo6osik.workjournal" />
+    </queries>
+    <application
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/test_data_extraction_rules">
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.testbackups"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/test_backup_paths" />
+        </provider>
+    </application>
+</manifest>

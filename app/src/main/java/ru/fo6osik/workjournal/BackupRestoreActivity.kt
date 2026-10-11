@@ -65,6 +65,16 @@ class BackupRestoreActivity : AppCompatActivity() {
 
     private fun openCreateBackupDialog() {
 
+        if (BackupStoragePolicy.isTest(packageName)) {
+            // TEST exports stay in its own sandbox, never in a shared working backup.
+            try {
+                createBackup(PrivateTestBackups.createDestination(this))
+            } catch (error: Exception) {
+                showError(error)
+            }
+            return
+        }
+
         val intent =
             Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
 
