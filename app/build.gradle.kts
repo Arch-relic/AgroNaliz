@@ -7,6 +7,8 @@ plugins {
 android {
     namespace = "ru.fo6osik.workjournal"
     compileSdk = 36
+    // AGP creates instrumented tests for one build type per invocation.
+    testBuildType = providers.gradleProperty("testBuildType").getOrElse("debug")
 
     buildFeatures {
         buildConfig = true

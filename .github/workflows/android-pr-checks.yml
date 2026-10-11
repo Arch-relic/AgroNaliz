@@ -37,7 +37,9 @@ jobs:
       - name: Make wrapper executable
         run: chmod +x ./gradlew
       - name: Build debug APK and run JVM tests
-        run: ./gradlew :app:assembleDebug :app:assembleDebugTest :app:testDebugUnitTest :app:testDebugTestUnitTest :app:assembleDebugAndroidTest :app:assembleDebugTestAndroidTest --no-daemon --stacktrace --console=plain
+        run: |
+          ./gradlew :app:assembleDebug :app:assembleDebugTest :app:testDebugUnitTest :app:testDebugTestUnitTest :app:assembleDebugAndroidTest --no-daemon --stacktrace --console=plain
+          ./gradlew -PtestBuildType=debugTest :app:assembleDebugTestAndroidTest --no-daemon --stacktrace --console=plain
       - name: Validate document catalog tests
         run: python3 -m unittest discover -s docs -p 'test_validate_document_catalog.py' -v
       - name: Verify APK identifiers and provider isolation

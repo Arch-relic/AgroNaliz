@@ -9,6 +9,8 @@
 - Основная Debug: ./gradlew :app:assembleDebug
 - TEST: ./gradlew :app:assembleDebugTest
 - Unit tests: ./gradlew :app:testDebugUnitTest :app:testDebugTestUnitTest
+- Instrumented APK основной версии: ./gradlew :app:assembleDebugAndroidTest
+- Instrumented APK TEST: ./gradlew -PtestBuildType=debugTest :app:assembleDebugTestAndroidTest
 
 В Actions → Android PR checks → успешный запуск → Artifacts скачать
 app-TEST-<ветка>-<короткий SHA>. ZIP содержит app-debugTest.apk.
