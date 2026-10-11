@@ -1,6 +1,6 @@
 # Передача контекста: АгроНализ v1.0 — масса и урожайность
 
-Дата: 2026-10-11. Статус: реализация подготовлена; GitHub Actions и Draft PR ожидаются.
+Дата: 2026-10-11. Статус: реализация опубликована в Draft PR #23; GitHub Actions выполняется.
 
 Ветка: `feature/harvest-yield`; опорный актуальный main:
 `c0ea3d01a97dd0eb4814b59307b44169916821bc` (Room v20).
@@ -49,6 +49,7 @@
 - `app/src/test/java/ru/fo6osik/workjournal/HarvestCalculatorTest.kt`
 - `docs/harvest-results.md`
 - `docs/run-harvest-checks.py`
+- `app/src/androidTest/java/ru/fo6osik/workjournal/HarvestCampaignUiTest.kt`
 - `docs/codex-handoff.md`
 
 Удалённых файлов нет. PDF, индексы, основная идентичность приложения, изоляция
@@ -79,6 +80,6 @@ TEST, зависимости и облачные интеграции не из�
 Для установки TEST рядом с основной не удалять/переустанавливать основную.
 Путь загрузки: будущий Actions run → Artifacts → app-TEST-* → ZIP → app-debugTest.apk.
 
-PR: пока не создан; будет Draft в main, без автоматического слияния.
+PR: #23, https://github.com/Arch-relic/AgroNaliz/pull/23 — Draft, открыт в main, не объединён.
 Незавершённое: облачная сборка, исправление найденных ошибок, проверка APK,
-публикация Draft PR и обновление этого отчёта точными ссылками/SHA/числами.
+обновление Draft PR и этого отчёта точными ссылками/SHA/числами.

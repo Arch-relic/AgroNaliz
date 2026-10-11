@@ -39,11 +39,12 @@ def main():
     adb("shell", "pm", "grant", test_id, "android.permission.POST_NOTIFICATIONS")
     adb("shell", "appops", "set", test_id, "SCHEDULE_EXACT_ALARM", "allow")
     instrument("HarvestAreaUiTest", count=5)
+    instrument("HarvestCampaignUiTest", count=2)
     instrument("HarvestBackupTest", count=3)
     isolation["instrument"]("ru.fo6osik.workjournal", "verifyMainAfterTest")
     adb("uninstall", test_id)
     isolation["instrument"]("ru.fo6osik.workjournal", "verifyMainAfterTest")
-    print("HARVEST SUCCESS: 15 harvest instrumentation tests; real Room v20 -> v21 upgrade; "
+    print("HARVEST SUCCESS: 17 harvest instrumentation tests; real Room v20 -> v21 upgrade; "
           "all legacy rows/timers/events retained; optional area completion/editing; "
           "v20/v21 backups and v21 import; synthetic main unchanged", flush=True)
 
