@@ -13,7 +13,7 @@
 - Приватные account/file bindings: Android Keystore AES-256-GCM, noBackupFilesDir, AAD, ciphertext fsync+rename, защита от потери ключа и конкурентных записей. Persistent pending-revoke позволяет повторить отзыв после offline-ошибки; смена аккаунта требует отключения старого.
 - Отдельные HTTP client/backend/transport/source, fixed HTTPS origin, запрет redirects, timeouts, allowlist выбранных IDs, MIME/size/version/ETag/trashed/canDownload, ограниченные metadata/media и закрытие потоков. Все сетевые операции, SHA и файловый IO на Dispatchers.IO.
 - Доверие только к обеим SHA-256 bundled catalog для 20 пар. Force refresh не позволяет подменить проверку нового облачного файла совпавшим кешем. Ревизии не выдуманы. Атомарная активация и прежняя копия при ошибке сохранены. Отдельная короткая lease-блокировка исключает ожидание длительного SHA при закрытии viewer.
-- Экран «Опции → Технические документы: Google Drive»: connect/disconnect, выбор PDF/индекса, статус/последний update, проверка версий, ручная синхронизация/отмена, offline-open, reset повреждённых настроек. SDK создаётся лениво, offline-open не зависит от авторизации/привязок.
+- Экран «Опции → Технические документы: Google Drive»: connect/disconnect, выбор PDF/индекса, статус/последний update, проверка версий, ручная синхронизация/отмена, offline-open, reset повреждённых настроек. SDK создаётся лениво, offline-open не зависит от авторизации/привязок. Список документов загружается раньше encrypted settings: ошибка Keystore не блокирует offline-выбор.
 - Factory.create остаётся Assets; createWithGoogleDrive opt-in. Viewer.fromFile использует проверенный lease и индекс того же поколения; прежние fromAsset/поиск/подсветка/zoom/navigation сохранены. HarvestDayActivity изменена только сигнатура onNewIntent для AndroidX.
 - Room/версия БД, documentId/revision/hash/sources/пути bundled catalog, существующие PDF/JSON не изменены и не перемещены. PDF, ключи, токены и реальные приватные привязки в Git не добавлены.
 
@@ -67,28 +67,28 @@
 - Ветка: `feature/google-drive-auth-stage2`.
 - Опорный main: `2c0f6cb21acae3b60a25f45ecef447a67df25b4e` (merge PR #6).
 - Исходный PR head для аудита: `0aba648e3e5301ab8c05a5da4e9950b9e7177c9c`.
-- Реально проверенный итоговый код: `bdb085f614c27df37a5184ffa63f6c18bb6086cb`.
-- Его Git tree: `781dc350dda34399401893bd3cb700a93399710c`, совпадает с локальным снимком. Локальный mirror-коммит `a490243` имеет другой parent/history; не подменяет опубликованный проверенный SHA.
+- Реально проверенный итоговый код: `4d13b33adbe8a53646d7a4a78460ecb1f9e504c6`.
+- Его Git tree: `26ece2a8f0b329ef066031f118c303a4f225295c`, совпадает с локальным снимком. Локальный mirror-коммит `818e373` имеет другой parent/history; не подменяет опубликованный проверенный SHA.
 - Shell git fetch/push блокируется proxy среды; публикация выполнена GitHub API коммитами поверх исходного PR head с expected_sha lease, без force и без изменения main. Деревья локального/удалённого снимка сверены.
 - Этот отчёт сохраняется отдельным следующим коммитом документации. Указанный SHA относится к проверенному коду, а не к самому содержащему отчёт коммиту. Последний SHA документации доступен в head PR.
 - Незакоммиченных изменений кода после проверки нет; следующий коммит содержит только этот отчёт.
 
 ## Проверки и результаты
 
-Проверенный код: [GitHub Actions run #25](https://github.com/Arch-relic/AgroNaliz/actions/runs/38118081525), success.
+Проверенный код: [GitHub Actions run #27](https://github.com/Arch-relic/AgroNaliz/actions/runs/38118566954), success.
 
-- `./gradlew :app:assembleDebug :app:testDebugUnitTest --no-daemon --stacktrace --console=plain`: BUILD SUCCESSFUL, 2m 5s. APK собран. compileDebugKotlin/packageDebug/testDebugUnitTest действительно выполнены; это новый запуск, не UP-TO-DATE.
+- `./gradlew :app:assembleDebug :app:testDebugUnitTest --no-daemon --stacktrace --console=plain`: BUILD SUCCESSFUL, 2m 34s. APK собран. compileDebugKotlin/packageDebug/testDebugUnitTest действительно выполнены; это новый запуск, не UP-TO-DATE.
 - JUnit: **96 tests, 0 failures, 0 errors, 0 skipped**, включая 33 новых stage2 теста. Фейковые SDK backend/HTTP transport, expiry/revoked/account change/concurrent refresh/stale 401, callback TTL/replay/old request, 403/404/412/503/network, malformed metadata/size/MIME/bounds, closed/truncated/oversized downloads, catalog trust/force refresh/offline preservation, AES-GCM/tamper/key loss/atomic concurrency, lease release при параллельной загрузке.
 - `python3 -m unittest discover -s docs -p 'test_validate_document_catalog.py' -v`: **13 tests, 0 failures/errors**, новый запуск в CI. Также локально повторно успешно выполнен.
 - `PYTHONDONTWRITEBYTECODE=1 python3 docs/validate-document-catalog.py`: 20 точных сопоставлений PDF checksum/path, 20 index hashes, 1535 страниц индексов, 309111 слов; PDF bytes checked **0/20**, compatibility NOT established.
 - `git diff --check`: успешно. Изменения assets/Room отсутствуют в PR diff.
 - Использованы проектные Kotlin 2.2.20, AGP 8.12.0, Gradle 8.13, compileSdk 36, minSdk 23, JVM 1.8; настройки проекта не повышены. Auth SDK закреплён 21.6.0 для API 23.
-- Diagnostics artifact: `android-pr7-diagnostics`, run #25, ID `11694116876` (JUnit XML/HTML и APK output metadata, срок хранения семь дней).
+- Diagnostics artifact: `android-pr7-diagnostics`, run #27, ID `11694208682` (JUnit XML/HTML и APK output metadata, срок хранения семь дней).
 
 Обнаруженные и исправленные ошибки CI:
 1. Run #22: Auth 22.0.0 требует minSdk 24 → заменён на 21.6.0, без overrideLibrary/повышения minSdk.
 2. Run #23: AndroidX non-null onNewIntent contract → минимальное исправление сигнатуры HarvestDayActivity.
-3. Run #24: APK успешно собран, JUnit initializationError из-за возврата Object из coroutine-теста → explicit runBlocking<Unit>. Эти неуспешные запуски не считаются зелёными; итоговый run #25 проверил все 96 тестов.
+3. Run #24: APK успешно собран, JUnit initializationError из-за возврата Object из coroutine-теста → explicit runBlocking<Unit>. Эти неуспешные запуски не считаются зелёными; run #25 проверил все 96 тестов. Финальный run #27 также проверил все 96 после исправления offline-выбора при нечитаемых Drive settings.
 
 ## Ограничения среды, риски и непроверенное
 
