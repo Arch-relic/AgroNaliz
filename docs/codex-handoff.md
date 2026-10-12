@@ -5,7 +5,8 @@
 
 Ветка GitHub: feature/original-key-signing. Опорный main:
 c0ea3d01a97dd0eb4814b59307b44169916821bc (Room 20).
-Проверенного GitHub SHA пока нет; локальные файлы подготовлены к публикации.
+Проверенный GitHub SHA: 5512aa5574a9b33ae13470da636218ec8eb0010d.
+Исходники опубликованы в отдельной ветке; main не изменён.
 Ветка harvest-yield / PR #23 не включена; остальные работы сохранены.
 
 ## Изменения и файлы
@@ -41,7 +42,7 @@ YAML разобран, git diff --check успешен.
 
 source /workspace/agronaliz-env.sh; agrogradle :app:assembleDebug :app:test:
 Gradle не стартовал: Could not determine a usable wildcard IP for this machine.
-Облачная сборка будет выполнена в GitHub Actions, её успех пока не объявляется.
+Облачная сборка выполнена в GitHub Actions #50 и #51, android job успешен.
 
 ## Риски и ручные действия
 
@@ -54,8 +55,9 @@ Gradle не стартовал: Could not determine a usable wildcard IP for thi
 Подробности и установка: docs/original-apk-signing.md. Ключи, пароли, алиас и
 персональные сертификатные сведения в отчёт/артефакты не включаются.
 PR #25: https://github.com/Arch-relic/AgroNaliz/pull/25 — Draft, открыт в main, не объединён.
-Незавершённое: CI, проверка оригинального сертификата/APK, публикация Draft
-и окончательное обновление отчёта.
+Незавершённое: подтверждение правильного публичного pin владельцем,
+успешный строгий контроль оригинального сертификата и публикация signed APK.
+Draft уже создан; объединение не выполнялось.
 
 ## Проверка Actions #50
 
@@ -74,3 +76,19 @@ Original signing не опубликовал APK: ANDROID_KEY_PASSWORD недо�
 Уточнение правильной идентичности установленного приложения запрошено;
 pin автоматически не заменён, signed artifact при несовпадении запрещён.
 Не включать private signing outputs или Secrets в отчёты/артефакты.
+
+## Проверка Actions #51 — итог перед уточнением сертификата
+
+https://github.com/Arch-relic/AgroNaliz/actions/runs/38232835514
+Исходный коммит 5512aa5574a9b33ae13470da636218ec8eb0010d; versionCode 51.
+Android job 114756225943: успешны сборки debug и debugTest, обе JVM test tasks,
+16 Python signing checks, 13 catalog checks, проверка ID/provider и Android-изоляции.
+Original-signature job 114758489397: реальное подписание выполнено;
+apksigner обнаружил сертификат 3FE57967C15F81EE39EA2B9B88DD96A7506C1B5B9032606ECBEA04BBDB15EE3C.
+Он НЕ совпал с закреплённым пользовательским pin (32606E вместо 3260EE),
+поэтому job завершился ошибкой, upload signed APK пропущен, cleanup успешен.
+Это проверенный отказ production pipeline при несовпадении, а не успешная публикация.
+Артефакты запуска: обычные debug/TEST и diagnostics; оригинально подписанного нет.
+Обычный debug НЕ использовать для обновления установленной оригинальной версии.
+Нужно подтвердить публичный отпечаток установленного приложения; автоматическая
+замена pin по настроенному keystore недопустима. Телефон/обновление данных не проверялись.
