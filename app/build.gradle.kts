@@ -24,11 +24,35 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Original AndroidIDE signing key is supplied only through CI secrets.
+    // Never commit the keystore or its passwords to this repository.
+    val originalKeystore = System.getenv("AGRONALIZ_KEYSTORE_PATH")
+    val originalStorePassword = System.getenv("AGRONALIZ_KEYSTORE_PASSWORD")
+    val originalKeyPassword = System.getenv("AGRONALIZ_KEY_PASSWORD")
+    val originalKeyAlias = System.getenv("AGRONALIZ_KEY_ALIAS")
+    if (listOf(originalKeystore, originalStorePassword, originalKeyPassword, originalKeyAlias).all { !it.isNullOrBlank() }) {
+        signingConfigs {
+            create("originalAndroidIde") {
+                storeFile = file(originalKeystore!!)
+                storePassword = originalStorePassword
+                keyAlias = originalKeyAlias
+                keyPassword = originalKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         create("debugTest") {
             initWith(getByName("debug"))
             applicationIdSuffix = ".debugtest"
             matchingFallbacks += listOf("debug")
+            // TEST remains isolated and uses the normal CI debug certificate.
+            signingConfig = signingConfigs.getByName("debug")
+        }
+        getByName("debug") {
+            if (signingConfigs.findByName("originalAndroidIde") != null) {
+                signingConfig = signingConfigs.getByName("originalAndroidIde")
+            }
         }
         release {
             isMinifyEnabled = false
