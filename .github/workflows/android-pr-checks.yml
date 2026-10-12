@@ -244,9 +244,12 @@ jobs:
           def main():
               # Fail closed before decoding the private key if the public pin is incomplete.
               expected = normalize_certificate(os.environ['EXPECTED_CERT_SHA256'])
-              required = ['ANDROID_KEYSTORE_BASE64', 'ANDROID_KEYSTORE_PASSWORD', 'ANDROID_KEY_ALIAS', 'ANDROID_KEY_PASSWORD']
+              required = ['ANDROID_KEYSTORE_BASE64', 'ANDROID_KEYSTORE_PASSWORD', 'ANDROID_KEY_ALIAS']
               if any(not os.environ.get(name) for name in required):
-                  raise SigningError('All four Android signing secrets must be configured')
+                  raise SigningError('Keystore Base64, store password and key alias secrets must be configured')
+              # apksigner normally uses the store password for the key when no separate
+              # password is configured (including standard PKCS12 keystores).
+              key_password_env = 'ANDROID_KEY_PASSWORD' if os.environ.get('ANDROID_KEY_PASSWORD') else 'ANDROID_KEYSTORE_PASSWORD'
               sdk = Path(os.environ['ANDROID_HOME']) / 'build-tools/35.0.0'
               runner_temp = Path(os.environ['RUNNER_TEMP'])
               source = runner_temp / 'agronaliz-original-input/app-debug.apk'
@@ -270,7 +273,7 @@ jobs:
                   staged = Path(folder) / 'verified.apk'
                   tool([str(sdk / 'apksigner'), 'sign', '--ks', str(key),
                         '--ks-key-alias', os.environ['ANDROID_KEY_ALIAS'],
-                        '--ks-pass', 'env:ANDROID_KEYSTORE_PASSWORD', '--key-pass', 'env:ANDROID_KEY_PASSWORD',
+                        '--ks-pass', 'env:ANDROID_KEYSTORE_PASSWORD', '--key-pass', 'env:' + key_password_env,
                         '--v1-signer-name', 'ORIGINAL',
                         '--v1-signing-enabled', 'true', '--v2-signing-enabled', 'true',
                         '--v3-signing-enabled', 'true', '--v4-signing-enabled', 'false',

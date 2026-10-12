@@ -86,7 +86,8 @@ class SigningVerificationTest(unittest.TestCase):
         self.assertNotIn('${{ secrets.', build)
         self.assertNotIn('pull_request_target:', WORKFLOW)
         self.assertIn("'--ks-pass', 'env:ANDROID_KEYSTORE_PASSWORD'", CODE)
-        self.assertIn("'--key-pass', 'env:ANDROID_KEY_PASSWORD'", CODE)
+        self.assertIn("'--key-pass', 'env:' + key_password_env", CODE)
+        self.assertIn("'ANDROID_KEY_PASSWORD' if os.environ.get('ANDROID_KEY_PASSWORD') else 'ANDROID_KEYSTORE_PASSWORD'", CODE)
         self.assertIn("'--v1-signer-name', 'ORIGINAL'", CODE)
         self.assertIn('0o600', CODE)
         self.assertIn('0o700', CODE)
@@ -141,6 +142,17 @@ class SigningVerificationTest(unittest.TestCase):
                 self.assertIn('META-INF/ORIGINAL.SF', archive.namelist())
                 self.assertFalse(any('fixture-private-alias' in name.lower() for name in archive.namelist()))
             shutil.rmtree(output)
+            # Default key-password behavior still authenticates/decrypts the private key.
+            variables['ANDROID_KEY_PASSWORD'] = ''
+            with patch.dict(os.environ, variables), contextlib.redirect_stdout(io.StringIO()): PROGRAM['main']()
+            self.assertEqual(digest, json.loads((output / 'verification.json').read_text())['certificateSha256'])
+            shutil.rmtree(output)
+            # An explicitly supplied wrong password never silently falls back.
+            variables['ANDROID_KEY_PASSWORD'] = 'intentionally-wrong-fixture-password'
+            with patch.dict(os.environ, variables), self.assertRaises(ERROR): PROGRAM['main']()
+            self.assertFalse(output.exists())
+            self.assertEqual([], list(root.glob('agronaliz-key-*')))
+            variables['ANDROID_KEY_PASSWORD'] = fixture_password
             variables['EXPECTED_CERT_SHA256'] = '0' * 64
             with patch.dict(os.environ, variables), self.assertRaises(ERROR): PROGRAM['main']()
             self.assertFalse(output.exists())
