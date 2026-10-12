@@ -37,6 +37,9 @@ class HarvestProcessActivity : AppCompatActivity() {
     private lateinit var textTotalVolume: TextView
     private lateinit var textAverageBunkerVolume: TextView
     private lateinit var textDaysEmpty: TextView
+    private lateinit var textHarvestResults: TextView
+    private lateinit var textDensity: TextView
+    private lateinit var buttonEditDensity: Button
     private lateinit var dayList: LinearLayout
     private lateinit var buttonNewDay: Button
     private lateinit var buttonEditProcess: Button
@@ -82,6 +85,11 @@ class HarvestProcessActivity : AppCompatActivity() {
             finish()
             return
         }
+
+        textHarvestResults = findViewById(R.id.textHarvestCampaignResults)
+        textDensity = findViewById(R.id.textHarvestDensity)
+        buttonEditDensity = findViewById(R.id.buttonEditHarvestDensity)
+        buttonEditDensity.setOnClickListener { showDensityDialog() }
 
         textTitle =
             findViewById(
@@ -292,6 +300,16 @@ class HarvestProcessActivity : AppCompatActivity() {
                 bunkers =
                     allBunkers
             )
+
+        val result = HarvestCalculator.campaign(
+            process.bunkerVolumeM3,
+            HarvestDensityCatalog.effective(process.crop, process.bulkDensityKgM3),
+            days.map { day -> HarvestCalculator.DayInput(
+                bunkersByDay[day.id].orEmpty().map { it.fillLevel }, day.harvestedAreaHa
+            ) }
+        )
+        textHarvestResults.text = HarvestResultsFormatter.results(result, campaign = true)
+        textDensity.text = HarvestResultsFormatter.density(process.crop, process.bulkDensityKgM3)
 
         renderDays(
             days,
@@ -1223,69 +1241,56 @@ class HarvestProcessActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    private fun coefficientRange(
-        fillLevel: String
-    ): Pair<Double, Double> {
-        return when (
-            fillLevel
-        ) {
-            "FULL" ->
-                1.0 to 1.0
-
-            "HALF" ->
-                0.5 to 0.5
-
-            "MORE_THAN_HALF" ->
-                0.5 to 1.0
-
-            "LESS_THAN_HALF" ->
-                0.0 to 0.5
-
-            else ->
-                0.0 to 0.0
+    private fun showDensityDialog() {
+        val process = currentProcess ?: return
+        val view = layoutInflater.inflate(R.layout.dialog_harvest_number, null)
+        val input = view.findViewById<EditText>(R.id.editHarvestNumber)
+        input.hint = getString(R.string.harvest_density_hint)
+        input.setText(HarvestDensityCatalog.effective(process.crop, process.bulkDensityKgM3)
+            ?.let { java.math.BigDecimal.valueOf(it).toPlainString() } ?: "")
+        view.findViewById<TextView>(R.id.textHarvestNumberNote).setText(R.string.harvest_density_note)
+        val dialog = AlertDialog.Builder(this).setTitle(R.string.harvest_density_title).setView(view)
+            .setPositiveButton(R.string.harvest_save, null)
+            .setNegativeButton(R.string.harvest_cancel, null)
+            .setNeutralButton(R.string.harvest_density_reference, null).create()
+        dialog.setOnShowListener {
+            fun save(density: Double?) {
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false
+                dialog.getButton(AlertDialog.BUTTON_NEUTRAL).isEnabled = false
+                Thread {
+                    try {
+                        DatabaseProvider.getDatabase(applicationContext).harvestDao()
+                            .updateBulkDensity(process.id, density)
+                        runOnUiThread { dialog.dismiss(); loadProcess() }
+                    } catch (e: Exception) {
+                        runOnUiThread {
+                            dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true
+                            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).isEnabled = true
+                            Toast.makeText(this, "Не удалось сохранить плотность: ${e.message}", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }.start()
+            }
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val density = try {
+                    requireNotNull(HarvestCalculator.parseOptionalPositive(input.text.toString()))
+                } catch (_: IllegalArgumentException) {
+                    input.error = getString(R.string.harvest_positive_number)
+                    return@setOnClickListener
+                }
+                save(density)
+            }
+            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener { save(null) }
         }
+        dialog.show()
     }
 
     private fun totalVolumeRange(
         bunkerVolumeM3: Double?,
         bunkers: List<HarvestBunker>
-    ): Pair<Double, Double>? {
-        if (
-            bunkerVolumeM3 ==
-            null
-        ) {
-            return null
-        }
-
-        var minEquivalent =
-            0.0
-
-        var maxEquivalent =
-            0.0
-
-        bunkers.forEach {
-            bunker ->
-
-            val range =
-                coefficientRange(
-                    bunker.fillLevel
-                )
-
-            minEquivalent +=
-                range.first
-
-            maxEquivalent +=
-                range.second
-        }
-
-        return (
-            minEquivalent *
-                bunkerVolumeM3
-            ) to (
-            maxEquivalent *
-                bunkerVolumeM3
-            )
-    }
+    ): Pair<Double, Double>? = HarvestCalculator.volume(
+        bunkerVolumeM3, bunkers.map { it.fillLevel }
+    )?.asPair()
 
     private fun calculationText(
         label: String,
@@ -1313,45 +1318,11 @@ class HarvestProcessActivity : AppCompatActivity() {
         }
     }
 
-    private fun averageText(
-        bunkerVolumeM3: Double?,
-        bunkers: List<HarvestBunker>
-    ): String {
-        if (
-            bunkers.isEmpty()
-        ) {
-            return "Средний объём бункера: —"
-        }
-
-        val range =
-            totalVolumeRange(
-                bunkerVolumeM3,
-                bunkers
-            )
-                ?: return "Средний объём бункера: не настроен"
-
-        val minAverage =
-            range.first /
-                bunkers.size
-
-        val maxAverage =
-            range.second /
-                bunkers.size
-
-        return if (
-            kotlin.math.abs(
-                minAverage -
-                    maxAverage
-            ) <
-            0.0001
-        ) {
-            "Средний объём бункера: " +
-                "${formatNumber(minAverage)} м³"
-        } else {
-            "Средний объём бункера: " +
-                "${formatNumber(minAverage)}–" +
-                "${formatNumber(maxAverage)} м³"
-        }
+    private fun averageText(bunkerVolumeM3: Double?, bunkers: List<HarvestBunker>): String {
+        if (bunkers.isEmpty()) return "Средний объём бункера: —"
+        val average = HarvestCalculator.averageVolume(bunkerVolumeM3, bunkers.map { it.fillLevel })
+            ?: return "Средний объём бункера: не настроен"
+        return "Средний объём бункера: ${HarvestResultsFormatter.range(average, "м³")}"
     }
 
     private fun shortCalculationText(

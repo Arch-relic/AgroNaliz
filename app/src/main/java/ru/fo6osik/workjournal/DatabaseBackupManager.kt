@@ -202,18 +202,7 @@ object DatabaseBackupManager {
                     "databaseVersion"
                 )
 
-            val compatibleLegacyToV20 =
-                database.version == 20 &&
-                    (
-                        backupDatabaseVersion == 18 ||
-                        backupDatabaseVersion == 19
-                    )
-
-            if (
-                backupDatabaseVersion !=
-                    database.version &&
-                !compatibleLegacyToV20
-            ) {
+            if (!HarvestBackupCompatibility.accepts(database.version, backupDatabaseVersion)) {
                 error(
                     "Версия базы резервной копии: " +
                             backupDatabaseVersion +
@@ -537,6 +526,17 @@ object DatabaseBackupManager {
                     .asSequence()
                     .toSet()
 
+            val harvestNumericColumn = when (tableName) {
+                "harvest_days" -> "harvestedAreaHa"
+                "harvest_processes" -> "bulkDensityKgM3"
+                else -> null
+            }
+            if (harvestNumericColumn != null && row.has(harvestNumericColumn) && !row.isNull(harvestNumericColumn)) {
+                require(HarvestCalculator.positive(row.getDouble(harvestNumericColumn)) != null) {
+                    "Некорректное значение $harvestNumericColumn в резервной копии"
+                }
+            }
+
             val missingColumns =
                 expectedColumns -
                     actualColumns
@@ -545,41 +545,9 @@ object DatabaseBackupManager {
                 actualColumns -
                     expectedColumns
 
-            val allowedMissingColumns =
-                when {
-                    database.version == 20 &&
-                        (
-                            backupDatabaseVersion == 18 ||
-                            backupDatabaseVersion == 19
-                        ) &&
-                        tableName == "harvest_days" -> {
-                        setOf(
-                            "workIntervalMinutes",
-                            "unloadIntervalMinutes",
-                            "lunchIntervalMinutes",
-                            "dinnerIntervalMinutes",
-                            "waitingTransportIntervalMinutes",
-                            "workIntervalCustom",
-                            "unloadIntervalCustom",
-                            "lunchIntervalCustom",
-                            "dinnerIntervalCustom",
-                            "waitingTransportIntervalCustom",
-                            "reminderSettingsInitialized"
-                        )
-                    }
-
-                    database.version == 20 &&
-                        backupDatabaseVersion == 18 &&
-                        tableName == "harvest_bunkers" -> {
-                        setOf(
-                            "postEventType"
-                        )
-                    }
-
-                    else -> {
-                        emptySet()
-                    }
-                }
+            val allowedMissingColumns = HarvestBackupCompatibility.allowedMissingColumns(
+                database.version, backupDatabaseVersion, tableName
+            )
 
             val invalidMissingColumns =
                 missingColumns -

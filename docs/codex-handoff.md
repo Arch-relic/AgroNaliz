@@ -1,180 +1,227 @@
-# Передача результатов Codex — «АгроНализ»
+# Передача контекста: АгроНализ v1.0 — масса и урожайность
 
-## Дата, цель и статус
+Дата: 2026-10-11. Статус: задача выполнена, код и полные проверки успешны.
+Draft PR #23: https://github.com/Arch-relic/AgroNaliz/pull/23 — открыт в main,
+не объединён. Слияние требует отдельного решения владельца.
 
-11 октября 2026. Отдельная безопасная TEST-сборка с applicationId
-ru.fo6osik.workjournal.debugtest и названием «АгроНализ TEST».
-Реализация готова к ревью. Штатная сборка обеих APK, JVM-тесты и проверка
-изоляции на API 35 эмуляторе прошли; APK скачаны и проверены. Открыт Draft PR №22.
-Основной applicationId ru.fo6osik.workjournal сохранён.
+## Ветка и проверенный результат
 
-## Решения и изоляция
+- Ветка GitHub: `feature/harvest-yield`, создана от актуального main
+  `c0ea3d01a97dd0eb4814b59307b44169916821bc` (Room v20); main напрямую не изменялся.
+- Проверенный коммит кода: `2f0b6e740c06fdbf7d0d55bb88230078f141fc33`.
+- Полный успешный workflow #47: https://github.com/Arch-relic/AgroNaliz/actions/runs/38177873746.
+- Actions использовал проверочный PR merge-коммит
+  `5c4ad56c31f9225793b9c689a2755400d0a0d18f`, объединяющий проверенный head с
+  указанным main только для CI. **PR с main не объединён.** Поэтому короткий
+  SHA в имени артефакта относится к проверочному merge-коммиту.
+- Этот окончательный отчёт сохраняется следующим коммитом в той же ветке,
+  меняющим только `docs/codex-handoff.md`. SHA выше обозначает реально
+  проверенный код, а не хеш самого отчёта. Автоматический workflow для
+  документального коммита может повторить те же проверки; его актуальный
+  статус доступен во вкладке Checks PR.
+- Все изменения опубликованы и закоммичены в GitHub. В изолированном локальном
+  worktree сохранена незакоммиченная копия этих файлов; неопубликованного кода
+  или незавершённых функциональных изменений нет. Остальные рабочие ветки сохранены.
 
-Добавлен build type debugTest, наследующий debug с отдельным applicationIdSuffix,
-без изменения namespace и обычных debug/release. Room 20, миграции и бизнес-логика
-сохранены. Android разделяет UID, базу, prefs, files/cache/noBackup и app-scoped
-external-files. Проверены все записи через File/contentResolver, манифест,
-reminder prefs и LocalDocumentStore. Общих фиксированных внешних путей нет.
-В main отсутствовал FileProvider; TEST получает приватный provider с authority
-${applicationId}.testbackups и доступом только к filesDir/test-backups.
-TEST экспорт не выбирает общий SAF-файл и дополнительно отвергает чужие URI в
-DatabaseBackupManager до открытия БД. Основной SAF-экспорт сохранён.
-Автоматическое резервирование и device transfer TEST исключены.
-Импорт/restore читает выбранный файл и пишет только в текущую базу; автоматического
-переноса данных основной версии нет. TEST-копии приватные, получение через ADB
-описано в docs/test-apk.md. Варианты могут быть установлены одновременно.
+## Поведение и архитектура
+
+- Завершение дня принимает необязательную положительную дробную площадь, га;
+  точка и запятая поддерживаются, пустое поле сохраняет null, а не ноль.
+  Прежний вопрос о завершении кампании сохранён. Отмена каждого шага ничего
+  не записывает; площадь/завершение дня/необязательное завершение кампании
+  сохраняются одной транзакцией.
+- Завершённый день имеет блок «Результаты уборки» и действие добавления/изменения
+  площади, работающее и после завершения кампании. Пустым полем площадь можно
+  снова сделать неизвестной. SQL обновляет только площадь, без открытия дня,
+  изменения таймеров, времени окончания или статуса кампании. После записи
+  карточка обновляется; Room-записи выполняются в фоновом потоке.
+- `HarvestCalculator` содержит все формулы и прежние четыре коэффициента
+  заполнения FULL [1;1], MORE_THAN_HALF [0,5;1], HALF [0,5;0,5], LESS_THAN_HALF
+  [0;0,5]. Дублирующие расчёты объёма/среднего в двух Activity удалены.
+  Масса и обе урожайности сохраняют диапазоны. Площадь не нужна для массы;
+  неположительные/нечисловые значения и переполнение не приводят к делению
+  на ноль или показу NaN/Infinity. Малые положительные площади не округляются в ноль.
+- `HarvestDensityCatalog` задаёт восемь ориентировочных плотностей кг/м³;
+  ручная корректировка хранится в конкретном процессе. null означает
+  справочник, если культура известна. Для «Другое» нужна ручная плотность,
+  иначе масса/урожайность не рассчитываются. При смене культуры корректировка
+  сбрасывается. Она действует на все дни кампании, в том числе прошлые.
+- Итоги кампании считают все бункеры, объём/массу всех дней и сумму известных
+  площадей. При хотя бы одной неизвестной площади общая урожайность не
+  рассчитывается, показывается предупреждение. При полных данных делится
+  суммарная масса на суммарную площадь, не усредняются дневные урожайности.
+- `HarvestResultsFormatter` занимается представлением, а не формулами.
+  Справочник, допущения и формулы: `docs/harvest-results.md`.
+- В двух карточках уборки ScrollView находится в FrameLayout, учитывающем
+  системные отступы: нижние кнопки доступны при обязательном edge-to-edge
+  на Android 15. Другие экраны не изменялись.
+
+## Room и резервные копии
+
+Версия базы: **21**, миграция **20 → 21** зарегистрирована в DatabaseProvider.
+Добавлены nullable REAL `harvest_days.harvestedAreaHa` и
+`harvest_processes.bulkDensityKgM3`. Все старые значения остаются на месте;
+историческая площадь не угадывается. Прежние миграции, индексы, FK и настройки
+напоминаний сохранены, destructive migration не применяется.
+
+Экспорт v21 включает новые поля. Полное восстановление продолжает принимать
+v18/v19 и теперь v20: пропущенные новые колонки остаются null; прежние разрешённые
+пропуски таймеров/событий сохранены. Копия v21 обязана содержать все колонки.
+Невалидные новые числовые значения проверяются до замены данных при restore.
+Выборочный импорт сохраняет новые поля и прежнюю дедупликацию/переназначение ID;
+принимаются v16, v18, v19, v20, v21.
+
+Миграция проверена обновлением **реальной базовой TEST APK** с main-коммита выше:
+Room v20 создаёт синтетические записи и копию; затем `adb install -r` обновляет
+TEST до v21 с тем же applicationId и ключом внутри одного CI job. Room проверяет
+полную схему v21. Сравниваются все старые значения всех таблиц, число записей,
+FK, бункеры/события, одиннадцать полей напоминаний и отдельные SharedPreferences;
+затем восстанавливается настоящая копия v20. Реальные данные пользователя не использовались.
 
 ## Файлы
 
-Изменены:
-- app/build.gradle.kts
-- app/src/main/java/ru/fo6osik/workjournal/BackupRestoreActivity.kt
-- app/src/main/java/ru/fo6osik/workjournal/DatabaseBackupManager.kt
-- app/src/androidTest/java/ru/fo6osik/workjournal/ExampleInstrumentedTest.kt
-- .github/workflows/android-pr-checks.yml
-- docs/codex-handoff.md
+Созданы (15):
 
-Созданы:
-- app/src/debug/AndroidManifest.xml
-- app/src/debugTest/AndroidManifest.xml
-- app/src/debugTest/res/values/strings.xml
-- app/src/debugTest/res/xml/test_backup_paths.xml
-- app/src/debugTest/res/xml/test_data_extraction_rules.xml
-- app/src/main/java/ru/fo6osik/workjournal/BackupStoragePolicy.kt
-- app/src/main/java/ru/fo6osik/workjournal/PrivateTestBackups.kt
-- app/src/test/java/ru/fo6osik/workjournal/BackupStoragePolicyTest.kt
-- app/src/androidTest/java/ru/fo6osik/workjournal/BuildVariantIsolationTest.kt
-- docs/run-build-isolation-checks.py
-- docs/verify-build-variants.py
-- docs/test-apk.md
+- `app/src/androidTest/java/ru/fo6osik/workjournal/HarvestAreaUiTest.kt`
+- `app/src/androidTest/java/ru/fo6osik/workjournal/HarvestBackupTest.kt`
+- `app/src/androidTest/java/ru/fo6osik/workjournal/HarvestCampaignUiTest.kt`
+- `app/src/androidTest/java/ru/fo6osik/workjournal/HarvestMigrationTest.kt`
+- `app/src/androidTest/java/ru/fo6osik/workjournal/HarvestPersistenceTest.kt`
+- `app/src/main/java/ru/fo6osik/workjournal/HarvestBackupCompatibility.kt`
+- `app/src/main/java/ru/fo6osik/workjournal/HarvestCalculator.kt`
+- `app/src/main/java/ru/fo6osik/workjournal/HarvestDensityCatalog.kt`
+- `app/src/main/java/ru/fo6osik/workjournal/HarvestResultsFormatter.kt`
+- `app/src/main/res/layout/dialog_harvest_number.xml`
+- `app/src/main/res/values/harvest_results.xml`
+- `app/src/test/java/ru/fo6osik/workjournal/HarvestBackupCompatibilityTest.kt`
+- `app/src/test/java/ru/fo6osik/workjournal/HarvestCalculatorTest.kt`
+- `docs/harvest-results.md`
+- `docs/run-harvest-checks.py`
 
-Удалений нет. PDF не возвращались, каталоги/индексы и облачные интеграции не
-изменялись. Секреты/APK/ключи не добавлены в Git. Debug queries между двумя
-пакетами нужны только для проверки совместной установки; release не затрагиваются.
+Изменены (14):
 
-## Ветка и SHA
+- `.github/workflows/android-pr-checks.yml`
+- `app/src/main/java/ru/fo6osik/workjournal/AppDatabase.kt`
+- `app/src/main/java/ru/fo6osik/workjournal/DataImportManager.kt`
+- `app/src/main/java/ru/fo6osik/workjournal/DatabaseBackupManager.kt`
+- `app/src/main/java/ru/fo6osik/workjournal/DatabaseProvider.kt`
+- `app/src/main/java/ru/fo6osik/workjournal/HarvestDao.kt`
+- `app/src/main/java/ru/fo6osik/workjournal/HarvestDay.kt`
+- `app/src/main/java/ru/fo6osik/workjournal/HarvestDayActivity.kt`
+- `app/src/main/java/ru/fo6osik/workjournal/HarvestProcess.kt`
+- `app/src/main/java/ru/fo6osik/workjournal/HarvestProcessActivity.kt`
+- `app/src/main/res/layout/activity_harvest_day.xml`
+- `app/src/main/res/layout/activity_harvest_process.xml`
+- `app/src/main/res/layout/dialog_finish_harvest_day.xml`
+- `docs/codex-handoff.md`
 
-Ветка feature/safe-test-apk создана GitHub API от актуального main
-e97063cece9b66062ad1cfd4190f7e1cedb3fbf0. main не изменяется.
-Предыдущая ветка сохранена; отдельный локальный worktree восстановлен из
-сохранённого snapshot и точных файлов актуального main через API.
-GitHub-ветка имеет настоящий parent main, а не локальную историю зеркала.
-Проверенный Android-код/head PR: 502b66e943489fec17f243e703bd4fefce3f5755.
-Фактически собранный merge SHA: 132b499663b5409faa14a052c5fba412f97bcbd1.
-GitHub Actions run 38134641076: SUCCESS.
-https://github.com/Arch-relic/AgroNaliz/actions/runs/38134641076
-После него коммит 309f1243d5e635bc79a855b920bc9d18306b885a изменил только runner проверки
-и его инструкцию: запрет физических устройств/существующих пакетов и отказ
-от adb install -r. Эти два отказа проверены локально с поддельным adb до
-любых мутаций. Android-код/APK-конфигурация не менялись.
-Этот отчёт сохранён следующим коммитом документации. Указанные SHA обозначают
-реально проверенные результаты, а не хеш самого содержащего отчёт коммита.
-Изменения закоммичены локально и опубликованы в отдельной GitHub-ветке.
+Удалённых/перемещённых файлов нет. PDF, поисковые индексы, зависимости Gradle,
+applicationId основной версии, исходная изоляция TEST и облачные интеграции не менялись.
 
-## Проверки
+## Команды и результаты проверок
 
-- git diff --check: успешно.
-- YAML через PyYAML BaseLoader: успешно.
-- python3 docs/run-document-jvm-tests.py: новый fallback запуск, 63 JUnit-теста,
-  0 ошибок, 0 failures; Kotlin 2.0.21/JVM 1.8. Новая backup-политика этим скриптом
-  не проверяется; штатные unit tests обоих вариантов ожидаются.
-- python3 -m unittest discover -s docs -p 'test_validate_document_catalog.py' -v:
-  новый запуск, 13 тестов, все прошли.
-- source /workspace/agronaliz-env.sh; agrogradle :app:assembleDebug :app:assembleDebugTest :app:test:
-  FAILED до компиляции: Could not determine a usable wildcard IP for this machine.
-  Локальная штатная сборка не объявляется успешной.
+Облачный GitHub Actions #47, Java 17 / Kotlin 2.2.20 / AGP 8.12.0 / Room 2.8.5:
 
-## Подтверждённые результаты GitHub Actions
+```bash
+./gradlew :app:assembleDebug :app:assembleDebugTest :app:testDebugUnitTest :app:testDebugTestUnitTest :app:assembleDebugAndroidTest --no-daemon --stacktrace --console=plain
+./gradlew -PtestBuildType=debugTest :app:assembleDebugTestAndroidTest --no-daemon --stacktrace --console=plain
+python3 -m unittest discover -s docs -p 'test_validate_document_catalog.py' -v
+python3 docs/verify-build-variants.py
+.migration-v20/gradlew -p .migration-v20 :app:assembleDebugTest --no-daemon --stacktrace --console=plain
+python3 docs/run-build-isolation-checks.py
+python3 docs/run-harvest-checks.py
+```
 
-1. ./gradlew :app:assembleDebug :app:assembleDebugTest :app:testDebugUnitTest :app:testDebugTestUnitTest :app:assembleDebugAndroidTest --no-daemon --stacktrace --console=plain:
-   BUILD SUCCESSFUL in 3m 25s. Unit tasks выполнены новым запуском, не UP-TO-DATE.
-   XML скачанного diagnostics: 67 tests для каждого варианта (5 suites),
-   всего 134 JVM-теста, 0 failures/errors/skipped. Четыре новые проверки backup
-   guard выполняются в обоих вариантах. Вспомогательные no-source/preBuild
-   задачи могли быть UP-TO-DATE; результаты unit tasks не взяты из старого запуска.
-2. ./gradlew -PtestBuildType=debugTest :app:assembleDebugTestAndroidTest --no-daemon --stacktrace --console=plain:
-   BUILD SUCCESSFUL in 25s. AGP создаёт instrumented APK только для выбранного
-   testBuildType; второй вызов использует уже построенный TEST (часть задач
-   UP-TO-DATE), но test APK собрана успешно. Обычный testBuildType остаётся debug.
-3. python3 -m unittest discover -s docs -p 'test_validate_document_catalog.py' -v:
-   новый CI запуск, 13 тестов, OK.
-4. python3 docs/verify-build-variants.py: успешно, IDs извлечены из настоящих APK,
-   label TEST подтверждён. Merged manifest: sharedUserId отсутствует, providers
-   exported=false. Main authorities: ru.fo6osik.workjournal.androidx-startup.
-   TEST: ru.fo6osik.workjournal.debugtest.androidx-startup и
-   ru.fo6osik.workjournal.debugtest.testbackups. Пересечений нет.
-   FileProvider основной APK отсутствует; TEST files-path только test-backups.
-   allowBackup=false и dataExtractionRules TEST подтверждены.
-5. python3 docs/run-build-isolation-checks.py, API 35 x86_64/google_apis/KVM:
-   совместная установка обеих APK и test APK успешна. 5 запусков инструментальных
-   тестов, каждый OK (1 test):
-   - main seed: синтетическая запись через настоящий VehicleDao/Room, prefs,
-     files/cache/noBackupFilesDir/documents/app-scoped external-files;
-   - TEST seed: другая запись в той же Room-схеме, отдельные пустые каталоги,
-     разные UID и dataDir, собственный путь БД;
-   - TEST provider: private URI read/write, отказ открытия файла вне разрешённого
-     backup-каталога, экспорт реальной TEST базы содержит только TEST-сентинел,
-     внешний SAF экспорт отвергнут, exported=false, чтение main sandbox запрещено;
-   - main verify: основная запись Room, prefs и все файловые сентинелы сохранены;
-   - TEST удалён; повторный main verify: все основные сентинелы снова сохранены.
-   Итог: ISOLATION SUCCESS. Исходные данные владельца не использовались.
-6. ZIP обеих APK и diagnostics скачаны через GitHub artifact API. ZIP CRC и
-   внутренняя структура APK проверены zipfile.testzip; AndroidManifest.xml найден.
-   aapt2 dump badging повторно проверил package/label/launchable activity.
-   apksigner verify обеих APK: exit 0 (стандартные предупреждения META-INF вне
-   JAR-защиты не меняли результат). Main label «АгроУчёт — КФХ Губановы» сохранён.
-   Команда основной Release-сборки в CI не выполнялась; её build type и ID
-   сохраняются исходной конфигурацией. Java 17, Gradle 8.13, Kotlin 2.2.20,
-   AGP 8.12.0, compileSdk 36 и minSdk 23 сохранены.
-7. Проверка защиты runner поддельным adb: физическое устройство и эмулятор с
-   установленным main отвергнуты до install/uninstall/instrument.
+- Основная debug и отдельная debugTest APK, обе инструментальные APK и
+  старая v20 TEST APK: BUILD SUCCESSFUL.
+- JVM: новый запуск `testDebugUnitTest` и `testDebugTestUnitTest`, **95 тестов
+  на вариант, 190 выполнений**, 0 failures/errors/skipped. XML-отчёты из
+  опубликованного diagnostics ZIP скачаны и суммированы. Это не UP-TO-DATE.
+  Новые классы: HarvestCalculatorTest (24), HarvestBackupCompatibilityTest (4).
+- Python-каталог: **13 тестов**, 0 ошибок.
+- Android API 35 x86_64: **17 новых инструментальных тестов**, 0 ошибок:
+  migration 2, persistence 5, day UI 5, campaign UI 2, backup/import 3.
+  Проверены обе отмены, пустая/дробная площадь, запрет нуля, добавление и изменение
+  после завершения кампании, ручная плотность/снятие корректировки, диапазоны
+  кампании и неполные площади, rollback, backup v20/v21 и additive import v21.
+- Существующие проверки изоляции выполнены 7 раз с контекстами main/TEST,
+  включая повторы проверки main после действий/удаления TEST. Всего с новыми
+  проверками: **24 инструментальных выполнения**, 0 ошибок.
+- Провайдеры имеют разные authorities, общий UID отсутствует; проверены разные
+  UID/Room/настройки/files/cache/noBackupFilesDir/документный store/внешние app-scoped
+  пути, приватный FileProvider TEST и отказ записи в общий SAF. Main остаётся
+  неизменённым после новой миграции, редактирования и удаления синтетической TEST.
+- `git diff --check`, XML-разбор и Python syntax: успешны.
 
-APK публикуются только после успешных проверок изоляции.
+Предусмотренная локальная команда также запускалась:
 
-## APK и получение
+```bash
+source /workspace/agronaliz-env.sh
+agrogradle :app:assembleDebug :app:test
+```
 
-TEST artifact: app-TEST-feature-safe-test-apk-132b499663b5, ID 11700861805.
-https://github.com/Arch-relic/AgroNaliz/actions/runs/38134641076/artifacts/11700861805
-ZIP 26303055 байт; app-debugTest.apk 38097874 байт; срок хранения до 25.10.2026.
-applicationId: ru.fo6osik.workjournal.debugtest, label: «АгроНализ TEST».
-SHA-256 APK: f66784148fb284b35c6af762b1d75d72fc4b29fdf40ae08033ba024536fea8b1.
-SHA-256 ZIP совпал с GitHub digest:
-ce4fa5f75b997e3a21a9cd1b9d4896c3da937ea24499890e4cc1d5923a21d601.
+Gradle не смог стартовать: `Could not determine a usable wildcard IP for this machine`.
+Это ограничение среды, локальная Android-сборка не объявляется успешной.
+Дополнительно новый запуск cached Kotlin 2.0.21 / JVM 1.8 / JUnit 4.13.2
+(K2JVMCompiler + JUnitCore с HarvestCalculatorTest/HarvestBackupCompatibilityTest)
+дал **28 тестов, 0 ошибок**; он не заменяет успешный Actions на Kotlin 2.2.20.
 
-Main artifact: app-debug-feature-safe-test-apk-132b499663b5, ID 11700971543.
-applicationId: ru.fo6osik.workjournal. APK 38096490 байт.
-SHA-256 APK: 64441249fcf5fd569eea75ca9aff865374fc2a7a8771f27dbf442f187c26648e.
-ZIP SHA-256 совпал с GitHub digest:
-f4c18eb95270c9c0476abc2442e0bc6c74cc82f0768229dce569f55b25110451.
-Diagnostics ID 11700806915 содержит JUnit XML обоих вариантов.
+Исправленные ошибки CI:
 
-## Исправленные ошибки при проверке
+1. #43/#44: RoomDatabase этой версии не поддерживает `use` — заменено на
+   try/finally/close в новых тестах.
+2. #45: окна не имели фокуса после сна/блокировки эмулятора — runner явно
+   пробуждает свежий эмулятор, снимает keyguard, удерживает экран включённым;
+   при ошибке печатает диагностику окна/питания.
+3. #46: последняя кнопка после scrollTo попадала на границу системной навигации
+   Android 15 — исправлены отступы двух карточек, все UI-тесты прошли в #47.
 
-- Run 38132846058: отсутствовала задача assembleDebugTestAndroidTest.
-  Исправлено выбором testBuildType через Gradle property и отдельным вызовом.
-- Run 38132964978: старый test AndroidX manifest не задавал exported для
-  InstrumentationActivityInvoker на target 35. Обновлены исключительно
-  androidTestImplementation junit 1.1.2 → 1.2.1 и espresso 3.3.0 → 3.6.1.
-  Production-зависимости не менялись.
-- Run 38134250896: неверное сравнение canonical database path с алиасом dataDir.
-  Канонизируются обе стороны. Ошибка была в тесте, не в путях приложения.
-Все три исправления подтверждены успешным run 38134641076.
+## APK и скачивание
 
-## Риски и ручные проверки
+Actions: https://github.com/Arch-relic/AgroNaliz/actions/runs/38177873746.
 
-Реальная установка на телефон/OEM не проверена. Debug-подпись между CI runners
-может отличаться; конфликт обновления TEST не требует удаления основной версии.
-TEST backup хранится приватно; его удаление удалит только TEST-копии.
-Автоматическое main-поведение обновится лишь после слияния владельцем.
-PDF-байты и совместимость содержания PDF/индексов не проверяются в этом этапе.
-Перед установкой использовать только artifact app-TEST-..., не app-debug-....
-Не выбирать для импорта реальные рабочие данные; использовать синтетические.
-См. docs/test-apk.md для проверки двух иконок/настроек/записей/удаления TEST.
+| Вариант | applicationId | Артефакт |
+| --- | --- | --- |
+| Основная debug | `ru.fo6osik.workjournal` | `app-debug-feature-harvest-yield-5c4ad56c31f9` |
+| «АгроНализ TEST» | `ru.fo6osik.workjournal.debugtest` | `app-TEST-feature-harvest-yield-5c4ad56c31f9` |
 
-## Pull Request
+TEST ZIP: https://github.com/Arch-relic/AgroNaliz/actions/runs/38177873746/artifacts/11716593301.
+Артефакты доступны до 2026-10-25T21:57:37Z; после истечения срока можно
+запустить workflow_dispatch для этой ветки/после принятия PR для main.
+Две ZIP скачаны и распакованы, реальные APK проверены `aapt2 dump badging` и
+`apksigner verify --print-certs`. Подписи валидны, идентификаторы/имя TEST верны.
+SHA-256 TEST APK: `cc63bdbaeccc4b93577ff9927e3a0f10610a31d269f52cc382c97dfa8e4e7383`.
+SHA-256 основной debug APK: `befa396fa8d4824fbda4d4af75a680cb0972754f5aa6012880589c77b2a7c6d7`.
+Это хеши файлов APK, не ZIP артефактов.
 
-[PR №22](https://github.com/Arch-relic/AgroNaliz/pull/22): Draft, открыт,
-base main, head feature/safe-test-apk. Не объединён; main не изменён.
-Отчёт и результаты добавлены после создания PR в эту же ветку.
-Следующее действие владельца: ревью и ручная установка TEST по docs/test-apk.md.
-Слияние требует отдельного разрешения владельца.
+Для телефона:
+
+1. Открыть Actions выше, войти в GitHub при необходимости, выбрать **app-TEST-***.
+2. Скачать ZIP и извлечь `app-debugTest.apk`.
+3. Открыть APK на Android; при запросе разрешить установку из используемого
+   файлового приложения/браузера.
+4. Установить «АгроНализ TEST» рядом с основной версией. **Основную не удалять,
+   не переустанавливать и не устанавливать вместо неё app-debug.apk.**
+
+Отладочный ключ CI может отличаться между запусками. Если уже установленная
+TEST сообщает о конфликте подписи, сначала сохранить данные именно TEST и
+решить обновление этой отдельной установки; основную версию не затрагивать.
+
+## Ограничения, риски и следующие ручные действия
+
+- Масса/урожайность приблизительны; фиксированные справочные плотности не
+  измеряют конкретную партию. Влажность, примеси, сорт и уплотнение требуют
+  ручной корректировки и сверки с весами. Диапазон отражает заполнение бункеров,
+  а не статистический интервал погрешности плотности.
+- Ручная плотность применяется ретроспективно ко всей кампании; при смене
+  культуры она сбрасывается. Неизвестные исторические площади остаются неизвестными.
+- Физический телефон и API 23 не проверялись; автоматические Android-проверки
+  выполнены на API 35 со строго синтетическими данными.
+- На телефоне проверить точку/запятую реальной клавиатуры, небольшой экран,
+  крупный шрифт, обе навигации Android, отмену/редактирование площади и возврат
+  к итогам кампании; работу напоминаний при блокировке/энергосбережении,
+  события после бункера и обычное редактирование/удаление бункеров.
+- CI-скрипты предназначены только для одноразового эмулятора: проверяют qemu
+  и отказываются заменять существующие main/TEST установки. Не запускать их на телефоне.
+- Просмотреть Draft PR и провести прикладную сверку расчётов на TEST. Выпуск/
+  слияние оставлены владельцу; незавершённых задач разработки нет.

@@ -25,7 +25,8 @@ data class HarvestDaySummary(
     val startTime: String,
     val endTime: String?,
     val status: String,
-    val bunkerCount: Int
+    val bunkerCount: Int,
+    val harvestedAreaHa: Double?
 )
 
 @Dao
@@ -156,6 +157,7 @@ interface HarvestDao {
             hd.startTime AS startTime,
             hd.endTime AS endTime,
             hd.status AS status,
+            hd.harvestedAreaHa AS harvestedAreaHa,
             (
                 SELECT COUNT(*)
                 FROM harvest_bunkers hb
@@ -286,14 +288,22 @@ interface HarvestDao {
         """
         UPDATE harvest_days
         SET endTime = :endTime,
-            status = 'COMPLETED'
-        WHERE id = :dayId
+            status = 'COMPLETED',
+            harvestedAreaHa = :harvestedAreaHa
+        WHERE id = :dayId AND status = 'ACTIVE'
         """
     )
     fun completeDay(
         dayId: Int,
-        endTime: String
+        endTime: String,
+        harvestedAreaHa: Double? = null
     )
+
+    @Query("UPDATE harvest_days SET harvestedAreaHa = :harvestedAreaHa WHERE id = :dayId AND status = 'COMPLETED'")
+    fun updateHarvestedArea(dayId: Int, harvestedAreaHa: Double?): Int
+
+    @Query("UPDATE harvest_processes SET bulkDensityKgM3 = :densityKgM3 WHERE id = :processId")
+    fun updateBulkDensity(processId: Int, densityKgM3: Double?)
 
     @Query(
         """
@@ -327,6 +337,7 @@ interface HarvestDao {
         SET startDate = :startDate,
             fieldId = :fieldId,
             fieldNameSnapshot = :fieldNameSnapshot,
+            bulkDensityKgM3 = CASE WHEN crop = :crop THEN bulkDensityKgM3 ELSE NULL END,
             crop = :crop,
             combineVehicleId = :combineVehicleId,
             combineNameSnapshot = :combineNameSnapshot,
