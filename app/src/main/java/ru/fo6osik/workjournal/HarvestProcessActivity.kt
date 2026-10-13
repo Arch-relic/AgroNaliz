@@ -37,6 +37,7 @@ class HarvestProcessActivity : AppCompatActivity() {
     private lateinit var textTotalVolume: TextView
     private lateinit var textAverageBunkerVolume: TextView
     private lateinit var textDaysEmpty: TextView
+    private lateinit var textHarvestResults: TextView
     private lateinit var dayList: LinearLayout
     private lateinit var buttonNewDay: Button
     private lateinit var buttonEditProcess: Button
@@ -82,6 +83,8 @@ class HarvestProcessActivity : AppCompatActivity() {
             finish()
             return
         }
+
+        textHarvestResults = findViewById(R.id.textHarvestCampaignResults)
 
         textTitle =
             findViewById(
@@ -292,6 +295,14 @@ class HarvestProcessActivity : AppCompatActivity() {
                 bunkers =
                     allBunkers
             )
+
+        val result = HarvestCalculator.campaign(
+            process.bunkerVolumeM3,
+            days.map { day -> HarvestCalculator.DayInput(
+                bunkersByDay[day.id].orEmpty().map { it.fillLevel }, day.harvestedAreaHa, day.bulkDensityKgM3
+            ) }
+        )
+        textHarvestResults.text = HarvestResultsFormatter.results(result, campaign = true)
 
         renderDays(
             days,
@@ -1083,7 +1094,15 @@ class HarvestProcessActivity : AppCompatActivity() {
                         fieldIds.isNotEmpty() &&
                             combineIds.isNotEmpty()
 
+                    var cropChangeConfirmed = false
                     buttonSave.setOnClickListener {
+                        if (!cropChangeConfirmed && currentDays.isNotEmpty() && crops[spinnerCrop.selectedItemPosition] != process.crop) {
+                            AlertDialog.Builder(this).setTitle("Изменить культуру?")
+                                .setMessage("Плотности существующих дней сохранятся. Проверьте их в настройках каждого дня. Новые дни получат минимальную плотность новой культуры.")
+                                .setPositiveButton("Изменить") { _, _ -> cropChangeConfirmed = true; buttonSave.performClick() }
+                                .setNegativeButton("Отмена", null).show()
+                            return@setOnClickListener
+                        }
                         val newStartDate =
                             SimpleDateFormat(
                                 "yyyy-MM-dd",
@@ -1223,69 +1242,12 @@ class HarvestProcessActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    private fun coefficientRange(
-        fillLevel: String
-    ): Pair<Double, Double> {
-        return when (
-            fillLevel
-        ) {
-            "FULL" ->
-                1.0 to 1.0
-
-            "HALF" ->
-                0.5 to 0.5
-
-            "MORE_THAN_HALF" ->
-                0.5 to 1.0
-
-            "LESS_THAN_HALF" ->
-                0.0 to 0.5
-
-            else ->
-                0.0 to 0.0
-        }
-    }
-
     private fun totalVolumeRange(
         bunkerVolumeM3: Double?,
         bunkers: List<HarvestBunker>
-    ): Pair<Double, Double>? {
-        if (
-            bunkerVolumeM3 ==
-            null
-        ) {
-            return null
-        }
-
-        var minEquivalent =
-            0.0
-
-        var maxEquivalent =
-            0.0
-
-        bunkers.forEach {
-            bunker ->
-
-            val range =
-                coefficientRange(
-                    bunker.fillLevel
-                )
-
-            minEquivalent +=
-                range.first
-
-            maxEquivalent +=
-                range.second
-        }
-
-        return (
-            minEquivalent *
-                bunkerVolumeM3
-            ) to (
-            maxEquivalent *
-                bunkerVolumeM3
-            )
-    }
+    ): Pair<Double, Double>? = HarvestCalculator.volume(
+        bunkerVolumeM3, bunkers.map { it.fillLevel }
+    )?.asPair()
 
     private fun calculationText(
         label: String,
@@ -1313,45 +1275,11 @@ class HarvestProcessActivity : AppCompatActivity() {
         }
     }
 
-    private fun averageText(
-        bunkerVolumeM3: Double?,
-        bunkers: List<HarvestBunker>
-    ): String {
-        if (
-            bunkers.isEmpty()
-        ) {
-            return "Средний объём бункера: —"
-        }
-
-        val range =
-            totalVolumeRange(
-                bunkerVolumeM3,
-                bunkers
-            )
-                ?: return "Средний объём бункера: не настроен"
-
-        val minAverage =
-            range.first /
-                bunkers.size
-
-        val maxAverage =
-            range.second /
-                bunkers.size
-
-        return if (
-            kotlin.math.abs(
-                minAverage -
-                    maxAverage
-            ) <
-            0.0001
-        ) {
-            "Средний объём бункера: " +
-                "${formatNumber(minAverage)} м³"
-        } else {
-            "Средний объём бункера: " +
-                "${formatNumber(minAverage)}–" +
-                "${formatNumber(maxAverage)} м³"
-        }
+    private fun averageText(bunkerVolumeM3: Double?, bunkers: List<HarvestBunker>): String {
+        if (bunkers.isEmpty()) return "Средний объём бункера: —"
+        val average = HarvestCalculator.averageVolume(bunkerVolumeM3, bunkers.map { it.fillLevel })
+            ?: return "Средний объём бункера: не настроен"
+        return "Средний объём бункера: ${HarvestResultsFormatter.range(average, "м³")}"
     }
 
     private fun shortCalculationText(

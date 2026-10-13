@@ -3,6 +3,7 @@ package ru.fo6osik.workjournal
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Transaction
 
 data class HarvestProcessSummary(
     val id: Int,
@@ -25,7 +26,10 @@ data class HarvestDaySummary(
     val startTime: String,
     val endTime: String?,
     val status: String,
-    val bunkerCount: Int
+    val bunkerCount: Int,
+    val harvestedAreaHa: Double?,
+    val bulkDensityKgM3: Double?,
+    val densityMode: String?
 )
 
 @Dao
@@ -37,9 +41,14 @@ interface HarvestDao {
     ): Long
 
     @Insert
-    fun insertDay(
-        day: HarvestDay
-    ): Long
+    fun insertDayRaw(day: HarvestDay): Long
+
+    @Transaction
+    fun insertDay(day: HarvestDay): Long {
+        val process = requireNotNull(getProcessById(day.processId))
+        val (mode, density) = HarvestDensityCatalog.initial(process.crop)
+        return insertDayRaw(day.copy(densityMode = mode, bulkDensityKgM3 = density))
+    }
 
     @Insert
     fun insertBunker(
@@ -156,6 +165,9 @@ interface HarvestDao {
             hd.startTime AS startTime,
             hd.endTime AS endTime,
             hd.status AS status,
+            hd.harvestedAreaHa AS harvestedAreaHa,
+            hd.bulkDensityKgM3 AS bulkDensityKgM3,
+            hd.densityMode AS densityMode,
             (
                 SELECT COUNT(*)
                 FROM harvest_bunkers hb
@@ -286,14 +298,32 @@ interface HarvestDao {
         """
         UPDATE harvest_days
         SET endTime = :endTime,
-            status = 'COMPLETED'
-        WHERE id = :dayId
+            status = 'COMPLETED',
+            harvestedAreaHa = :harvestedAreaHa
+        WHERE id = :dayId AND status = 'ACTIVE'
         """
     )
     fun completeDay(
         dayId: Int,
-        endTime: String
+        endTime: String,
+        harvestedAreaHa: Double? = null
     )
+
+    @Query("UPDATE harvest_days SET harvestedAreaHa = :harvestedAreaHa WHERE id = :dayId AND status = 'COMPLETED'")
+    fun updateHarvestedArea(dayId: Int, harvestedAreaHa: Double?): Int
+
+    @Query("UPDATE harvest_days SET bulkDensityKgM3 = :densityKgM3, densityMode = :mode WHERE id = :dayId")
+    fun updateDayDensityRaw(dayId: Int, mode: String?, densityKgM3: Double?): Int
+
+    @Transaction
+    fun updateDayDensity(dayId: Int, mode: String, custom: Double? = null): Int {
+        val day = requireNotNull(getDayById(dayId))
+        val process = requireNotNull(getProcessById(day.processId))
+        require(mode in setOf("MIN", "AVERAGE", "MAX", "CUSTOM"))
+        val density = HarvestDensityCatalog.selected(process.crop, mode, custom)
+        require(mode != "CUSTOM" || density != null)
+        return updateDayDensityRaw(dayId, if (density == null) null else mode, density)
+    }
 
     @Query(
         """

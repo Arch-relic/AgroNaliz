@@ -99,5 +99,10 @@ data class HarvestDay(
     @ColumnInfo(defaultValue = "0")
     val reminderSettingsInitialized: Boolean = true,
 
+    // null = фактически убранная площадь неизвестна, никогда не означает ноль.
+    val harvestedAreaHa: Double? = null,
+    val bulkDensityKgM3: Double? = null,
+    val densityMode: String? = null,
+
     val createdAt: Long = System.currentTimeMillis()
 )
