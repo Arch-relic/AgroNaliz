@@ -41,3 +41,42 @@ Area UI дополнен повторным открытием через реа
 Ограничение схемы: HH:mm без даты бункера; время до начала относится к следующим
 суткам, смена менее 24 ч. При изменении начала сторона полуночи существующих
 бункеров сохраняется либо сохранение отклоняется. Смены 24 ч и более не представлены.
+
+## Файлы текущего результата
+
+- .github/workflows/android-pr-checks.yml
+- app/src/main/java/ru/fo6osik/workjournal/AppDatabase.kt
+- app/src/main/java/ru/fo6osik/workjournal/DataImportManager.kt
+- app/src/main/java/ru/fo6osik/workjournal/DatabaseBackupManager.kt
+- app/src/main/java/ru/fo6osik/workjournal/DatabaseProvider.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestDao.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestDay.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestDayActivity.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestProcessActivity.kt
+- app/src/main/res/layout/activity_harvest_day.xml
+- app/src/main/res/layout/activity_harvest_process.xml
+- app/src/main/res/layout/dialog_add_harvest_bunker.xml
+- app/src/main/res/layout/dialog_edit_harvest_day.xml
+- app/src/main/res/layout/dialog_finish_harvest_day.xml
+- docs/codex-handoff.md
+- app/src/androidTest/java/ru/fo6osik/workjournal/HarvestAreaUiTest.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/HarvestBackupTest.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/HarvestCampaignStateUiTest.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/HarvestLifecycleTest.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/HarvestMigrationTest.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/HarvestPersistenceTest.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestBackupCompatibility.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestCalculator.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestChronology.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestDensityCatalog.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestResultsFormatter.kt
+- app/src/main/res/layout/dialog_harvest_number.xml
+- app/src/main/res/values/harvest_results.xml
+- app/src/test/java/ru/fo6osik/workjournal/HarvestCalculatorTest.kt
+- app/src/test/java/ru/fo6osik/workjournal/HarvestChronologyTest.kt
+- docs/harvest-results.md
+- docs/run-harvest-checks.py
+
+Удалённых файлов нет. Локальный worktree содержит незакоммиченные зеркала;
+GitHub-коммиты создаются отдельно через API с parent из ветки PR #26.
+Новый regression CI запускается, отчёт будет дополнен проверенным SHA и результатами.

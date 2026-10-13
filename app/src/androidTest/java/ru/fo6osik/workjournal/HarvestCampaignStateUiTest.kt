@@ -34,7 +34,7 @@ class HarvestCampaignStateUiTest {
         val end=System.currentTimeMillis()+10000
         while(true) {
             var ready=false
-            scenario.onActivity { val b=it.findViewById<Button>(R.id.buttonNewHarvestDay);ready=b.visibility==View.VISIBLE && b.text.toString()==text }
+            scenario.onActivity { val b=it.findViewById<Button>(R.id.buttonNewHarvestDay);ready=b.visibility==View.VISIBLE && b.text.toString()==text && it.findViewById<android.widget.TextView>(R.id.textHarvestCampaignResults).text.isNotEmpty() }
             if(ready)return
             if(System.currentTimeMillis()>end)fail("Campaign continuation action did not update")
             Thread.sleep(50)

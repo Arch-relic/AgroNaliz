@@ -50,7 +50,20 @@ class HarvestAreaUiTest {
         }
         return scenario
     }
-    private fun finishDialog() = onView(withId(R.id.buttonFinishHarvestDay)).perform(scrollTo(), click())
+    private fun finishDialog() {
+        onView(withId(R.id.buttonFinishHarvestDay)).perform(scrollTo(), click())
+        onView(withId(R.id.textFinishHarvestDayTime)).perform(click())
+        onView(isAssignableFrom(android.widget.TimePicker::class.java)).perform(object : androidx.test.espresso.ViewAction {
+            override fun getDescription() = "Select deterministic end time after fixture bunker"
+            override fun getConstraints(): org.hamcrest.Matcher<android.view.View> = isAssignableFrom(android.widget.TimePicker::class.java)
+            override fun perform(controller: androidx.test.espresso.UiController, view: android.view.View) {
+                (view as android.widget.TimePicker).currentHour = 18
+                view.currentMinute = 0
+                controller.loopMainThreadUntilIdle()
+            }
+        })
+        onView(withId(android.R.id.button1)).perform(click())
+    }
 
     @Test fun finishWithoutAreaKeepsUnknownAndCampaignQuestion() {
         val day = fixture()
@@ -147,6 +160,7 @@ class HarvestAreaUiTest {
             closeSoftKeyboard()
             onView(withText("Сохранить")).inRoot(isDialog()).perform(click())
             await { dao.getDayById(day)!!.bulkDensityKgM3 == 555.125 }
+            await { var ready=false;it.onActivity { a -> ready=a.findViewById<TextView>(R.id.textHarvestDayResults).text.contains("555,13") };ready }
             densityDialog()
             onView(withHint("Своё значение, кг/м³")).check(matches(withText("555.125")))
             onView(withText("Своё значение")).check(matches(isChecked()))
@@ -169,7 +183,7 @@ class HarvestAreaUiTest {
             assertEquals(before.copy(status="ACTIVE",endTime=null),dao.getDayById(day))
             assertEquals("IN_PROGRESS",dao.getProcessById(before.processId)!!.status)
             scenario.recreate()
-            await { var ready=false;scenario.onActivity { ready=it.findViewById<android.widget.Button>(R.id.buttonFinishHarvestDay).visibility==android.view.View.VISIBLE };ready }
+            await { var ready=false;scenario.onActivity { ready=it.findViewById<android.widget.Button>(R.id.buttonFinishHarvestDay).visibility==android.view.View.VISIBLE && it.findViewById<TextView>(R.id.textHarvestDayResults).text.isNotEmpty() };ready }
             finishDialog()
             onView(withId(R.id.editFinishHarvestDayArea)).check(matches(withText("3.125")))
             onView(withId(R.id.buttonCancelFinishHarvestDay)).perform(click())
