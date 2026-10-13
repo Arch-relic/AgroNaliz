@@ -54,5 +54,6 @@ JSON сохраняет только Room, не все файлы/настрой
 
 ## Pull Request
 
-Draft PR пока не создан: публикация следующим шагом. Номер и URL будут
-добавлены отдельным отчётным коммитом после фактического создания.
+Draft PR #28: https://github.com/Arch-relic/AgroNaliz/pull/28. Открыт, Draft,
+не объединён. CI https://github.com/Arch-relic/AgroNaliz/actions/runs/38451789433
+выполняется для 0cd90d698df58fdcc8a2bd3773e89804ffb2a03e. Итог будет обновлён.

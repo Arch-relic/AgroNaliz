@@ -121,6 +121,13 @@ class TestApkSigning(unittest.TestCase):
         source=ROOT/'app/build/outputs/apk/debugTest/app-debugTest.apk'
         if not source.is_file() or not (sdk()/'apksigner').is_file() or not shutil.which('keytool'):
             self.skipTest('Built TEST APK and SDK required; Actions executes after build')
+        main_apk=ROOT/'app/build/outputs/apk/debug/app-debug.apk'
+        if main_apk.exists():
+            badging=subprocess.check_output([str(sdk()/'aapt2'),'dump','badging',str(main_apk)],text=True)
+            self.assertRegex(badging,r"package: name='ru.fo6osik.workjournal' versionCode='1'")
+        identity=PROGRAM['apk_identity'](subprocess.check_output([str(sdk()/'aapt2'),'dump','badging',str(source)],text=True))
+        if os.environ.get('TEST_VERSION_CODE'):
+            self.assertEqual(int(os.environ['TEST_VERSION_CODE']),identity[1])
         before=hashlib.sha256(source.read_bytes()).hexdigest()
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder);key,pin=fixture_key(root,'fixture')
