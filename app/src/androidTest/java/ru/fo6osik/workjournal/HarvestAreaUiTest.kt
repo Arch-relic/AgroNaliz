@@ -69,7 +69,7 @@ class HarvestAreaUiTest {
         val day = fixture()
         open(day).use {
             finishDialog()
-            onView(withId(R.id.buttonConfirmFinishHarvestDay)).perform(click())
+            onView(withId(R.id.buttonConfirmFinishHarvestDay)).perform(scrollTo(), click())
             onView(withText("Уборочная кампания окончена?")).check(matches(isDisplayed()))
             onView(withText("Нет")).inRoot(isDialog()).perform(click())
             await { dao.getDayById(day)!!.status == "COMPLETED" }
@@ -83,7 +83,7 @@ class HarvestAreaUiTest {
             finishDialog()
             onView(withId(R.id.editFinishHarvestDayArea)).perform(replaceText("12,375"))
             closeSoftKeyboard()
-            onView(withId(R.id.buttonConfirmFinishHarvestDay)).perform(click())
+            onView(withId(R.id.buttonConfirmFinishHarvestDay)).perform(scrollTo(), click())
             onView(withText("Да")).inRoot(isDialog()).perform(click())
             await { dao.getDayById(day)!!.status == "COMPLETED" }
             assertEquals(12.375, dao.getDayById(day)!!.harvestedAreaHa!!, 0.0)
@@ -97,12 +97,12 @@ class HarvestAreaUiTest {
             finishDialog()
             onView(withId(R.id.editFinishHarvestDayArea)).perform(replaceText("2.5"))
             closeSoftKeyboard()
-            onView(withId(R.id.buttonCancelFinishHarvestDay)).perform(click())
+            onView(withId(R.id.buttonCancelFinishHarvestDay)).perform(scrollTo(), click())
             assertEquals(before, dao.getDayById(day))
             finishDialog()
             onView(withId(R.id.editFinishHarvestDayArea)).perform(replaceText("3,5"))
             closeSoftKeyboard()
-            onView(withId(R.id.buttonConfirmFinishHarvestDay)).perform(click())
+            onView(withId(R.id.buttonConfirmFinishHarvestDay)).perform(scrollTo(), click())
             onView(withText("Отмена")).inRoot(isDialog()).perform(click())
             assertEquals(before, dao.getDayById(day))
         }
@@ -113,10 +113,10 @@ class HarvestAreaUiTest {
             finishDialog()
             onView(withId(R.id.editFinishHarvestDayArea)).perform(replaceText("0"))
             closeSoftKeyboard()
-            onView(withId(R.id.buttonConfirmFinishHarvestDay)).perform(click())
+            onView(withId(R.id.buttonConfirmFinishHarvestDay)).perform(scrollTo(), click())
             onView(withId(R.id.editFinishHarvestDayArea)).check(matches(hasErrorText(context.getString(R.string.harvest_positive_number))))
             assertEquals("ACTIVE", dao.getDayById(day)!!.status)
-            onView(withId(R.id.buttonCancelFinishHarvestDay)).perform(click())
+            onView(withId(R.id.buttonCancelFinishHarvestDay)).perform(scrollTo(), click())
         }
     }
     @Test fun addAndEditAreaAfterCampaignCompletionUpdatesYieldAndPreservesDay() {
@@ -178,7 +178,7 @@ class HarvestAreaUiTest {
             onView(withId(R.id.buttonEditHarvestDay)).perform(scrollTo(), click())
             onView(withId(R.id.spinnerEditHarvestDayStatus)).perform(click())
             androidx.test.espresso.Espresso.onData(org.hamcrest.Matchers.equalTo("Текущий")).perform(click())
-            onView(withId(R.id.buttonConfirmEditHarvestDay)).perform(click())
+            onView(withId(R.id.buttonConfirmEditHarvestDay)).perform(scrollTo(), click())
             await { dao.getDayById(day)!!.status == "ACTIVE" }
             assertEquals(before.copy(status="ACTIVE",endTime=null),dao.getDayById(day))
             assertEquals("IN_PROGRESS",dao.getProcessById(before.processId)!!.status)
@@ -186,7 +186,7 @@ class HarvestAreaUiTest {
             await { var ready=false;scenario.onActivity { ready=it.findViewById<android.widget.Button>(R.id.buttonFinishHarvestDay).visibility==android.view.View.VISIBLE && it.findViewById<TextView>(R.id.textHarvestDayResults).text.isNotEmpty() };ready }
             finishDialog()
             onView(withId(R.id.editFinishHarvestDayArea)).check(matches(withText("3.125")))
-            onView(withId(R.id.buttonCancelFinishHarvestDay)).perform(click())
+            onView(withId(R.id.buttonCancelFinishHarvestDay)).perform(scrollTo(), click())
         }
     }
 
