@@ -22,16 +22,20 @@ class HarvestMigrationTest {
         val room = DatabaseProvider.getDatabase(context)
         val db = room.openHelper.writableDatabase
         assertEquals(20, db.version)
+        db.execSQL("INSERT INTO fields (id,name,areaHa,location,note,isActive) VALUES (4001,'synthetic field',99.5,'synthetic','keep',1)")
+        db.execSQL("INSERT INTO farm_events (id,eventUid,eventType,targetModule,title,description,eventYear,eventMonth,eventDay,datePrecision,payloadJson,targetRecordUid,createdAt) VALUES (4002,'migration-event','FIELD_WORK','FIELDS','synthetic','keep',2026,10,10,'DAY',NULL,NULL,100)")
         db.execSQL("INSERT INTO vehicles (id,type,brand,model,number,year,note,engineId,engineName) VALUES (4101,'combine','synthetic','migration','MIGRATION',2020,'keep',NULL,'')")
         db.execSQL("""INSERT INTO harvest_processes
             (id,processUid,startDate,endDate,status,fieldId,fieldNameSnapshot,crop,combineVehicleId,combineNameSnapshot,bunkerVolumeM3,createdAt)
-            VALUES (4201,'migration-process','2026-10-10','2026-10-10','COMPLETED',NULL,'synthetic','Пшеница',4101,'synthetic',8.0,101)""")
+            VALUES (4201,'migration-process','2026-10-10','2026-10-10','COMPLETED',4001,'synthetic','Пшеница',4101,'synthetic',8.0,101)""")
         db.execSQL("""INSERT INTO harvest_days
             (id,dayUid,processId,workDate,startTime,endTime,status,workIntervalMinutes,unloadIntervalMinutes,lunchIntervalMinutes,
              dinnerIntervalMinutes,waitingTransportIntervalMinutes,workIntervalCustom,unloadIntervalCustom,lunchIntervalCustom,
              dinnerIntervalCustom,waitingTransportIntervalCustom,reminderSettingsInitialized,createdAt)
             VALUES (4301,'migration-day',4201,'2026-10-10','08:00','18:00','COMPLETED',47,9,22,23,41,1,1,1,1,1,1,102)""")
         db.execSQL("INSERT INTO harvest_bunkers (id,bunkerUid,dayId,fillTime,fillLevel,postEventType,createdAt) VALUES (4401,'migration-bunker',4301,'09:00','MORE_THAN_HALF','WAITING_TRANSPORT',103)")
+        db.execSQL("INSERT INTO harvest_processes SELECT 4202,'unknown-process',startDate,endDate,status,fieldId,fieldNameSnapshot,'Другое',combineVehicleId,combineNameSnapshot,bunkerVolumeM3,createdAt FROM harvest_processes WHERE id=4201")
+        db.execSQL("INSERT INTO harvest_days SELECT 4302,'unknown-day',4202,workDate,startTime,endTime,status,workIntervalMinutes,unloadIntervalMinutes,lunchIntervalMinutes,dinnerIntervalMinutes,waitingTransportIntervalMinutes,workIntervalCustom,unloadIntervalCustom,lunchIntervalCustom,dinnerIntervalCustom,waitingTransportIntervalCustom,reminderSettingsInitialized,createdAt FROM harvest_days WHERE id=4301")
         assertTrue(context.getSharedPreferences("harvest_reminder_prefs", 0).edit()
             .putBoolean("enabled_4301", false).putInt("interval_4301", 47).commit())
         val uri = PrivateTestBackups.createDestination(context)
@@ -74,6 +78,11 @@ class HarvestMigrationTest {
                 assertEquals("WAITING_TRANSPORT", cursor.getString(1))
                 assertEquals(103, cursor.getInt(2))
             }
+            db.query("SELECT bulkDensityKgM3,densityMode,harvestedAreaHa FROM harvest_days WHERE id=4302").use {
+                assertTrue(it.moveToFirst()); assertTrue(it.isNull(0)); assertTrue(it.isNull(1)); assertTrue(it.isNull(2))
+            }
+            db.query("SELECT areaHa FROM fields WHERE id=4001").use { assertTrue(it.moveToFirst()); assertEquals(99.5,it.getDouble(0),0.0) }
+            db.query("SELECT description FROM farm_events WHERE id=4002").use { assertTrue(it.moveToFirst()); assertEquals("keep",it.getString(0)) }
             db.query("PRAGMA foreign_key_check").use { assertFalse(it.moveToFirst()) }
             db.query("SELECT number FROM vehicles WHERE id=4101").use { assertTrue(it.moveToFirst()); assertEquals("MIGRATION", it.getString(0)) }
         }

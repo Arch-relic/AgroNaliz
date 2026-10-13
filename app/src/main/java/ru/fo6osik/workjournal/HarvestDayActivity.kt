@@ -3153,6 +3153,7 @@ class HarvestDayActivity : AppCompatActivity() {
         val custom = EditText(this).apply {
             hint = "Своё значение, кг/м³"
             inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
+            keyListener = android.text.method.DigitsKeyListener.getInstance("0123456789,.")
             if (day.densityMode == "CUSTOM") setText(day.bulkDensityKgM3?.let { java.math.BigDecimal.valueOf(it).toPlainString() } ?: "")
         }
         layout.addView(group); layout.addView(custom)
@@ -3373,13 +3374,13 @@ class HarvestDayActivity : AppCompatActivity() {
                         )
 
                 database.runInTransaction {
-                    database
+                    check(database
                         .harvestDao()
                         .completeDay(
                             day.id,
                             endTime,
                             harvestedAreaHa
-                        )
+                        ) == 1) { "День уже завершён или удалён" }
 
                     if (
                         finishProcess

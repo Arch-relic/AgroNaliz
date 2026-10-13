@@ -4440,8 +4440,12 @@ private fun importHarvestDays(
                     }
                 )
 
-                val density = jsonNullableDouble(row, "bulkDensityKgM3")
-                val mode = jsonNullableString(row, "densityMode")
+                val legacy = !row.has("bulkDensityKgM3") && !row.has("densityMode")
+                val initial = if (legacy) database.query("SELECT crop FROM harvest_processes WHERE id = ?", arrayOf(processId)).use {
+                    check(it.moveToFirst()); HarvestDensityCatalog.initial(it.getString(0))
+                } else null to null
+                val density = if (legacy) initial.second else jsonNullableDouble(row, "bulkDensityKgM3")
+                val mode = if (legacy) initial.first else jsonNullableString(row, "densityMode")
                 require(density == null || HarvestCalculator.positive(density) != null)
                 require(mode == null || mode in setOf("MIN", "AVERAGE", "MAX", "CUSTOM"))
                 require((density == null) == (mode == null))

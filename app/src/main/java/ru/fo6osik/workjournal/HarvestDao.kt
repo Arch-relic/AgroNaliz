@@ -303,14 +303,20 @@ interface HarvestDao {
         WHERE id = :dayId AND status = 'ACTIVE'
         """
     )
-    fun completeDay(
-        dayId: Int,
-        endTime: String,
-        harvestedAreaHa: Double? = null
-    )
+    fun completeDayRaw(dayId: Int, endTime: String, harvestedAreaHa: Double?): Int
+
+    fun completeDay(dayId: Int, endTime: String, harvestedAreaHa: Double? = null): Int {
+        require(harvestedAreaHa == null || HarvestCalculator.positive(harvestedAreaHa) != null)
+        return completeDayRaw(dayId, endTime, harvestedAreaHa)
+    }
 
     @Query("UPDATE harvest_days SET harvestedAreaHa = :harvestedAreaHa WHERE id = :dayId AND status = 'COMPLETED'")
-    fun updateHarvestedArea(dayId: Int, harvestedAreaHa: Double?): Int
+    fun updateHarvestedAreaRaw(dayId: Int, harvestedAreaHa: Double?): Int
+
+    fun updateHarvestedArea(dayId: Int, harvestedAreaHa: Double?): Int {
+        require(harvestedAreaHa == null || HarvestCalculator.positive(harvestedAreaHa) != null)
+        return updateHarvestedAreaRaw(dayId, harvestedAreaHa)
+    }
 
     @Query("UPDATE harvest_days SET bulkDensityKgM3 = :densityKgM3, densityMode = :mode WHERE id = :dayId")
     fun updateDayDensityRaw(dayId: Int, mode: String?, densityKgM3: Double?): Int
