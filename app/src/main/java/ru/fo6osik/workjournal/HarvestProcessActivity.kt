@@ -148,7 +148,9 @@ class HarvestProcessActivity : AppCompatActivity() {
             )
 
         buttonNewDay.setOnClickListener {
-            showNewDayDialog()
+            val active = currentDays.firstOrNull { it.status == "ACTIVE" }
+            if (active == null) showNewDayDialog() else startActivity(Intent(this, HarvestDayActivity::class.java)
+                .putExtra(HarvestDayActivity.EXTRA_DAY_ID, active.id))
         }
 
         buttonEditProcess.setOnClickListener {
@@ -316,11 +318,11 @@ class HarvestProcessActivity : AppCompatActivity() {
                     "ACTIVE"
             }
 
+        buttonNewDay.text = if (hasActiveDay) "Продолжить рабочий день" else "Новый день"
         buttonNewDay.visibility =
             if (
                 process.status ==
-                    "IN_PROGRESS" &&
-                !hasActiveDay
+                    "IN_PROGRESS"
             ) {
                 View.VISIBLE
             } else {

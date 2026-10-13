@@ -155,4 +155,25 @@ class HarvestAreaUiTest {
         }
     }
 
+    @Test fun editReopensCampaignAndKeepsHarvestResults() {
+        val day = fixture(completed = true)
+        dao.updateHarvestedArea(day, 3.125)
+        dao.updateDayDensity(day, "CUSTOM", 555.125)
+        val before = dao.getDayById(day)!!
+        open(day).use { scenario ->
+            onView(withId(R.id.buttonEditHarvestDay)).perform(scrollTo(), click())
+            onView(withId(R.id.spinnerEditHarvestDayStatus)).perform(click())
+            androidx.test.espresso.Espresso.onData(org.hamcrest.Matchers.equalTo("Текущий")).perform(click())
+            onView(withId(R.id.buttonConfirmEditHarvestDay)).perform(click())
+            await { dao.getDayById(day)!!.status == "ACTIVE" }
+            assertEquals(before.copy(status="ACTIVE",endTime=null),dao.getDayById(day))
+            assertEquals("IN_PROGRESS",dao.getProcessById(before.processId)!!.status)
+            scenario.recreate()
+            await { var ready=false;scenario.onActivity { ready=it.findViewById<android.widget.Button>(R.id.buttonFinishHarvestDay).visibility==android.view.View.VISIBLE };ready }
+            finishDialog()
+            onView(withId(R.id.editFinishHarvestDayArea)).check(matches(withText("3.125")))
+            onView(withId(R.id.buttonCancelFinishHarvestDay)).perform(click())
+        }
+    }
+
 }

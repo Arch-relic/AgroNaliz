@@ -53,6 +53,10 @@
         android:digits="0123456789,."
         android:singleLine="true" />
 
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="Время до начала смены относится к следующим суткам. Смена — менее 24 часов."
+        android:paddingTop="8dp" />
+
     <Button
         android:id="@+id/buttonConfirmFinishHarvestDay"
         android:layout_width="match_parent"

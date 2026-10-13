@@ -2488,18 +2488,7 @@ class HarvestDayActivity : AppCompatActivity() {
                                 newStatus
                         )
 
-                        if (
-                            newStatus ==
-                            "ACTIVE"
-                        ) {
-                            dao.reopenProcess(
-                                day.processId
-                            )
-                        } else {
-                            dao.refreshCompletedProcessEndDate(
-                                day.processId
-                            )
-                        }
+
                     }
 
                     runOnUiThread {
@@ -3252,6 +3241,7 @@ class HarvestDayActivity : AppCompatActivity() {
             )
 
         val editArea = dialogView.findViewById<EditText>(R.id.editFinishHarvestDayArea)
+        editArea.setText(day.harvestedAreaHa?.let { java.math.BigDecimal.valueOf(it).toPlainString() } ?: "")
 
         val buttonConfirm =
             dialogView.findViewById<Button>(
@@ -3502,53 +3492,9 @@ class HarvestDayActivity : AppCompatActivity() {
         }
     }
 
-    private fun minutesBetween(
-        first: String,
-        second: String
-    ): Int? {
-        return try {
-            val firstParts =
-                first.split(":")
-
-            val secondParts =
-                second.split(":")
-
-            if (
-                firstParts.size != 2 ||
-                secondParts.size != 2
-            ) {
-                null
-
-            } else {
-                val firstMinutes =
-                    firstParts[0].toInt() *
-                        60 +
-                        firstParts[1].toInt()
-
-                val secondMinutes =
-                    secondParts[0].toInt() *
-                        60 +
-                        secondParts[1].toInt()
-
-                val difference =
-                    secondMinutes -
-                        firstMinutes
-
-                if (
-                    difference < 0
-                ) {
-                    null
-                } else {
-                    difference
-                }
-            }
-
-        } catch (
-            _: Exception
-        ) {
-            null
-        }
-    }
+    private fun minutesBetween(first: String, second: String): Int? = try {
+        HarvestChronology.offset(first, second)
+    } catch (_: IllegalArgumentException) { null }
 
     private fun totalVolumeRange(
         bunkerVolumeM3: Double?,

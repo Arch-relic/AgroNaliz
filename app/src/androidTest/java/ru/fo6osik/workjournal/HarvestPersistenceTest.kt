@@ -102,7 +102,7 @@ class HarvestPersistenceTest {
             dao.updateDayDensity(first, "CUSTOM", 725.5)
             val second = dao.insertDay(HarvestDay(dayUid = "second", processId = process, workDate = "2026-10-12", startTime = "08:00")).toInt()
             assertEquals(720.0, dao.getDayById(second)!!.bulkDensityKgM3!!, 0.0)
-            dao.completeDay(first, "18:00"); dao.completeProcess(process, "2026-10-12")
+            dao.completeDay(first, "18:00"); dao.completeDay(second, "18:00"); dao.completeProcess(process, "2026-10-12")
             dao.updateDayDensity(first, "CUSTOM", 555.25)
             assertEquals(555.25, dao.getDayById(first)!!.bulkDensityKgM3!!, 0.0)
             assertEquals("CUSTOM", dao.getDayById(first)!!.densityMode)
