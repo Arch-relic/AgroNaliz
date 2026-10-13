@@ -387,8 +387,10 @@ interface HarvestDao {
 
     @Transaction
     fun completeProcess(processId: Int, endDate: String) {
-        require(getDaysForProcess(processId).none { it.status == "ACTIVE" }) { "Сначала завершите активный рабочий день" }
-        completeProcessRaw(processId, endDate)
+        val days = getDaysForProcess(processId)
+        require(days.none { it.status == "ACTIVE" }) { "Сначала завершите активный рабочий день" }
+        // Reopening an earlier day must not shorten the existing campaign history.
+        completeProcessRaw(processId, maxOf(endDate, days.maxOfOrNull { it.workDate } ?: endDate))
     }
 
 

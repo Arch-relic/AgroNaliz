@@ -47,6 +47,7 @@ class HarvestCampaignStateUiTest {
             await(scenario,"Продолжить рабочий день");scenario.recreate();await(scenario,"Продолжить рабочий день")
             onView(withId(R.id.buttonNewHarvestDay)).perform(scrollTo(),click())
             onView(withId(R.id.buttonFinishHarvestDay)).check(matches(withText("Рабочий день окончен")))
+            androidx.test.espresso.Espresso.pressBack()
         }
         assertEquals(1,dao.getDaysForProcess(process).size)
     }

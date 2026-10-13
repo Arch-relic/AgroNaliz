@@ -84,4 +84,18 @@ class HarvestLifecycleTest {
             rejected { dao.updateDayDetails(day,before.workDate,before.startTime,null,"ACTIVE") }
         } finally { db.close();context.deleteDatabase(name) }
     }
+    @Test fun reCompletingEarlierDayKeepsLatestCampaignDateAndLaterDay() = memory { db ->
+        val(process,first)=fixture(db);val dao=db.harvestDao()
+        dao.completeDay(first,"18:00",2.0)
+        val second=dao.insertDay(HarvestDay(dayUid="later",processId=process,workDate="2026-10-11",startTime="08:00")).toInt()
+        dao.completeDay(second,"18:00",3.0);dao.completeProcess(process,"2026-10-11")
+        val later=dao.getDayById(second)
+        val firstDay=dao.getDayById(first)!!
+        dao.updateDayDetails(first,firstDay.workDate,firstDay.startTime,null,"ACTIVE")
+        dao.completeDay(first,"19:00");dao.completeProcess(process,"2026-10-10")
+        assertEquals("2026-10-11",dao.getProcessById(process)!!.endDate)
+        assertEquals(later,dao.getDayById(second))
+        assertEquals(2.0,dao.getDayById(first)!!.harvestedAreaHa!!,0.0)
+    }
+
 }
