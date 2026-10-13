@@ -65,3 +65,16 @@ implementation(
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
 }
 
+
+// TEST-only public build metadata. Main APK version and signing stay unchanged.
+androidComponents {
+    onVariants(selector().withBuildType("debugTest")) { variant ->
+        val code = providers.gradleProperty("testVersionCode").map { value ->
+            value.toIntOrNull()?.takeIf { it in 1..2100000000 }
+                ?: throw GradleException("testVersionCode must be an integer in 1..2100000000")
+        }
+        variant.outputs.forEach { output ->
+            if (providers.gradleProperty("testVersionCode").isPresent) output.versionCode.set(code)
+        }
+    }
+}

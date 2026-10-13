@@ -1,180 +1,88 @@
-# Передача результатов Codex — «АгроНализ»
+# Передача контекста: Issue #27, стабильная TEST подпись
 
-## Дата, цель и статус
+Дата: 2026-10-13. Статус: безопасная реализация в Draft PR #28, CI успешен.
+Постоянный выпуск и обновление старой установки блокированы отсутствующим ключом. Основной APK signer не изменён.
 
-11 октября 2026. Отдельная безопасная TEST-сборка с applicationId
-ru.fo6osik.workjournal.debugtest и названием «АгроНализ TEST».
-Реализация готова к ревью. Штатная сборка обеих APK, JVM-тесты и проверка
-изоляции на API 35 эмуляторе прошли; APK скачаны и проверены. Открыт Draft PR №22.
-Основной applicationId ru.fo6osik.workjournal сохранён.
-
-## Решения и изоляция
-
-Добавлен build type debugTest, наследующий debug с отдельным applicationIdSuffix,
-без изменения namespace и обычных debug/release. Room 20, миграции и бизнес-логика
-сохранены. Android разделяет UID, базу, prefs, files/cache/noBackup и app-scoped
-external-files. Проверены все записи через File/contentResolver, манифест,
-reminder prefs и LocalDocumentStore. Общих фиксированных внешних путей нет.
-В main отсутствовал FileProvider; TEST получает приватный provider с authority
-${applicationId}.testbackups и доступом только к filesDir/test-backups.
-TEST экспорт не выбирает общий SAF-файл и дополнительно отвергает чужие URI в
-DatabaseBackupManager до открытия БД. Основной SAF-экспорт сохранён.
-Автоматическое резервирование и device transfer TEST исключены.
-Импорт/restore читает выбранный файл и пишет только в текущую базу; автоматического
-переноса данных основной версии нет. TEST-копии приватные, получение через ADB
-описано в docs/test-apk.md. Варианты могут быть установлены одновременно.
-
-## Файлы
-
-Изменены:
-- app/build.gradle.kts
-- app/src/main/java/ru/fo6osik/workjournal/BackupRestoreActivity.kt
-- app/src/main/java/ru/fo6osik/workjournal/DatabaseBackupManager.kt
-- app/src/androidTest/java/ru/fo6osik/workjournal/ExampleInstrumentedTest.kt
-- .github/workflows/android-pr-checks.yml
-- docs/codex-handoff.md
+## Изменения
 
 Созданы:
-- app/src/debug/AndroidManifest.xml
-- app/src/debugTest/AndroidManifest.xml
-- app/src/debugTest/res/values/strings.xml
-- app/src/debugTest/res/xml/test_backup_paths.xml
-- app/src/debugTest/res/xml/test_data_extraction_rules.xml
-- app/src/main/java/ru/fo6osik/workjournal/BackupStoragePolicy.kt
-- app/src/main/java/ru/fo6osik/workjournal/PrivateTestBackups.kt
-- app/src/test/java/ru/fo6osik/workjournal/BackupStoragePolicyTest.kt
-- app/src/androidTest/java/ru/fo6osik/workjournal/BuildVariantIsolationTest.kt
-- docs/run-build-isolation-checks.py
-- docs/verify-build-variants.py
-- docs/test-apk.md
+- .github/workflows/test-apk-publish.yml
+- app/src/androidTest/java/ru/fo6osik/workjournal/TestSigningUpdateTest.kt
+- docs/export-installed-test-backup.py
+- docs/run-test-signing-checks.py
+- docs/test_test_apk_signing.py
+- docs/test_test_backup_export.py
+- docs/test-apk-signing.md
 
-Удалений нет. PDF не возвращались, каталоги/индексы и облачные интеграции не
-изменялись. Секреты/APK/ключи не добавлены в Git. Debug queries между двумя
-пакетами нужны только для проверки совместной установки; release не затрагиваются.
+Изменены:
+- .github/workflows/android-pr-checks.yml
+- .gitignore
+- app/build.gradle.kts
+- docs/codex-handoff.md
 
-## Ветка и SHA
+Удалений нет. Нет изменений Room, данных, APK основной подписи и PR #25/#26.
+Раздельный signer использует TEST_* Secrets и TEST_CERT_SHA256 Variable,
+ограничен владельцем/main/первой попыткой. Проверяет сертификат и ID до upload.
+TEST versionCode увеличивается независимо от основной версии. Raw TEST из PR
+больше не публикуется; добавлены проверки обновления в свежем эмуляторе.
 
-Ветка feature/safe-test-apk создана GitHub API от актуального main
-e97063cece9b66062ad1cfd4190f7e1cedb3fbf0. main не изменяется.
-Предыдущая ветка сохранена; отдельный локальный worktree восстановлен из
-сохранённого snapshot и точных файлов актуального main через API.
-GitHub-ветка имеет настоящий parent main, а не локальную историю зеркала.
-Проверенный Android-код/head PR: 502b66e943489fec17f243e703bd4fefce3f5755.
-Фактически собранный merge SHA: 132b499663b5409faa14a052c5fba412f97bcbd1.
-GitHub Actions run 38134641076: SUCCESS.
-https://github.com/Arch-relic/AgroNaliz/actions/runs/38134641076
-После него коммит 309f1243d5e635bc79a855b920bc9d18306b885a изменил только runner проверки
-и его инструкцию: запрет физических устройств/существующих пакетов и отказ
-от adb install -r. Эти два отказа проверены локально с поддельным adb до
-любых мутаций. Android-код/APK-конфигурация не менялись.
-Этот отчёт сохранён следующим коммитом документации. Указанные SHA обозначают
-реально проверенные результаты, а не хеш самого содержащего отчёт коммита.
-Изменения закоммичены локально и опубликованы в отдельной GitHub-ветке.
+## Ветка и проверки
 
-## Проверки
+Ветка feature/test-apk-stable-signing, main
+c0ea3d01a97dd0eb4814b59307b44169916821bc.
+Проверенный код: 2c39d60359f9e198b50fb1ef9d6554a844eafd55 (CI #64).
+Предыдущий 0cd90d698df58fdcc8a2bd3773e89804ffb2a03e также прошёл CI #63.
+Отчёт сохраняется следующим отдельным коммитом; его собственный SHA здесь
+не указан намеренно. Код после проверенного SHA не меняется, только этот отчёт.
+Локальное зеркало остаётся незакоммиченным; изменения опубликованы через GitHub
+Git API в отдельной feature-ветке. Main не менялся.
+`python3 -m unittest discover -s docs -p 'test_test_*.py' -v`: 25 тестов,
+24 успешны, один SDK тест пропущен до появления собранной TEST APK.
+`source /workspace/agronaliz-env.sh; agrogradle :app:assembleDebug :app:test`:
+запуск облачного Gradle блокирован до сборки: Could not determine a usable
+wildcard IP for this machine. Это не успешная сборка/UP-TO-DATE.
+GitHub Actions #64: https://github.com/Arch-relic/AgroNaliz/actions/runs/38451873836
+Все steps успешны, свежие запуски, не UP-TO-DATE:
+- `./gradlew -PtestVersionCode=1000064 :app:assembleDebug :app:assembleDebugTest :app:testDebugUnitTest :app:testDebugTestUnitTest :app:assembleDebugAndroidTest --no-daemon --stacktrace --console=plain` — успешен.
+- `./gradlew -PtestVersionCode=1000064 -PtestBuildType=debugTest :app:assembleDebugTestAndroidTest --no-daemon --stacktrace --console=plain` — успешен.
+- JVM: 67 debug + 67 debugTest тестов, ошибок/пропусков нет (XML CI #63,
+  тот же набор; оба JVM tasks также реально выполнены в CI #64).
+- `python3 -m unittest discover -s docs -p 'test_validate_document_catalog.py' -v` — 13 pass.
+- `python3 docs/verify-build-variants.py` — ID/providers/изоляция успешны.
+- `python3 -m unittest discover -s docs -p 'test_test_*.py' -v` — 25 pass,
+  0 skip, включая реальный SDK signer, отрицательный SHA и удаление temp key.
+  Проверены main ID/versionCode1 и TEST ID/versionCode1000064 в самих APK.
+- `./gradlew -PtestVersionCode=1000065 :app:assembleDebugTest --no-daemon --stacktrace --console=plain` — успешен.
+- `python3 docs/run-build-isolation-checks.py` и
+  `python3 docs/run-test-signing-checks.py` — успешны, 11 одиночных запусков
+  instrument methods в одноразовом API35 эмуляторе. Обновление одним ключом
+  сохранило Room/preferences/files, другим ключом отклонено без изменения
+  данных; приватный JSON скопирован read-only и синтетически восстановлен;
+  основная установка остаётся неизменной. SYNTHETIC fixtures, не телефон.
+- `python3 -m py_compile ...`, YAML parse, `git diff --check` — успешны локально.
 
-- git diff --check: успешно.
-- YAML через PyYAML BaseLoader: успешно.
-- python3 docs/run-document-jvm-tests.py: новый fallback запуск, 63 JUnit-теста,
-  0 ошибок, 0 failures; Kotlin 2.0.21/JVM 1.8. Новая backup-политика этим скриптом
-  не проверяется; штатные unit tests обоих вариантов ожидаются.
-- python3 -m unittest discover -s docs -p 'test_validate_document_catalog.py' -v:
-  новый запуск, 13 тестов, все прошли.
-- source /workspace/agronaliz-env.sh; agrogradle :app:assembleDebug :app:assembleDebugTest :app:test:
-  FAILED до компиляции: Could not determine a usable wildcard IP for this machine.
-  Локальная штатная сборка не объявляется успешной.
+Artifacts CI #64: только обычная main debug APK и диагностика.
+Стабильно подписанной пользовательской TEST APK в этом PR нет намеренно.
+Production workflow пока не запускался: только main после отдельного merge
+владельцем и настройки TEST ключа/pin. Не выдавать fixture подписи за постоянную.
 
-## Подтверждённые результаты GitHub Actions
+## Ограничения и ручные действия
 
-1. ./gradlew :app:assembleDebug :app:assembleDebugTest :app:testDebugUnitTest :app:testDebugTestUnitTest :app:assembleDebugAndroidTest --no-daemon --stacktrace --console=plain:
-   BUILD SUCCESSFUL in 3m 25s. Unit tasks выполнены новым запуском, не UP-TO-DATE.
-   XML скачанного diagnostics: 67 tests для каждого варианта (5 suites),
-   всего 134 JVM-теста, 0 failures/errors/skipped. Четыре новые проверки backup
-   guard выполняются в обоих вариантах. Вспомогательные no-source/preBuild
-   задачи могли быть UP-TO-DATE; результаты unit tasks не взяты из старого запуска.
-2. ./gradlew -PtestBuildType=debugTest :app:assembleDebugTestAndroidTest --no-daemon --stacktrace --console=plain:
-   BUILD SUCCESSFUL in 25s. AGP создаёт instrumented APK только для выбранного
-   testBuildType; второй вызов использует уже построенный TEST (часть задач
-   UP-TO-DATE), но test APK собрана успешно. Обычный testBuildType остаётся debug.
-3. python3 -m unittest discover -s docs -p 'test_validate_document_catalog.py' -v:
-   новый CI запуск, 13 тестов, OK.
-4. python3 docs/verify-build-variants.py: успешно, IDs извлечены из настоящих APK,
-   label TEST подтверждён. Merged manifest: sharedUserId отсутствует, providers
-   exported=false. Main authorities: ru.fo6osik.workjournal.androidx-startup.
-   TEST: ru.fo6osik.workjournal.debugtest.androidx-startup и
-   ru.fo6osik.workjournal.debugtest.testbackups. Пересечений нет.
-   FileProvider основной APK отсутствует; TEST files-path только test-backups.
-   allowBackup=false и dataExtractionRules TEST подтверждены.
-5. python3 docs/run-build-isolation-checks.py, API 35 x86_64/google_apis/KVM:
-   совместная установка обеих APK и test APK успешна. 5 запусков инструментальных
-   тестов, каждый OK (1 test):
-   - main seed: синтетическая запись через настоящий VehicleDao/Room, prefs,
-     files/cache/noBackupFilesDir/documents/app-scoped external-files;
-   - TEST seed: другая запись в той же Room-схеме, отдельные пустые каталоги,
-     разные UID и dataDir, собственный путь БД;
-   - TEST provider: private URI read/write, отказ открытия файла вне разрешённого
-     backup-каталога, экспорт реальной TEST базы содержит только TEST-сентинел,
-     внешний SAF экспорт отвергнут, exported=false, чтение main sandbox запрещено;
-   - main verify: основная запись Room, prefs и все файловые сентинелы сохранены;
-   - TEST удалён; повторный main verify: все основные сентинелы снова сохранены.
-   Итог: ISOLATION SUCCESS. Исходные данные владельца не использовались.
-6. ZIP обеих APK и diagnostics скачаны через GitHub artifact API. ZIP CRC и
-   внутренняя структура APK проверены zipfile.testzip; AndroidManifest.xml найден.
-   aapt2 dump badging повторно проверил package/label/launchable activity.
-   apksigner verify обеих APK: exit 0 (стандартные предупреждения META-INF вне
-   JAR-защиты не меняли результат). Main label «АгроУчёт — КФХ Губановы» сохранён.
-   Команда основной Release-сборки в CI не выполнялась; её build type и ID
-   сохраняются исходной конфигурацией. Java 17, Gradle 8.13, Kotlin 2.2.20,
-   AGP 8.12.0, compileSdk 36 и minSdk 23 сохранены.
-7. Проверка защиты runner поддельным adb: физическое устройство и эмулятор с
-   установленным main отвергнуты до install/uninstall/instrument.
-
-APK публикуются только после успешных проверок изоляции.
-
-## APK и получение
-
-TEST artifact: app-TEST-feature-safe-test-apk-132b499663b5, ID 11700861805.
-https://github.com/Arch-relic/AgroNaliz/actions/runs/38134641076/artifacts/11700861805
-ZIP 26303055 байт; app-debugTest.apk 38097874 байт; срок хранения до 25.10.2026.
-applicationId: ru.fo6osik.workjournal.debugtest, label: «АгроНализ TEST».
-SHA-256 APK: f66784148fb284b35c6af762b1d75d72fc4b29fdf40ae08033ba024536fea8b1.
-SHA-256 ZIP совпал с GitHub digest:
-ce4fa5f75b997e3a21a9cd1b9d4896c3da937ea24499890e4cc1d5923a21d601.
-
-Main artifact: app-debug-feature-safe-test-apk-132b499663b5, ID 11700971543.
-applicationId: ru.fo6osik.workjournal. APK 38096490 байт.
-SHA-256 APK: 64441249fcf5fd569eea75ca9aff865374fc2a7a8771f27dbf442f187c26648e.
-ZIP SHA-256 совпал с GitHub digest:
-f4c18eb95270c9c0476abc2442e0bc6c74cc82f0768229dce569f55b25110451.
-Diagnostics ID 11700806915 содержит JUnit XML обоих вариантов.
-
-## Исправленные ошибки при проверке
-
-- Run 38132846058: отсутствовала задача assembleDebugTestAndroidTest.
-  Исправлено выбором testBuildType через Gradle property и отдельным вызовом.
-- Run 38132964978: старый test AndroidX manifest не задавал exported для
-  InstrumentationActivityInvoker на target 35. Обновлены исключительно
-  androidTestImplementation junit 1.1.2 → 1.2.1 и espresso 3.3.0 → 3.6.1.
-  Production-зависимости не менялись.
-- Run 38134250896: неверное сравнение canonical database path с алиасом dataDir.
-  Канонизируются обе стороны. Ошибка была в тесте, не в путях приложения.
-Все три исправления подтверждены успешным run 38134641076.
-
-## Риски и ручные проверки
-
-Реальная установка на телефон/OEM не проверена. Debug-подпись между CI runners
-может отличаться; конфликт обновления TEST не требует удаления основной версии.
-TEST backup хранится приватно; его удаление удалит только TEST-копии.
-Автоматическое main-поведение обновится лишь после слияния владельцем.
-PDF-байты и совместимость содержания PDF/индексов не проверяются в этом этапе.
-Перед установкой использовать только artifact app-TEST-..., не app-debug-....
-Не выбирать для импорта реальные рабочие данные; использовать синтетические.
-См. docs/test-apk.md для проверки двух иконок/настроек/записей/удаления TEST.
+Старый приватный TEST ключ не найден в доступной среде; старый полный SHA
+не предоставлен (Issue сообщает только 5F3A...). Android не позволяет обновить
+старую установку новым ключом. Ни удаление, ни очистка данных не выполняются.
+Нужны постоянный TEST keystore и четыре TEST_* Secrets плюс полный публичный
+TEST_CERT_SHA256. Возможности безопасно записать Secrets через доступные
+инструменты нет; владелец настраивает их в GitHub. Производственная подписанная
+TEST APK пока не создана, её будущий сертификат неизвестен.
+Текущий main Room20: floor21 намеренно блокирует downgrade старой установки21.
+JSON сохраняет только Room, не все файлы/настройки. Реальный телефон и данные
+не доступны; доказательство эмулятора относится только к синтетическим данным.
+Подробный безопасный порядок: docs/test-apk-signing.md. PR не объединять.
 
 ## Pull Request
 
-[PR №22](https://github.com/Arch-relic/AgroNaliz/pull/22): Draft, открыт,
-base main, head feature/safe-test-apk. Не объединён; main не изменён.
-Отчёт и результаты добавлены после создания PR в эту же ветку.
-Следующее действие владельца: ревью и ручная установка TEST по docs/test-apk.md.
-Слияние требует отдельного разрешения владельца.
+Draft PR #28: https://github.com/Arch-relic/AgroNaliz/pull/28. Открыт, Draft,
+не объединён. CI #63 и #64 успешны. Финальный отчёт — документационный коммит после
+проверенного кода; повторная Android сборка для одного отчёта не обязательна
+по AGENTS.md. Новые автоматически запущенные проверки нужно оценивать отдельно.
