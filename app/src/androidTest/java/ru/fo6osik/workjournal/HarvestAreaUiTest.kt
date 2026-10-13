@@ -176,8 +176,14 @@ class HarvestAreaUiTest {
         val before = dao.getDayById(day)!!
         open(day).use { scenario ->
             onView(withId(R.id.buttonEditHarvestDay)).perform(scrollTo(), click())
-            onView(withId(R.id.spinnerEditHarvestDayStatus)).perform(click())
-            androidx.test.espresso.Espresso.onData(org.hamcrest.Matchers.equalTo("Текущий")).perform(click())
+            onView(withId(R.id.spinnerEditHarvestDayStatus)).inRoot(isDialog()).perform(object : androidx.test.espresso.ViewAction {
+                override fun getDescription() = "Select active day in the real edit dialog"
+                override fun getConstraints(): org.hamcrest.Matcher<android.view.View> = isAssignableFrom(android.widget.Spinner::class.java)
+                override fun perform(controller: androidx.test.espresso.UiController, view: android.view.View) {
+                    (view as android.widget.Spinner).setSelection(0)
+                    controller.loopMainThreadUntilIdle()
+                }
+            })
             onView(withId(R.id.buttonConfirmEditHarvestDay)).perform(scrollTo(), click())
             await { dao.getDayById(day)!!.status == "ACTIVE" }
             assertEquals(before.copy(status="ACTIVE",endTime=null),dao.getDayById(day))

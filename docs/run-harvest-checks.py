@@ -50,10 +50,13 @@ def main():
     instrument("HarvestBackupTest", count=3)
     instrument("HarvestLifecycleTest", count=5)
     instrument("HarvestCampaignStateUiTest", count=2)
+    instrument("HarvestRestartTest", "seedReopenedDay")
+    adb("shell", "am", "force-stop", test_id)
+    instrument("HarvestRestartTest", "verifyAfterProcessRestart")
     isolation["instrument"]("ru.fo6osik.workjournal", "verifyMainAfterTest")
     adb("uninstall", test_id)
     isolation["instrument"]("ru.fo6osik.workjournal", "verifyMainAfterTest")
-    print("HARVEST SUCCESS: 24 harvest instrumentation tests; real Room v20 -> v21 upgrade; "
+    print("HARVEST SUCCESS: 26 harvest instrumentation tests; real Room v20 -> v21 upgrade; "
           "all legacy rows/timers/events retained; optional area completion/editing; "
           "v20/v21 backups and v21 import; synthetic main unchanged", flush=True)
 
