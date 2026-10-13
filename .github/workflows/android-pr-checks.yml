@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      version_code:
+        description: 'Optional APK versionCode (must not be lower than installed); default is run number'
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -14,6 +19,11 @@ jobs:
   android:
     runs-on: ubuntu-latest
     timeout-minutes: 40
+    outputs:
+      debug_artifact: ${{ steps.apk.outputs.name }}
+      source_sha: ${{ steps.apk.outputs.source_sha }}
+      version_code: ${{ steps.apk.outputs.version_code }}
+      original_artifact: ${{ steps.apk.outputs.original_name }}
     steps:
       - name: Checkout selected revision
         uses: actions/checkout@v4
@@ -36,10 +46,24 @@ jobs:
           sed -i '/^android\.aapt2FromMavenOverride=/d' gradle.properties
       - name: Make wrapper executable
         run: chmod +x ./gradlew
+      - name: Choose public APK version code
+        env:
+          CODE_OVERRIDE: ${{ inputs.version_code }}
+        run: |
+          python3 - <<'PY'
+          import os, re
+          value = os.environ.get("CODE_OVERRIDE", "").strip() or os.environ["GITHUB_RUN_NUMBER"]
+          if not re.fullmatch(r"[1-9][0-9]*", value) or int(value) > 2100000000:
+              raise SystemExit("version_code must be an integer in 1..2100000000")
+          with open(os.environ["GITHUB_ENV"], "a") as output:
+              output.write(f"APK_VERSION_CODE={int(value)}\n")
+          PY
       - name: Build debug APK and run JVM tests
         run: |
-          ./gradlew :app:assembleDebug :app:assembleDebugTest :app:testDebugUnitTest :app:testDebugTestUnitTest :app:assembleDebugAndroidTest --no-daemon --stacktrace --console=plain
-          ./gradlew -PtestBuildType=debugTest :app:assembleDebugTestAndroidTest --no-daemon --stacktrace --console=plain
+          ./gradlew -PciVersionCode="$APK_VERSION_CODE" :app:assembleDebug :app:assembleDebugTest :app:testDebugUnitTest :app:testDebugTestUnitTest :app:assembleDebugAndroidTest --no-daemon --stacktrace --console=plain
+          ./gradlew -PciVersionCode="$APK_VERSION_CODE" -PtestBuildType=debugTest :app:assembleDebugTestAndroidTest --no-daemon --stacktrace --console=plain
+      - name: Test signing verification and trust policy without production secrets
+        run: python3 -m unittest discover -s docs -p 'test_original_apk_signing.py' -v
       - name: Validate document catalog tests
         run: python3 -m unittest discover -s docs -p 'test_validate_document_catalog.py' -v
       - name: Verify APK identifiers and provider isolation
@@ -70,6 +94,10 @@ jobs:
           with open(os.environ["GITHUB_OUTPUT"], "a") as output:
               output.write(f"name=app-debug-{branch}-{sha}\n")
               output.write(f"test_name=app-TEST-{branch}-{sha}\n")
+              full_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+              output.write(f"source_sha={full_sha}\n")
+              output.write(f"version_code={os.environ['APK_VERSION_CODE']}\n")
+              output.write(f"original_name=app-original-signed-{branch}-{sha}-v{os.environ['APK_VERSION_CODE']}\n")
           PY
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
@@ -96,3 +124,203 @@ jobs:
             app/build/test-results/
             app/build/reports/tests/
             app/build/outputs/apk/debug/output-metadata.json
+
+  original-signature:
+    needs: android
+    # Never use pull_request_target or run Gradle/repository code with signing secrets.
+    # Bootstrap preview is limited to the owner's explicitly authorized, same-repo branch.
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.head.repo.full_name == github.repository &&
+       github.event.pull_request.head.ref == 'feature/original-key-signing' &&
+       github.event.pull_request.user.login == github.repository_owner &&
+       github.actor == github.repository_owner)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Set up Java 17 for trusted Android SDK tools
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install signing tools before exposing any secrets
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          "$SDKMANAGER" "build-tools;35.0.0"
+      - name: Download only the successfully checked main debug APK
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.android.outputs.debug_artifact }}
+          path: ${{ runner.temp }}/agronaliz-original-input
+      - name: Read only the public certificate fingerprint from configured keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          python3 - <<'PY'
+          import base64, hashlib, os, subprocess, tempfile
+          from pathlib import Path
+          try:
+              required = ['ANDROID_KEYSTORE_BASE64', 'ANDROID_KEYSTORE_PASSWORD', 'ANDROID_KEY_ALIAS']
+              if any(not os.environ.get(name) for name in required):
+                  raise ValueError()
+              with tempfile.TemporaryDirectory(prefix='agronaliz-key-', dir=os.environ['RUNNER_TEMP']) as folder:
+                  os.chmod(folder, 0o700)
+                  key = Path(folder) / 'original.keystore'
+                  data = base64.b64decode(''.join(os.environ['ANDROID_KEYSTORE_BASE64'].split()), validate=True)
+                  descriptor = os.open(key, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+                  with os.fdopen(descriptor, 'wb') as stream:
+                      stream.write(data)
+                  del data
+                  result = subprocess.run(['keytool', '-exportcert', '-keystore', str(key),
+                                           '-alias', os.environ['ANDROID_KEY_ALIAS'],
+                                           '-storepass:env', 'ANDROID_KEYSTORE_PASSWORD'],
+                                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)
+                  if result.returncode != 0 or not result.stdout:
+                      raise ValueError()
+                  print('Configured key public certificate SHA-256: ' + hashlib.sha256(result.stdout).hexdigest().upper())
+          except Exception:
+              raise SystemExit('Cannot read public signing certificate; check configured secrets (details suppressed)')
+          PY
+      - name: Sign and verify original AndroidIDE certificate
+        id: original
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          EXPECTED_CERT_SHA256: '3FE57967C15F81EE39EA2B9B88DD96A7506C1B5B9032606ECBEA04BBDB15EE3C'
+          APK_SOURCE_SHA: ${{ needs.android.outputs.source_sha }}
+          APK_VERSION_CODE: ${{ needs.android.outputs.version_code }}
+        run: |
+          python3 - <<'PY'
+          import base64
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          import re
+          import subprocess
+          import sys
+          import tempfile
+
+          class SigningError(Exception):
+              pass
+
+          def normalize_certificate(value):
+              value = value.strip().replace(':', '').upper()
+              if not re.fullmatch(r'[0-9A-F]{64}', value):
+                  raise SigningError('Expected certificate SHA-256 must contain exactly 64 hex characters')
+              return value
+
+          def certificate_digest(output):
+              digests = re.findall(r'^Signer #\d+ certificate SHA-256 digest: ([0-9a-fA-F]{64})\s*$', output, re.MULTILINE)
+              if len(digests) != 1:
+                  raise SigningError('APK must have exactly one verified signing certificate')
+              return normalize_certificate(digests[0])
+
+          def apk_identity(output):
+              match = re.search(r"^package: name='([^']+)' versionCode='([0-9]+)'", output, re.MULTILINE)
+              if not match or match.group(1) != 'ru.fo6osik.workjournal':
+                  raise SigningError('APK applicationId must be ru.fo6osik.workjournal')
+              return match.group(1), int(match.group(2))
+
+          def tool(command):
+              try:
+                  result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                          text=True, timeout=120, check=False)
+              except Exception:
+                  raise SigningError('Android signing/verification tool could not run; details suppressed') from None
+              if result.returncode != 0:
+                  raise SigningError('Android signing/verification tool failed; check secrets and SDK (details suppressed)')
+              return result.stdout
+
+          def main():
+              # Fail closed before decoding the private key if the public pin is incomplete.
+              expected = normalize_certificate(os.environ['EXPECTED_CERT_SHA256'])
+              required = ['ANDROID_KEYSTORE_BASE64', 'ANDROID_KEYSTORE_PASSWORD', 'ANDROID_KEY_ALIAS']
+              if any(not os.environ.get(name) for name in required):
+                  raise SigningError('Keystore Base64, store password and key alias secrets must be configured')
+              # apksigner normally uses the store password for the key when no separate
+              # password is configured (including standard PKCS12 keystores).
+              key_password_env = 'ANDROID_KEY_PASSWORD' if os.environ.get('ANDROID_KEY_PASSWORD') else 'ANDROID_KEYSTORE_PASSWORD'
+              sdk = Path(os.environ['ANDROID_HOME']) / 'build-tools/35.0.0'
+              runner_temp = Path(os.environ['RUNNER_TEMP'])
+              source = runner_temp / 'agronaliz-original-input/app-debug.apk'
+              app_id, version = apk_identity(tool([str(sdk / 'aapt2'), 'dump', 'badging', str(source)]))
+              if version != int(os.environ['APK_VERSION_CODE']):
+                  raise SigningError('APK versionCode differs from the checked build')
+              encoded = ''.join(os.environ['ANDROID_KEYSTORE_BASE64'].split())
+              try:
+                  key_bytes = base64.b64decode(encoded, validate=True)
+              except Exception:
+                  raise SigningError('Keystore Base64 is invalid (value suppressed)') from None
+              if not key_bytes:
+                  raise SigningError('Keystore is empty')
+              with tempfile.TemporaryDirectory(prefix='agronaliz-key-', dir=runner_temp) as folder:
+                  os.chmod(folder, 0o700)
+                  key = Path(folder) / 'original.keystore'
+                  descriptor = os.open(key, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+                  with os.fdopen(descriptor, 'wb') as stream:
+                      stream.write(key_bytes)
+                  del key_bytes, encoded
+                  staged = Path(folder) / 'verified.apk'
+                  tool([str(sdk / 'apksigner'), 'sign', '--ks', str(key),
+                        '--ks-key-alias', os.environ['ANDROID_KEY_ALIAS'],
+                        '--ks-pass', 'env:ANDROID_KEYSTORE_PASSWORD', '--key-pass', 'env:' + key_password_env,
+                        '--v1-signer-name', 'ORIGINAL',
+                        '--v1-signing-enabled', 'true', '--v2-signing-enabled', 'true',
+                        '--v3-signing-enabled', 'true', '--v4-signing-enabled', 'false',
+                        '--out', str(staged), str(source)])
+                  actual = certificate_digest(tool([str(sdk / 'apksigner'), 'verify', '--print-certs', str(staged)]))
+                  if actual != expected:
+                      raise SigningError('Certificate SHA-256 mismatch; observed public fingerprint: ' + actual)
+                  if apk_identity(tool([str(sdk / 'aapt2'), 'dump', 'badging', str(staged)])) != (app_id, version):
+                      raise SigningError('Signed APK identity/version changed')
+                  output = runner_temp / 'agronaliz-original-output'
+                  output.mkdir(mode=0o700)
+                  apk = output / 'app-original-signed.apk'
+                  staged.replace(apk)
+                  report = dict(applicationId=app_id, versionCode=version, certificateSha256=actual,
+                                apkSha256=hashlib.sha256(apk.read_bytes()).hexdigest(), sourceSha=os.environ['APK_SOURCE_SHA'])
+                  (output / 'verification.json').write_text(json.dumps(report, indent=2) + '\n')
+                  print('Verified original certificate SHA-256: ' + actual)
+                  with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
+                      stream.write('certificate=' + actual + '\n')
+
+          if __name__ == '__main__':
+              try:
+                  main()
+              except SigningError as error:
+                  print(str(error), file=sys.stderr)
+                  sys.exit(1)
+              except Exception:
+                  print('Signing failed; no signed APK published (details suppressed)', file=sys.stderr)
+                  sys.exit(1)
+          PY
+      - name: Publish only the certificate-verified original APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.android.outputs.original_artifact }}
+          path: |
+            ${{ runner.temp }}/agronaliz-original-output/app-original-signed.apk
+            ${{ runner.temp }}/agronaliz-original-output/verification.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Remove temporary keystore and signing files
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import os, shutil
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP'])
+          for path in list(root.glob('agronaliz-key-*')) + [root / 'agronaliz-original-output', root / 'agronaliz-original-input']:
+              if path.is_dir():
+                  shutil.rmtree(path)
+          PY
