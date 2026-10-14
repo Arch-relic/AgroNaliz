@@ -54,6 +54,16 @@ jobs:
           cp app/build/outputs/apk/debugTest/app-debugTest.apk "$RUNNER_TEMP/test-update-input/first.apk"
           ./gradlew -PtestVersionCode="$((TEST_VERSION_CODE + 1))" :app:assembleDebugTest --no-daemon --stacktrace --console=plain
           cp app/build/outputs/apk/debugTest/app-debugTest.apk "$RUNNER_TEMP/test-update-input/second.apk"
+      - name: Checkout real Room v20 migration baseline
+        uses: actions/checkout@v4
+        with:
+          ref: c0ea3d01a97dd0eb4814b59307b44169916821bc
+          path: .migration-v20
+      - name: Build baseline TEST APK for real database upgrade
+        run: |
+          sed -i '/^android\.aapt2FromMavenOverride=/d' .migration-v20/gradle.properties
+          chmod +x .migration-v20/gradlew
+          .migration-v20/gradlew -p .migration-v20 :app:assembleDebugTest --no-daemon --stacktrace --console=plain
       - name: Enable emulator KVM
         run: sudo chmod 666 /dev/kvm
       - name: Verify data isolation on Android
@@ -67,6 +77,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: |
             python3 docs/run-build-isolation-checks.py
+            python3 docs/run-harvest-checks.py
             python3 docs/run-test-signing-checks.py
       - name: Name debug APK artifact
         id: apk

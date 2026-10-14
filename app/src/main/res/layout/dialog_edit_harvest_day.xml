@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content">
 <LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -85,6 +86,10 @@
         android:layout_height="wrap_content"
         android:minHeight="48dp" />
 
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="Время до начала смены относится к следующим суткам. Смена — менее 24 часов."
+        android:paddingTop="8dp" />
+
     <Button
         android:id="@+id/buttonConfirmEditHarvestDay"
         android:layout_width="match_parent"
@@ -100,3 +105,5 @@
         android:text="Отмена" />
 
 </LinearLayout>
+
+</ScrollView>

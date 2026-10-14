@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+<LinearLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -33,6 +36,27 @@
         android:padding="12dp"
         android:textSize="18sp" />
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:labelFor="@id/editFinishHarvestDayArea"
+        android:text="@string/harvest_area_label"
+        android:textSize="17sp" />
+
+    <EditText
+        android:id="@+id/editFinishHarvestDayArea"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/harvest_area_optional"
+        android:inputType="numberDecimal"
+        android:digits="0123456789,."
+        android:singleLine="true" />
+
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="Время до начала смены относится к следующим суткам. Смена — менее 24 часов."
+        android:paddingTop="8dp" />
+
     <Button
         android:id="@+id/buttonConfirmFinishHarvestDay"
         android:layout_width="match_parent"
@@ -48,3 +72,4 @@
         android:text="Отмена" />
 
 </LinearLayout>
+</ScrollView>

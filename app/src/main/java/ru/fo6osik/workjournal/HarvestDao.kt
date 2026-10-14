@@ -3,6 +3,7 @@ package ru.fo6osik.workjournal
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Transaction
 
 data class HarvestProcessSummary(
     val id: Int,
@@ -25,7 +26,10 @@ data class HarvestDaySummary(
     val startTime: String,
     val endTime: String?,
     val status: String,
-    val bunkerCount: Int
+    val bunkerCount: Int,
+    val harvestedAreaHa: Double?,
+    val bulkDensityKgM3: Double?,
+    val densityMode: String?
 )
 
 @Dao
@@ -37,14 +41,35 @@ interface HarvestDao {
     ): Long
 
     @Insert
-    fun insertDay(
-        day: HarvestDay
-    ): Long
+    fun insertDayRaw(day: HarvestDay): Long
+
+    @Transaction
+    fun insertDay(day: HarvestDay): Long {
+        val process = requireNotNull(getProcessById(day.processId))
+        HarvestChronology.minutes(day.startTime)
+        require(day.workDate >= process.startDate) { "Дата дня раньше начала кампании" }
+        require(day.status in setOf("ACTIVE", "COMPLETED"))
+        if (day.status == "ACTIVE") {
+            require(process.status == "IN_PROGRESS") { "Кампания завершена; сначала откройте её" }
+            require(getDaysForProcess(day.processId).none { it.status == "ACTIVE" }) { "В кампании уже есть активный день" }
+            require(day.endTime == null)
+        } else {
+            HarvestChronology.validateEnd(day.startTime, requireNotNull(day.endTime), emptyList())
+        }
+        val (mode, density) = HarvestDensityCatalog.initial(process.crop)
+        return insertDayRaw(day.copy(densityMode = mode, bulkDensityKgM3 = density))
+    }
 
     @Insert
-    fun insertBunker(
-        bunker: HarvestBunker
-    ): Long
+    fun insertBunkerRaw(bunker: HarvestBunker): Long
+
+    @Transaction
+    fun insertBunker(bunker: HarvestBunker): Long {
+        val day = requireNotNull(getDayById(bunker.dayId))
+        require(day.status == "ACTIVE" && getProcessById(day.processId)?.status == "IN_PROGRESS") { "Рабочий день завершён" }
+        HarvestChronology.validateBunker(day.startTime, day.endTime, bunker.fillTime)
+        return insertBunkerRaw(bunker)
+    }
 
     @Query(
         """
@@ -156,6 +181,9 @@ interface HarvestDao {
             hd.startTime AS startTime,
             hd.endTime AS endTime,
             hd.status AS status,
+            hd.harvestedAreaHa AS harvestedAreaHa,
+            hd.bulkDensityKgM3 AS bulkDensityKgM3,
+            hd.densityMode AS densityMode,
             (
                 SELECT COUNT(*)
                 FROM harvest_bunkers hb
@@ -172,10 +200,10 @@ interface HarvestDao {
 
     @Query(
         """
-        SELECT *
-        FROM harvest_bunkers
-        WHERE dayId = :dayId
-        ORDER BY fillTime ASC, id ASC
+        SELECT hb.* FROM harvest_bunkers hb JOIN harvest_days hd ON hd.id = hb.dayId
+        WHERE hb.dayId = :dayId
+        ORDER BY ((CAST(substr(hb.fillTime,1,2) AS INTEGER)*60 + CAST(substr(hb.fillTime,4,2) AS INTEGER)
+            - CAST(substr(hd.startTime,1,2) AS INTEGER)*60 - CAST(substr(hd.startTime,4,2) AS INTEGER) + 1440) % 1440), hb.id
         """
     )
     fun getBunkersForDay(
@@ -190,11 +218,18 @@ interface HarvestDao {
         WHERE id = :bunkerId
         """
     )
-    fun updateBunker(
-        bunkerId: Int,
-        fillTime: String,
-        fillLevel: String
-    )
+    fun updateBunkerRaw(bunkerId: Int, fillTime: String, fillLevel: String)
+
+    @Query("SELECT * FROM harvest_bunkers WHERE id = :bunkerId LIMIT 1")
+    fun getBunkerById(bunkerId: Int): HarvestBunker?
+
+    @Transaction
+    fun updateBunker(bunkerId: Int, fillTime: String, fillLevel: String) {
+        val bunker = requireNotNull(getBunkerById(bunkerId))
+        val day = requireNotNull(getDayById(bunker.dayId))
+        HarvestChronology.validateBunker(day.startTime, day.endTime, fillTime)
+        updateBunkerRaw(bunkerId, fillTime, fillLevel)
+    }
 
     @Query(
         """
@@ -226,11 +261,13 @@ interface HarvestDao {
         WHERE id = :dayId
         """
     )
-    fun updateDayTimes(
-        dayId: Int,
-        startTime: String,
-        endTime: String?
-    )
+    fun updateDayTimesRaw(dayId: Int, startTime: String, endTime: String?)
+
+    @Transaction
+    fun updateDayTimes(dayId: Int, startTime: String, endTime: String?) {
+        val day = requireNotNull(getDayById(dayId))
+        updateDayDetails(dayId, day.workDate, startTime, endTime, day.status)
+    }
 
     @Query(
         """
@@ -242,13 +279,25 @@ interface HarvestDao {
         WHERE id = :dayId
         """
     )
-    fun updateDayDetails(
-        dayId: Int,
-        workDate: String,
-        startTime: String,
-        endTime: String?,
-        status: String
-    )
+    fun updateDayDetailsRaw(dayId: Int, workDate: String, startTime: String, endTime: String?, status: String)
+
+    @Transaction
+    fun updateDayDetails(dayId: Int, workDate: String, startTime: String, endTime: String?, status: String) {
+        val day = requireNotNull(getDayById(dayId))
+        val process = requireNotNull(getProcessById(day.processId))
+        require(workDate >= process.startDate) { "Дата дня раньше начала кампании" }
+        val otherDays = getDaysForProcess(day.processId).filter { it.id != dayId }
+        require(otherDays.none { it.workDate == workDate }) { "На эту дату рабочий день уже существует" }
+        val times = getBunkersForDay(dayId).map { it.fillTime }
+        HarvestChronology.validateStartChange(day.startTime, startTime, times)
+        require(status in setOf("ACTIVE", "COMPLETED"))
+        if (status == "ACTIVE") {
+            require(endTime == null)
+            require(otherDays.none { it.status == "ACTIVE" }) { "В кампании уже есть активный день" }
+        } else HarvestChronology.validateEnd(startTime, requireNotNull(endTime), times)
+        updateDayDetailsRaw(dayId, workDate, startTime, endTime, status)
+        if (status == "ACTIVE") reopenProcess(day.processId) else refreshCompletedProcessEndDate(day.processId)
+    }
 
     @Query(
         """
@@ -286,14 +335,45 @@ interface HarvestDao {
         """
         UPDATE harvest_days
         SET endTime = :endTime,
-            status = 'COMPLETED'
-        WHERE id = :dayId
+            status = 'COMPLETED',
+            harvestedAreaHa = :harvestedAreaHa
+        WHERE id = :dayId AND status = 'ACTIVE'
         """
     )
-    fun completeDay(
-        dayId: Int,
-        endTime: String
-    )
+    fun completeDayRaw(dayId: Int, endTime: String, harvestedAreaHa: Double?): Int
+
+    @Transaction
+    fun completeDay(dayId: Int, endTime: String): Int =
+        completeDay(dayId, endTime, requireNotNull(getDayById(dayId)).harvestedAreaHa)
+
+    @Transaction
+    fun completeDay(dayId: Int, endTime: String, harvestedAreaHa: Double?): Int {
+        require(harvestedAreaHa == null || HarvestCalculator.positive(harvestedAreaHa) != null)
+        val day = requireNotNull(getDayById(dayId))
+        HarvestChronology.validateEnd(day.startTime, endTime, getBunkersForDay(dayId).map { it.fillTime })
+        return completeDayRaw(dayId, endTime, harvestedAreaHa)
+    }
+
+    @Query("UPDATE harvest_days SET harvestedAreaHa = :harvestedAreaHa WHERE id = :dayId AND status = 'COMPLETED'")
+    fun updateHarvestedAreaRaw(dayId: Int, harvestedAreaHa: Double?): Int
+
+    fun updateHarvestedArea(dayId: Int, harvestedAreaHa: Double?): Int {
+        require(harvestedAreaHa == null || HarvestCalculator.positive(harvestedAreaHa) != null)
+        return updateHarvestedAreaRaw(dayId, harvestedAreaHa)
+    }
+
+    @Query("UPDATE harvest_days SET bulkDensityKgM3 = :densityKgM3, densityMode = :mode WHERE id = :dayId")
+    fun updateDayDensityRaw(dayId: Int, mode: String?, densityKgM3: Double?): Int
+
+    @Transaction
+    fun updateDayDensity(dayId: Int, mode: String, custom: Double? = null): Int {
+        val day = requireNotNull(getDayById(dayId))
+        val process = requireNotNull(getProcessById(day.processId))
+        require(mode in setOf("MIN", "AVERAGE", "MAX", "CUSTOM"))
+        val density = HarvestDensityCatalog.selected(process.crop, mode, custom)
+        require(mode != "CUSTOM" || density != null)
+        return updateDayDensityRaw(dayId, if (density == null) null else mode, density)
+    }
 
     @Query(
         """
@@ -303,10 +383,15 @@ interface HarvestDao {
         WHERE id = :processId
         """
     )
-    fun completeProcess(
-        processId: Int,
-        endDate: String
-    )
+    fun completeProcessRaw(processId: Int, endDate: String)
+
+    @Transaction
+    fun completeProcess(processId: Int, endDate: String) {
+        val days = getDaysForProcess(processId)
+        require(days.none { it.status == "ACTIVE" }) { "Сначала завершите активный рабочий день" }
+        // Reopening an earlier day must not shorten the existing campaign history.
+        completeProcessRaw(processId, maxOf(endDate, days.maxOfOrNull { it.workDate } ?: endDate))
+    }
 
 
     @Query(

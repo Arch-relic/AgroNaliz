@@ -1,88 +1,106 @@
-# Передача контекста: Issue #27, стабильная TEST подпись
+# PR #26: синхронизация с main после PR #28
 
-Дата: 2026-10-13. Статус: безопасная реализация в Draft PR #28, CI успешен.
-Постоянный выпуск и обновление старой установки блокированы отсутствующим ключом. Основной APK signer не изменён.
+Дата: 2026-10-14. Статус: конфликты разрешены, объединённый результат прошёл CI.
+GitHub mergeable=true; технически готов к объединению владельцем. Обновляется только feature/harvest-day-density; PR не объединяется.
 
-## Изменения
+## Опорные версии
 
-Созданы:
+Main: 3c24b3ebc5d5f36aef4f3fa2f5e4a654dadcfd63 (merge PR #28).
+Исходный head PR #26: c7d360245c3d8d416fca232de115588b2579610f.
+Общий предок: c0ea3d01a97dd0eb4814b59307b44169916821bc.
+Создан merge-коммит 7dd7ba47c7ce702e0b9b6445cbb33e825b8f3366 с обоими
+родителями, без переписывания истории. Это проверенный SHA, CI #67 success.
+Этот отчёт публикуется следующим документационным коммитом поверх него;
+собственный SHA отчёта намеренно не записывается в содержащий его файл. Локальное зеркало изолировано
+от прежних рабочих каталогов; публикация выполняется GitHub Git API.
+
+## Разрешение конфликтов и сохранённое поведение
+
+Пересечение изменений — .github/workflows/android-pr-checks.yml и этот отчёт.
+Workflow объединяет оба набора тестов и сохраняет отказ от публикации
+временной TEST APK. Порядок эмулятора: изоляция → уборка/реальный Room20→21
+upgrade → подпись/сохранность обновления. Harvest runner удаляет только свою
+синтетическую TEST в одноразовом эмуляторе, поэтому signer runner получает
+нужное чистое исходное состояние без удаления реальных пользовательских данных.
+
+Весь код уборки PR #26 сохранён без изменений: плотности каждого дня,
+необязательная площадь, диапазоны объёма/массы/урожайности, неполные кампании,
+проверки хронологии с переходом через полночь, безопасное повторное открытие
+дня/кампании, таймеры/события, backup/import и Room20→21 (три nullable-поля).
+Новых миграций нет, destructive migration отсутствует.
+Все компоненты PR #28 сохранены без изменений: TEST-only versionCode,
+отдельный signer workflow, SHA-256 pin, owner/main-only secret context,
+read-only экспорт копии, JVM/Python/emulator signing tests. Основная подпись
+и PR #25 не затронуты. Код и данные основного приложения не меняются этим merge.
+
+## Файлы
+
+Относительно прежнего head PR #26 созданные (из main/PR #28):
 - .github/workflows/test-apk-publish.yml
 - app/src/androidTest/java/ru/fo6osik/workjournal/TestSigningUpdateTest.kt
 - docs/export-installed-test-backup.py
 - docs/run-test-signing-checks.py
+- docs/test-apk-signing.md
 - docs/test_test_apk_signing.py
 - docs/test_test_backup_export.py
-- docs/test-apk-signing.md
 
-Изменены:
+Изменённые (main либо разрешение конфликта):
 - .github/workflows/android-pr-checks.yml
 - .gitignore
 - app/build.gradle.kts
 - docs/codex-handoff.md
 
-Удалений нет. Нет изменений Room, данных, APK основной подписи и PR #25/#26.
-Раздельный signer использует TEST_* Secrets и TEST_CERT_SHA256 Variable,
-ограничен владельцем/main/первой попыткой. Проверяет сертификат и ID до upload.
-TEST versionCode увеличивается независимо от основной версии. Raw TEST из PR
-больше не публикуется; добавлены проверки обновления в свежем эмуляторе.
+Удалений нет. Остальные 31 файл функционала/тестов уборки побайтово сохранены
+из head PR #26; у PR относительно актуального main они остаются в diff.
 
-## Ветка и проверки
+## Проверки
 
-Ветка feature/test-apk-stable-signing, main
-c0ea3d01a97dd0eb4814b59307b44169916821bc.
-Проверенный код: 2c39d60359f9e198b50fb1ef9d6554a844eafd55 (CI #64).
-Предыдущий 0cd90d698df58fdcc8a2bd3773e89804ffb2a03e также прошёл CI #63.
-Отчёт сохраняется следующим отдельным коммитом; его собственный SHA здесь
-не указан намеренно. Код после проверенного SHA не меняется, только этот отчёт.
-Локальное зеркало остаётся незакоммиченным; изменения опубликованы через GitHub
-Git API в отдельной feature-ветке. Main не менялся.
-`python3 -m unittest discover -s docs -p 'test_test_*.py' -v`: 25 тестов,
-24 успешны, один SDK тест пропущен до появления собранной TEST APK.
-`source /workspace/agronaliz-env.sh; agrogradle :app:assembleDebug :app:test`:
-запуск облачного Gradle блокирован до сборки: Could not determine a usable
-wildcard IP for this machine. Это не успешная сборка/UP-TO-DATE.
-GitHub Actions #64: https://github.com/Arch-relic/AgroNaliz/actions/runs/38451873836
-Все steps успешны, свежие запуски, не UP-TO-DATE:
-- `./gradlew -PtestVersionCode=1000064 :app:assembleDebug :app:assembleDebugTest :app:testDebugUnitTest :app:testDebugTestUnitTest :app:assembleDebugAndroidTest --no-daemon --stacktrace --console=plain` — успешен.
-- `./gradlew -PtestVersionCode=1000064 -PtestBuildType=debugTest :app:assembleDebugTestAndroidTest --no-daemon --stacktrace --console=plain` — успешен.
-- JVM: 67 debug + 67 debugTest тестов, ошибок/пропусков нет (XML CI #63,
-  тот же набор; оба JVM tasks также реально выполнены в CI #64).
+CI #67: https://github.com/Arch-relic/AgroNaliz/actions/runs/38528515013 — success.
+Реально выполнены, не UP-TO-DATE:
+- `./gradlew -PtestVersionCode=1000067 :app:assembleDebug :app:assembleDebugTest :app:testDebugUnitTest :app:testDebugTestUnitTest :app:assembleDebugAndroidTest --no-daemon --stacktrace --console=plain` — success.
+- `./gradlew -PtestVersionCode=1000067 -PtestBuildType=debugTest :app:assembleDebugTestAndroidTest --no-daemon --stacktrace --console=plain` — success.
+- 99 JVM-тестов debug и 99 debugTest; 0 failures/errors/skipped, подтверждено XML artifact.
 - `python3 -m unittest discover -s docs -p 'test_validate_document_catalog.py' -v` — 13 pass.
-- `python3 docs/verify-build-variants.py` — ID/providers/изоляция успешны.
-- `python3 -m unittest discover -s docs -p 'test_test_*.py' -v` — 25 pass,
-  0 skip, включая реальный SDK signer, отрицательный SHA и удаление temp key.
-  Проверены main ID/versionCode1 и TEST ID/versionCode1000064 в самих APK.
-- `./gradlew -PtestVersionCode=1000065 :app:assembleDebugTest --no-daemon --stacktrace --console=plain` — успешен.
-- `python3 docs/run-build-isolation-checks.py` и
-  `python3 docs/run-test-signing-checks.py` — успешны, 11 одиночных запусков
-  instrument methods в одноразовом API35 эмуляторе. Обновление одним ключом
-  сохранило Room/preferences/files, другим ключом отклонено без изменения
-  данных; приватный JSON скопирован read-only и синтетически восстановлен;
-  основная установка остаётся неизменной. SYNTHETIC fixtures, не телефон.
-- `python3 -m py_compile ...`, YAML parse, `git diff --check` — успешны локально.
+- `python3 -m unittest discover -s docs -p 'test_test_*.py' -v` — 25 pass, 0 skip,
+  включая точный inline signer с временным тестовым ключом, неверный SHA,
+  очистку ключа, actual main versionCode1 и TEST ID/versionCode1000067.
+- `python3 docs/verify-build-variants.py` — ID/providers/изоляция pass.
+- `./gradlew -PtestVersionCode=1000068 :app:assembleDebugTest --no-daemon --stacktrace --console=plain` — success; подготовлена вторая версия TEST для обновления.
+- `.migration-v20/gradlew -p .migration-v20 :app:assembleDebugTest --no-daemon --stacktrace --console=plain` — success; точный исходный Room20 commit c0ea3d0, без TEST version override.
+- `python3 docs/run-build-isolation-checks.py`, `python3 docs/run-harvest-checks.py`,
+  `python3 docs/run-test-signing-checks.py` — success на одноразовом API35 эмуляторе.
+  39 исполнений инструментальных test methods (26 уборки, плюс подпись/изоляция
+  и контроль main). Реальный APK update20→21 сохраняет старые записи, таймеры,
+  бункеры, события; проверены площадь, плотность, хронология/полночь,
+  повторное открытие/закрытие кампании, backup/import, force-stop/restart.
+  После этого обновление TEST тем же fixture ключом сохраняет Room/preferences/files;
+  другой ключ отвергнут Android с данными нетронутыми. Проверены read-only
+  экспорт приватного JSON и синтетический restore v21 (включая площадь/плотность).
+- Локально catalog13 pass, signing/backup25: 24 pass и 1 SDK skip до сборки.
+  `git diff --check`, YAML parse, Python py_compile — pass.
+- `source /workspace/agronaliz-env.sh; agrogradle :app:assembleDebug :app:test` —
+  не стартует: Could not determine a usable wildcard IP for this machine.
+  Это ограничение локальной среды; успешная сборка выполнена GitHub Actions.
 
-Artifacts CI #64: только обычная main debug APK и диагностика.
-Стабильно подписанной пользовательской TEST APK в этом PR нет намеренно.
-Production workflow пока не запускался: только main после отдельного merge
-владельцем и настройки TEST ключа/pin. Не выдавать fixture подписи за постоянную.
+Artifacts: обычная main debug APK и диагностика, временная TEST APK не публикуется.
+Стабильный production TEST signer сохранён, не запускался из PR. Ни пользовательские
+данные телефона, ни настоящий постоянный ключ не использовались в тестах.
+Документационный коммит после проверенного кода не меняет Android или workflow;
+новый автоматический CI оценивается отдельно, повторная ручная сборка одного
+отчёта по AGENTS.md не обязательна.
 
-## Ограничения и ручные действия
+## Ограничения и ручные проверки
 
-Старый приватный TEST ключ не найден в доступной среде; старый полный SHA
-не предоставлен (Issue сообщает только 5F3A...). Android не позволяет обновить
-старую установку новым ключом. Ни удаление, ни очистка данных не выполняются.
-Нужны постоянный TEST keystore и четыре TEST_* Secrets плюс полный публичный
-TEST_CERT_SHA256. Возможности безопасно записать Secrets через доступные
-инструменты нет; владелец настраивает их в GitHub. Производственная подписанная
-TEST APK пока не создана, её будущий сертификат неизвестен.
-Текущий main Room20: floor21 намеренно блокирует downgrade старой установки21.
-JSON сохраняет только Room, не все файлы/настройки. Реальный телефон и данные
-не доступны; доказательство эмулятора относится только к синтетическим данным.
-Подробный безопасный порядок: docs/test-apk-signing.md. PR не объединять.
+Не объявлять совместимость старой установленной TEST с новым ключом:
+оригинальный приватный ключ ранее не найден. Постоянный выпуск требует
+TEST_* Secrets и полного TEST_CERT_SHA256; signer workflow не запускается
+из PR. Room станет 21 после отдельного merge владельцем; до того main20.
+Проверки проводятся на синтетических данных; физический телефон недоступен.
+Ручные сценарии уборки: docs/harvest-results.md. Подпись/безопасная копия:
+docs/test-apk-signing.md (JSON включает Room, не весь state приложения).
 
 ## Pull Request
 
-Draft PR #28: https://github.com/Arch-relic/AgroNaliz/pull/28. Открыт, Draft,
-не объединён. CI #63 и #64 успешны. Финальный отчёт — документационный коммит после
-проверенного кода; повторная Android сборка для одного отчёта не обязательна
-по AGENTS.md. Новые автоматически запущенные проверки нужно оценивать отдельно.
+https://github.com/Arch-relic/AgroNaliz/pull/26 — существующий Draft PR.
+Проверено после CI: mergeable=true, Draft=true, merged=false; main не менялся.
+Владелец решает перевод из Draft и объединение. Самостоятельно не объединять.

@@ -81,6 +81,7 @@ object DataImportManager {
                 sourceDatabaseVersion != 16 &&
                 sourceDatabaseVersion != 18 &&
                 sourceDatabaseVersion != 19 &&
+                sourceDatabaseVersion != 20 &&
                 sourceDatabaseVersion != database.version
             ) {
                 error(
@@ -4129,6 +4130,8 @@ private fun importHarvestProcesses(
                     )
                 }
 
+
+
                 put(
                     "createdAt",
                     row.optLong(
@@ -4436,6 +4439,23 @@ private fun importHarvestDays(
                         0
                     }
                 )
+
+                val legacy = !row.has("bulkDensityKgM3") && !row.has("densityMode")
+                val initial = if (legacy) database.query("SELECT crop FROM harvest_processes WHERE id = ?", arrayOf(processId)).use {
+                    check(it.moveToFirst()); HarvestDensityCatalog.initial(it.getString(0))
+                } else null to null
+                val density = if (legacy) initial.second else jsonNullableDouble(row, "bulkDensityKgM3")
+                val mode = if (legacy) initial.first else jsonNullableString(row, "densityMode")
+                require(density == null || HarvestCalculator.positive(density) != null)
+                require(mode == null || mode in setOf("MIN", "AVERAGE", "MAX", "CUSTOM"))
+                require((density == null) == (mode == null))
+                if (density == null) putNull("bulkDensityKgM3") else put("bulkDensityKgM3", density)
+                if (mode == null) putNull("densityMode") else put("densityMode", mode)
+                val harvestValue = jsonNullableDouble(row, "harvestedAreaHa")
+                require(harvestValue == null || HarvestCalculator.positive(harvestValue) != null) {
+                    "Некорректное значение harvestedAreaHa в файле импорта"
+                }
+                if (harvestValue == null) putNull("harvestedAreaHa") else put("harvestedAreaHa", harvestValue)
 
                 put(
                     "createdAt",

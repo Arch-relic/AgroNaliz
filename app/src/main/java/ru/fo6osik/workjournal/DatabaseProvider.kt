@@ -1675,6 +1675,24 @@ private val MIGRATION_16_17 =
             }
         }
 
+    val MIGRATION_20_21 = object : Migration(20, 21) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            database.execSQL("ALTER TABLE harvest_days ADD COLUMN harvestedAreaHa REAL")
+            database.execSQL("ALTER TABLE harvest_days ADD COLUMN bulkDensityKgM3 REAL")
+            database.execSQL("ALTER TABLE harvest_days ADD COLUMN densityMode TEXT")
+            initializeLegacyDayDensity(database)
+        }
+    }
+
+    /** Also used after restoring an older backup; never overwrite an existing day setting. */
+    fun initializeLegacyDayDensity(database: SupportSQLiteDatabase) {
+        for ((crop, values) in HarvestDensityCatalog.values) {
+            database.execSQL("""UPDATE harvest_days SET bulkDensityKgM3 = ?, densityMode = 'MIN'
+                WHERE bulkDensityKgM3 IS NULL AND densityMode IS NULL AND processId IN
+                (SELECT id FROM harvest_processes WHERE crop = ?)""", arrayOf(values.min, crop))
+        }
+    }
+
     fun getDatabase(
         context: Context
     ): AppDatabase {
@@ -1705,7 +1723,8 @@ private val MIGRATION_16_17 =
     MIGRATION_16_17,
     MIGRATION_17_18,
     MIGRATION_18_19,
-    MIGRATION_19_20
+    MIGRATION_19_20,
+    MIGRATION_20_21
 )
                     .build()
 

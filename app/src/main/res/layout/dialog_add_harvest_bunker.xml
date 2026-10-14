@@ -49,6 +49,10 @@
         android:layout_height="wrap_content"
         android:minHeight="48dp" />
 
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="Время до начала смены относится к следующим суткам. Смена — менее 24 часов."
+        android:paddingTop="8dp" />
+
     <Button
         android:id="@+id/buttonConfirmHarvestBunker"
         android:layout_width="match_parent"
