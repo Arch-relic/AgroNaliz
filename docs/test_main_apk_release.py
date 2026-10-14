@@ -31,7 +31,13 @@ def sdk():
 
 def fixture_key(folder, name):
     # Existing disposable runner debug fixture; never create/replace a production key.
-    key=Path(os.environ.get('USERPROFILE',str(Path.home())))/'.android/debug.keystore'
+    report=subprocess.run([str(ROOT/'gradlew'),':app:signingReport','--no-daemon','--console=plain'],
+                          cwd=ROOT,check=True,capture_output=True,text=True).stdout
+    section=re.split(r'^Variant: debug\s*$',report,flags=re.MULTILINE)[1].split('Variant:',1)[0]
+    store=re.search(r'^Store: (.+)$',section,re.MULTILINE)
+    if not store:raise RuntimeError('Cannot locate disposable Gradle debug fixture')
+    key=Path(store.group(1).strip())
+    if not key.is_file():raise RuntimeError('Disposable debug fixture missing')
     variables=dict(os.environ,FIXTURE_PASSWORD='android')
     certificate=subprocess.check_output(['keytool','-exportcert','-keystore',str(key),'-alias','androiddebugkey',
                                          '-storepass:env','FIXTURE_PASSWORD'],env=variables,stderr=subprocess.PIPE)
