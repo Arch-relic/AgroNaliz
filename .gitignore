@@ -32,3 +32,10 @@ secrets.properties
 
 # Temporary PDF parts
 /nova_parts/
+
+# Local helper caches and private signing encodings
+__pycache__/
+*.py[cod]
+*.keystore.base64
+*.p12.base64
+*.jks.base64
