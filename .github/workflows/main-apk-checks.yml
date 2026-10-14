@@ -1,0 +1,66 @@
+name: Main APK safe update checks
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  main-update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install SDK and prepare runner
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;35.0.0"
+          sed -i '/^android\.aapt2FromMavenOverride=/d' gradle.properties
+          chmod +x gradlew
+      - name: Build main update and unchanged TEST metadata without production secrets
+        run: ./gradlew -PmainVersionCode=3000001 :app:assembleDebug :app:assembleDebugTest :app:assembleDebugAndroidTest :app:testDebugUnitTest --no-daemon --stacktrace --console=plain
+      - name: Test exact main release signer and safety gates with disposable debug fixture
+        run: |
+          python3 -m unittest discover -s docs -p 'test_main_apk_release.py' -v
+          python3 -m unittest discover -s docs -p 'test_verify_main_update.py' -v
+      - name: Prepare second main version
+        run: |
+          mkdir -p "$RUNNER_TEMP/main-update-input"
+          cp app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/main-update-input/first.apk"
+          ./gradlew -PmainVersionCode=3000002 :app:assembleDebug --no-daemon --stacktrace --console=plain
+          cp app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/main-update-input/second.apk"
+      - name: Checkout Room20 baseline
+        uses: actions/checkout@v4
+        with:
+          ref: c0ea3d01a97dd0eb4814b59307b44169916821bc
+          path: .main-v20
+      - name: Build installed-version53 Room20 fixture
+        run: |
+          sed -i '/^android\.aapt2FromMavenOverride=/d' .main-v20/gradle.properties
+          sed -i 's/versionCode = 1/versionCode = 53/' .main-v20/app/build.gradle.kts
+          chmod +x .main-v20/gradlew
+          .main-v20/gradlew -p .main-v20 :app:assembleDebug --no-daemon --stacktrace --console=plain
+      - name: Enable KVM
+        run: sudo chmod 666 /dev/kvm
+      - name: Verify main in-place update Room20 to21 then21 to21
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: python3 docs/run-main-update-checks.py
+      - name: Upload test diagnostics only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main-update-check-diagnostics
+          path: |
+            app/build/test-results/
+            app/build/reports/tests/
+          if-no-files-found: warn

@@ -1,106 +1,115 @@
-# PR #26: синхронизация с main после PR #28
+# Основная APK — безопасное обновление, выпуск ожидает владельца
 
-Дата: 2026-10-14. Статус: конфликты разрешены, объединённый результат прошёл CI.
-GitHub mergeable=true; технически готов к объединению владельцем. Обновляется только feature/harvest-day-density; PR не объединяется.
+Дата: 2026-10-14. Статус: Draft PR #29, реализация проверена двумя успешными CI.
+Выпуск НЕ завершён. Настоящая актуальная APK оригинальным ключом ещё не
+создана/проверена. Требуется отдельный merge владельцем, затем manual release.
+Codex main не меняет, PR не объединяет и данные телефона не трогает.
 
-## Опорные версии
+## Контекст
 
-Main: 3c24b3ebc5d5f36aef4f3fa2f5e4a654dadcfd63 (merge PR #28).
-Исходный head PR #26: c7d360245c3d8d416fca232de115588b2579610f.
-Общий предок: c0ea3d01a97dd0eb4814b59307b44169916821bc.
-Создан merge-коммит 7dd7ba47c7ce702e0b9b6445cbb33e825b8f3366 с обоими
-родителями, без переписывания истории. Это проверенный SHA, CI #67 success.
-Этот отчёт публикуется следующим документационным коммитом поверх него;
-собственный SHA отчёта намеренно не записывается в содержащий его файл. Локальное зеркало изолировано
-от прежних рабочих каталогов; публикация выполняется GitHub Git API.
+Ветка: feature/main-original-safe-update.
+Main: b59df2ed7be777fd69a4848111d93f86b3e3c3db (включает PR #26/#28).
+Проверенный SHA: 2b9eba3850aa95b5bc44694147c0a61774619011.
+Этот отчёт сохраняется отдельным следующим коммитом только документации;
+собственный SHA отчёта намеренно не вписывается в содержащий его файл.
+GitHub commits опубликованы Git API; локальное изолированное зеркало остаётся
+незакоммиченным. Предыдущие рабочие каталоги не изменялись.
 
-## Разрешение конфликтов и сохранённое поведение
+Владелец подтвердил установленную основную versionCode53, Room20 и pin:
+3FE57967C15F81EE39EA2B9B88DD96A7506C1B5B9032606ECBEA04BBDB15EE3C.
+Историческое настоящее подписание в PR #25 уже выдало этот публичный pin,
+но иной ожидаемый pin тогда заблокировал выпуск. PR #25 не менялся, head
+b7b73397470e0ae3e9b45db3bfdcefd7ea5abd2f проверен неизменным.
+Исторический сертификат не доказывает подпись новой APK до свежего release.
 
-Пересечение изменений — .github/workflows/android-pr-checks.yml и этот отчёт.
-Workflow объединяет оба набора тестов и сохраняет отказ от публикации
-временной TEST APK. Порядок эмулятора: изоляция → уборка/реальный Room20→21
-upgrade → подпись/сохранность обновления. Harvest runner удаляет только свою
-синтетическую TEST в одноразовом эмуляторе, поэтому signer runner получает
-нужное чистое исходное состояние без удаления реальных пользовательских данных.
+## Реализация и файлы
 
-Весь код уборки PR #26 сохранён без изменений: плотности каждого дня,
-необязательная площадь, диапазоны объёма/массы/урожайности, неполные кампании,
-проверки хронологии с переходом через полночь, безопасное повторное открытие
-дня/кампании, таймеры/события, backup/import и Room20→21 (три nullable-поля).
-Новых миграций нет, destructive migration отсутствует.
-Все компоненты PR #28 сохранены без изменений: TEST-only versionCode,
-отдельный signer workflow, SHA-256 pin, owner/main-only secret context,
-read-only экспорт копии, JVM/Python/emulator signing tests. Основная подпись
-и PR #25 не затронуты. Код и данные основного приложения не меняются этим merge.
-
-## Файлы
-
-Относительно прежнего head PR #26 созданные (из main/PR #28):
-- .github/workflows/test-apk-publish.yml
-- app/src/androidTest/java/ru/fo6osik/workjournal/TestSigningUpdateTest.kt
-- docs/export-installed-test-backup.py
-- docs/run-test-signing-checks.py
-- docs/test-apk-signing.md
-- docs/test_test_apk_signing.py
-- docs/test_test_backup_export.py
-
-Изменённые (main либо разрешение конфликта):
-- .github/workflows/android-pr-checks.yml
-- .gitignore
+Изменены:
 - app/build.gradle.kts
 - docs/codex-handoff.md
 
-Удалений нет. Остальные 31 файл функционала/тестов уборки побайтово сохранены
-из head PR #26; у PR относительно актуального main они остаются в diff.
+Созданы:
+- .github/workflows/main-apk-publish.yml
+- .github/workflows/main-apk-checks.yml
+- app/src/androidTest/java/ru/fo6osik/workjournal/MainUpdateTest.kt
+- docs/test_main_apk_release.py
+- docs/test_verify_main_update.py
+- docs/run-main-update-checks.py
+- docs/verify-main-apk-update.py
+- docs/main-original-update.md
 
-## Проверки
+Удалений нет. Схема Room21, migrations (включая20→21), runtime функциональность
+и TEST версия/подпись/workflows не меняются. Новое mainVersionCode свойство
+влияет только на debug main outputs; без свойства main остаётся1, TEST
+самостоятельно сохраняет default/testVersionCode политику.
 
-CI #67: https://github.com/Arch-relic/AgroNaliz/actions/runs/38528515013 — success.
-Реально выполнены, не UP-TO-DATE:
-- `./gradlew -PtestVersionCode=1000067 :app:assembleDebug :app:assembleDebugTest :app:testDebugUnitTest :app:testDebugTestUnitTest :app:assembleDebugAndroidTest --no-daemon --stacktrace --console=plain` — success.
-- `./gradlew -PtestVersionCode=1000067 -PtestBuildType=debugTest :app:assembleDebugTestAndroidTest --no-daemon --stacktrace --console=plain` — success.
-- 99 JVM-тестов debug и 99 debugTest; 0 failures/errors/skipped, подтверждено XML artifact.
-- `python3 -m unittest discover -s docs -p 'test_validate_document_catalog.py' -v` — 13 pass.
-- `python3 -m unittest discover -s docs -p 'test_test_*.py' -v` — 25 pass, 0 skip,
-  включая точный inline signer с временным тестовым ключом, неверный SHA,
-  очистку ключа, actual main versionCode1 и TEST ID/versionCode1000067.
-- `python3 docs/verify-build-variants.py` — ID/providers/изоляция pass.
-- `./gradlew -PtestVersionCode=1000068 :app:assembleDebugTest --no-daemon --stacktrace --console=plain` — success; подготовлена вторая версия TEST для обновления.
-- `.migration-v20/gradlew -p .migration-v20 :app:assembleDebugTest --no-daemon --stacktrace --console=plain` — success; точный исходный Room20 commit c0ea3d0, без TEST version override.
-- `python3 docs/run-build-isolation-checks.py`, `python3 docs/run-harvest-checks.py`,
-  `python3 docs/run-test-signing-checks.py` — success на одноразовом API35 эмуляторе.
-  39 исполнений инструментальных test methods (26 уборки, плюс подпись/изоляция
-  и контроль main). Реальный APK update20→21 сохраняет старые записи, таймеры,
-  бункеры, события; проверены площадь, плотность, хронология/полночь,
-  повторное открытие/закрытие кампании, backup/import, force-stop/restart.
-  После этого обновление TEST тем же fixture ключом сохраняет Room/preferences/files;
-  другой ключ отвергнут Android с данными нетронутыми. Проверены read-only
-  экспорт приватного JSON и синтетический restore v21 (включая площадь/плотность).
-- Локально catalog13 pass, signing/backup25: 24 pass и 1 SDK skip до сборки.
-  `git diff --check`, YAML parse, Python py_compile — pass.
-- `source /workspace/agronaliz-env.sh; agrogradle :app:assembleDebug :app:test` —
-  не стартует: Could not determine a usable wildcard IP for this machine.
-  Это ограничение локальной среды; успешная сборка выполнена GitHub Actions.
+Publish original main APK — owner/main-only workflow_dispatch/attempt1.
+Build без Secrets; sign без checkout/Gradle, с временным keystore0700/0600,
+прежними четырьмя ANDROID_* Secrets, фиксированным public pin, strict
+package/version/Room gates. APK публикуется после SDK проверки. Key удаляется
+finally/always, unsigned transport удаляется или истекает1day. История runs и
+concurrency предотвращают обратный порядок версии. Room target должен быть21,
+установленный Room20 либо21; неизвестные версии блокируются до нового аудита.
 
-Artifacts: обычная main debug APK и диагностика, временная TEST APK не публикуется.
-Стабильный production TEST signer сохранён, не запускался из PR. Ни пользовательские
-данные телефона, ни настоящий постоянный ключ не использовались в тестах.
-Документационный коммит после проверенного кода не меняет Android или workflow;
-новый автоматический CI оценивается отдельно, повторная ручная сборка одного
-отчёта по AGENTS.md не обязательна.
+## Фактические проверки
 
-## Ограничения и ручные проверки
+Main APK safe update checks #3 — success:
+https://github.com/Arch-relic/AgroNaliz/actions/runs/38603496625
 
-Не объявлять совместимость старой установленной TEST с новым ключом:
-оригинальный приватный ключ ранее не найден. Постоянный выпуск требует
-TEST_* Secrets и полного TEST_CERT_SHA256; signer workflow не запускается
-из PR. Room станет 21 после отдельного merge владельцем; до того main20.
-Проверки проводятся на синтетических данных; физический телефон недоступен.
-Ручные сценарии уборки: docs/harvest-results.md. Подпись/безопасная копия:
-docs/test-apk-signing.md (JSON включает Room, не весь state приложения).
+- `./gradlew -PmainVersionCode=3000001 :app:assembleDebug :app:assembleDebugTest :app:assembleDebugAndroidTest :app:testDebugUnitTest --no-daemon --stacktrace --console=plain` — success;99 JVM pass,0 errors/skipped по XML.
+- `python3 -m unittest discover -s docs -p 'test_main_apk_release.py' -v` —18 pass,0 skip: реальный exact inline signer на существующем disposable Gradle debug fixture, неверный pin, cleanup, gates и неизменная TEST versionCode1 при main override.
+- `python3 -m unittest discover -s docs -p 'test_verify_main_update.py' -v` —8 pass.
+- `./gradlew -PmainVersionCode=3000002 :app:assembleDebug --no-daemon --stacktrace --console=plain` —success.
+- `.main-v20/gradlew -p .main-v20 :app:assembleDebug --no-daemon --stacktrace --console=plain` —success, pinned C0 baseline Room20 с единственной metadata-поправкой versionCode53, только ephemeral fixture.
+- `python3 docs/run-main-update-checks.py` —3 instrumentation methods pass на свежем API35 emulator: основной пакет53/Room20→3000001/Room21→3000002/Room21, без uninstall/clear/downgrade. Проверены все прежние значения пользовательских таблиц синтетической БД, настройки, таймеры, файл, сертификат, новые площадь/плотность и force-stop/restart. Guards в script и test class запрещают физический телефон/существующую main установку.
+
+Android PR checks #72 — success:
+https://github.com/Arch-relic/AgroNaliz/actions/runs/38603496901
+
+- Стандартные main/TEST и обе instrumentation APK собраны.
+- JVM99 debug +99 debugTest,0 errors/skipped по XML; tasks реально выполнены, не UP-TO-DATE.
+- Catalog13 и TEST signer/backup25 Python tests pass, SDK test не пропущен.
+- APK ID/provider/data isolation,39 instrumentation исполнений (26 уборки), TEST Room20→21, chronology/reopening/backup/restart и TEST same-key update/different-key reject успешны.
+
+Локально:18 signing/release tests (17 pass,1 SDK skip до APK),8 read-only tests
+pass, прежние TEST tests25 (24 pass,1 SDK skip); YAML/py_compile/diff pass.
+`source /workspace/agronaliz-env.sh; agrogradle :app:assembleDebug :app:test`
+не стартует: Could not determine a usable wildcard IP for this machine.
+Успешная сборка выполнена GitHub Actions, это не локальный pass/UP-TO-DATE.
+
+Первый main CI SDK test не смог прочитать default debug key по фиксированному
+пути. Исправлено определение Store через Gradle signingReport (stdout
+перехватывается); повторный CI успешен. Production key не использовался.
+После этого отчёта автоматический CI запускается отдельно, без изменения
+кода; ручная повторная Android сборка документации по AGENTS.md не обязательна.
+
+## Ограничения и обязательный следующий шаг
+
+Реальные ANDROID_* Secrets доступны только trusted release job после owner
+merge. Новый постоянный ключ не создавался. Подпись готовой новой production
+APK и actual data пользователя НЕ подтверждены fixture/историческими тестами.
+GitHub CI публикует диагностику и обычную debug APK; последняя НЕ предназначена
+для обновления основной AndroidIDE версии. Original artifact пока отсутствует.
+
+Владелец после проверки объединяет PR #29 (не #25), затем Actions → Publish
+original main APK → Run workflow → main → minimum_installed_version_code53,
+minimum_room_version20. Если телефон уже обновлён, вводить новые фактические
+значения. Скачивать только app-main-original-main-<SHA>-v<code>, распаковать
+app-main-original.apk и verification.json. Workflow ещё раз проверяет Pin,
+package, strictly higher version и Room до публикации.
+
+Далее read-only verify-main-apk-update.py на компьютере владельца сравнивает
+установленную base.apk с новой APK и report. Room ввод подтверждён владельцем
+из его backup; script не читает живую БД. Только после PASS открывать APK как
+обновление. Не удалять приложение/данные и не использовать TEST/debug APK.
+Сохранять backup приватно вне Git; JSON содержит Room, не все prefs/files.
+Физический телефон недоступен CI; нет безусловной гарантии для произвольной
+нестандартной Room20 схемы или неподтверждённых данных. При несовпадении
+остановить установку; destructive recovery запрещён.
+Полные инструкции: docs/main-original-update.md.
 
 ## Pull Request
 
-https://github.com/Arch-relic/AgroNaliz/pull/26 — существующий Draft PR.
-Проверено после CI: mergeable=true, Draft=true, merged=false; main не менялся.
-Владелец решает перевод из Draft и объединение. Самостоятельно не объединять.
+https://github.com/Arch-relic/AgroNaliz/pull/29 — открыт, Draft, не объединён.
+Слияние и запуск настоящего release — точное действие владельца, после него
+проверить новый original APK artifact и actual installed certificate.
