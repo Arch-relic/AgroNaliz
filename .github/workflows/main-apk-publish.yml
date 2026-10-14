@@ -60,6 +60,8 @@ jobs:
           if code > 2100000000 or code <= positive(os.environ['INSTALLED_CODE']):
               raise SystemExit('MAIN versionCode must increase and stay within Android limits')
           room = int(re.search(r'version\s*=\s*(\d+)', Path('app/src/main/java/ru/fo6osik/workjournal/AppDatabase.kt').read_text()).group(1))
+          if room != 21:
+              raise SystemExit('New Room version needs a separate verified migration audit')
           installed_room = positive(os.environ['INSTALLED_ROOM'])
           if installed_room not in (20, 21):
               raise SystemExit('Only installed Room20/21 updates have been verified; stop for an explicit migration audit')

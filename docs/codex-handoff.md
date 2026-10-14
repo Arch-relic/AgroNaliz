@@ -31,7 +31,7 @@ Main-only Gradle property, отдельный trusted signer с прежними
 
 ## Проверки
 
-Локально: 17 signing/release tests (16 pass,1 SDK skip до APK),8 read-only tests
+Локально: 18 signing/release tests (17 pass,1 SDK skip до APK),8 read-only tests
 pass, YAML/py_compile/diff checks pass. Cloud Gradle команда
 `source /workspace/agronaliz-env.sh; agrogradle :app:assembleDebug :app:test`
 не стартует: Could not determine a usable wildcard IP for this machine.
@@ -52,4 +52,5 @@ APK пока не подтверждена: её подтвердят apksigner 
 
 ## PR
 
-Пока не создан, создание следующим шагом. Объединение только владельцем.
+Draft PR #29: https://github.com/Arch-relic/AgroNaliz/pull/29, открыт, не объединён.
+Объединение только владельцем. CI выполняется, итог будет обновлён.

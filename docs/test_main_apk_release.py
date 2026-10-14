@@ -148,3 +148,7 @@ class MainApkRelease(unittest.TestCase):
              patch.dict(PROGRAM,{'tool':tool})):
             with self.assertRaises(ERROR) as caught:PROGRAM['main']()
             self.assertIn('strictly greater',str(caught.exception))
+
+    def test_future_target_room_needs_new_audit(self):
+        with patch('pathlib.Path.read_text',return_value='version = 22'):
+            self.preflight(expect_failure=True)

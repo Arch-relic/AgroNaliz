@@ -16,7 +16,10 @@ import org.json.JSONArray
 class MainUpdateTest {
     private val context=InstrumentationRegistry.getInstrumentation().targetContext
     private val prefs get()=context.getSharedPreferences("synthetic-main-update",0)
-    private fun guard() { check(context.packageName=="ru.fo6osik.workjournal") }
+    private fun guard() {
+        check(context.packageName=="ru.fo6osik.workjournal")
+        check(android.os.Build.HARDWARE in setOf("ranchu","goldfish")) { "Disposable emulator required" }
+    }
     @Suppress("DEPRECATION") private fun version()=context.packageManager.getPackageInfo(context.packageName,0).versionCode
     @Suppress("DEPRECATION") private fun certificate():String {
         val bytes=context.packageManager.getPackageInfo(context.packageName,android.content.pm.PackageManager.GET_SIGNATURES).signatures!!.single().toByteArray()
