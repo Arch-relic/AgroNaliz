@@ -1,0 +1,281 @@
+name: Publish original main APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      minimum_installed_version_code:
+        default: '53'
+        description: 'Installed MAIN versionCode; new code must be strictly greater'
+        required: true
+        type: string
+      minimum_room_version:
+        default: '20'
+        description: 'Installed MAIN database version from its JSON backup; prevents downgrade'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: original-main-apk-publish
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main' && github.actor == github.repository_owner && github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      artifact: ${{ steps.metadata.outputs.artifact }}
+      version_code: ${{ steps.metadata.outputs.version_code }}
+      room_version: ${{ steps.metadata.outputs.room_version }}
+      source_sha: ${{ github.sha }}
+      input_id: ${{ steps.input.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Validate immutable MAIN release sequence and database floor
+        id: metadata
+        env:
+          INSTALLED_CODE: ${{ inputs.minimum_installed_version_code }}
+          INSTALLED_ROOM: ${{ inputs.minimum_room_version }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import json, os, re, urllib.request
+          from pathlib import Path
+          def positive(value):
+              if not re.fullmatch(r'[1-9][0-9]*', value):
+                  raise SystemExit('Version values must be positive integers')
+              return int(value)
+          number = positive(os.environ['GITHUB_RUN_NUMBER'])
+          code = 3000000 + number
+          if code > 2100000000 or code <= positive(os.environ['INSTALLED_CODE']):
+              raise SystemExit('MAIN versionCode must increase and stay within Android limits')
+          room = int(re.search(r'version\s*=\s*(\d+)', Path('app/src/main/java/ru/fo6osik/workjournal/AppDatabase.kt').read_text()).group(1))
+          installed_room = positive(os.environ['INSTALLED_ROOM'])
+          if installed_room not in (20, 21):
+              raise SystemExit('Only installed Room20/21 updates have been verified; stop for an explicit migration audit')
+          if room < installed_room:
+              raise SystemExit('Database downgrade blocked; use a compatible main revision')
+          url = 'https://api.github.com/repos/' + os.environ['GITHUB_REPOSITORY'] + '/actions/workflows/main-apk-publish.yml/runs?status=completed&per_page=100'
+          request = urllib.request.Request(url, headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json'})
+          try:
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  previous = json.load(response)['workflow_runs']
+          except Exception:
+              raise SystemExit('Cannot verify MAIN release sequence; no APK published')
+          if any(run['run_number'] >= number for run in previous):
+              raise SystemExit('Out-of-order MAIN publication blocked; dispatch a new run')
+          artifact = 'internal-unsigned-MAIN-do-not-install-main-' + os.environ['GITHUB_SHA'][:12] + '-v' + str(code)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write(f'artifact={artifact}\nversion_code={code}\nroom_version={room}\n')
+          with open(os.environ['GITHUB_ENV'], 'a') as output:
+              output.write(f'MAIN_VERSION_CODE={code}\n')
+          PY
+      - name: Install SDK
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;35.0.0"
+          sed -i '/^android\.aapt2FromMavenOverride=/d' gradle.properties
+          chmod +x ./gradlew
+      - name: Build and test MAIN APK without signing secrets
+        run: ./gradlew -PmainVersionCode="$MAIN_VERSION_CODE" :app:assembleDebug :app:testDebugUnitTest --no-daemon --stacktrace --console=plain
+      - uses: actions/upload-artifact@v4
+        id: input
+        with:
+          name: ${{ steps.metadata.outputs.artifact }}
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 1
+
+  sign:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.actor == github.repository_owner && github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install trusted signing tools before exposing secrets
+        run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "build-tools;35.0.0"'
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build.outputs.artifact }}
+          path: ${{ runner.temp }}/agronaliz-main-input
+      - name: Sign and verify stable MAIN certificate
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          EXPECTED_CERT_SHA256: 3FE57967C15F81EE39EA2B9B88DD96A7506C1B5B9032606ECBEA04BBDB15EE3C
+          MAIN_VERSION_CODE: ${{ needs.build.outputs.version_code }}
+          INSTALLED_CODE: ${{ inputs.minimum_installed_version_code }}
+          INSTALLED_ROOM: ${{ inputs.minimum_room_version }}
+          MAIN_ROOM_VERSION: ${{ needs.build.outputs.room_version }}
+          APK_SOURCE_SHA: ${{ needs.build.outputs.source_sha }}
+        run: |
+          python3 - <<'PY'
+          import base64
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          import re
+          import subprocess
+          import sys
+          import tempfile
+
+          class SigningError(Exception):
+              pass
+
+          def normalize_certificate(value):
+              value = value.strip().replace(':', '').upper()
+              if not re.fullmatch(r'[0-9A-F]{64}', value):
+                  raise SigningError('Expected certificate SHA-256 must contain exactly 64 hex characters')
+              return value
+
+          def certificate_digest(output):
+              digests = re.findall(r'^Signer #\d+ certificate SHA-256 digest: ([0-9a-fA-F]{64})\s*$', output, re.MULTILINE)
+              if len(digests) != 1:
+                  raise SigningError('APK must have exactly one verified signing certificate')
+              return normalize_certificate(digests[0])
+
+          def apk_identity(output):
+              match = re.search(r"^package: name='([^']+)' versionCode='([0-9]+)'", output, re.MULTILINE)
+              if not match or match.group(1) != 'ru.fo6osik.workjournal':
+                  raise SigningError('APK applicationId must be ru.fo6osik.workjournal')
+              version = int(match.group(2))
+              if not 1 <= version <= 2100000000:
+                  raise SigningError('MAIN versionCode must be a positive Android integer')
+              return match.group(1), version
+
+          def tool(command):
+              try:
+                  result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                          text=True, timeout=120, check=False)
+              except Exception:
+                  raise SigningError('Android signing/verification tool could not run; details suppressed') from None
+              if result.returncode != 0:
+                  raise SigningError('Android signing/verification tool failed; check secrets and SDK (details suppressed)')
+              return result.stdout
+
+          def main():
+              # Fail closed before decoding the private key if the public pin is incomplete.
+              expected = normalize_certificate(os.environ['EXPECTED_CERT_SHA256'])
+              required = ['ANDROID_KEYSTORE_BASE64', 'ANDROID_KEYSTORE_PASSWORD', 'ANDROID_KEY_ALIAS']
+              if any(not os.environ.get(name) for name in required):
+                  raise SigningError('Keystore Base64, store password and key alias secrets must be configured')
+              # apksigner normally uses the store password for the key when no separate
+              # password is configured (including standard PKCS12 keystores).
+              key_password_env = 'ANDROID_KEY_PASSWORD' if os.environ.get('ANDROID_KEY_PASSWORD') else 'ANDROID_KEYSTORE_PASSWORD'
+              sdk = Path(os.environ['ANDROID_HOME']) / 'build-tools/35.0.0'
+              runner_temp = Path(os.environ['RUNNER_TEMP'])
+              source = runner_temp / 'agronaliz-main-input/app-debug.apk'
+              app_id, version = apk_identity(tool([str(sdk / 'aapt2'), 'dump', 'badging', str(source)]))
+              if version <= int(os.environ['INSTALLED_CODE']):
+                  raise SigningError('Main versionCode must be strictly greater than installed')
+              if int(os.environ['MAIN_ROOM_VERSION']) < int(os.environ['INSTALLED_ROOM']):
+                  raise SigningError('Database downgrade blocked')
+              if version != int(os.environ['MAIN_VERSION_CODE']):
+                  raise SigningError('APK versionCode differs from the checked build')
+              encoded = ''.join(os.environ['ANDROID_KEYSTORE_BASE64'].split())
+              try:
+                  key_bytes = base64.b64decode(encoded, validate=True)
+              except Exception:
+                  raise SigningError('Keystore Base64 is invalid (value suppressed)') from None
+              if not key_bytes:
+                  raise SigningError('Keystore is empty')
+              with tempfile.TemporaryDirectory(prefix='agronaliz-main-key-', dir=runner_temp) as folder:
+                  os.chmod(folder, 0o700)
+                  key = Path(folder) / 'original.keystore'
+                  descriptor = os.open(key, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+                  with os.fdopen(descriptor, 'wb') as stream:
+                      stream.write(key_bytes)
+                  del key_bytes, encoded
+                  staged = Path(folder) / 'verified.apk'
+                  tool([str(sdk / 'apksigner'), 'sign', '--ks', str(key),
+                        '--ks-key-alias', os.environ['ANDROID_KEY_ALIAS'],
+                        '--ks-pass', 'env:ANDROID_KEYSTORE_PASSWORD', '--key-pass', 'env:' + key_password_env,
+                        '--v1-signer-name', 'ORIGINAL',
+                        '--v1-signing-enabled', 'true', '--v2-signing-enabled', 'true',
+                        '--v3-signing-enabled', 'true', '--v4-signing-enabled', 'false',
+                        '--out', str(staged), str(source)])
+                  actual = certificate_digest(tool([str(sdk / 'apksigner'), 'verify', '--print-certs', str(staged)]))
+                  if actual != expected:
+                      raise SigningError('Certificate SHA-256 mismatch; observed public fingerprint: ' + actual)
+                  if apk_identity(tool([str(sdk / 'aapt2'), 'dump', 'badging', str(staged)])) != (app_id, version):
+                      raise SigningError('Signed APK identity/version changed')
+                  output = runner_temp / 'agronaliz-main-output'
+                  output.mkdir(mode=0o700)
+                  apk = output / 'app-main-original.apk'
+                  staged.replace(apk)
+                  report = dict(applicationId=app_id, versionCode=version, certificateSha256=actual,
+                                apkSha256=hashlib.sha256(apk.read_bytes()).hexdigest(), sourceSha=os.environ['APK_SOURCE_SHA'], roomVersion=int(os.environ['MAIN_ROOM_VERSION']), installedVersionCode=int(os.environ['INSTALLED_CODE']), installedRoomVersion=int(os.environ['INSTALLED_ROOM']))
+                  (output / 'verification.json').write_text(json.dumps(report, indent=2) + '\n')
+                  print('Verified MAIN certificate SHA-256: ' + actual)
+                  with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
+                      stream.write('certificate=' + actual + '\n')
+
+          if __name__ == '__main__':
+              try:
+                  main()
+              except SigningError as error:
+                  print(str(error), file=sys.stderr)
+                  sys.exit(1)
+              except Exception:
+                  print('Signing failed; no signed APK published (details suppressed)', file=sys.stderr)
+                  sys.exit(1)
+          PY
+      - name: Publish verified MAIN APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-main-original-main-${{ github.sha }}-v${{ needs.build.outputs.version_code }}
+          path: |
+            ${{ runner.temp }}/agronaliz-main-output/app-main-original.apk
+            ${{ runner.temp }}/agronaliz-main-output/verification.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Remove temporary MAIN key and artifacts
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import os, shutil
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP'])
+          for path in list(root.glob('agronaliz-main-key-*')) + [root / 'agronaliz-main-input', root / 'agronaliz-main-output']:
+              if path.is_dir(): shutil.rmtree(path)
+          PY
+      - name: Remove internal unsigned transport artifact
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_ID: ${{ needs.build.outputs.input_id }}
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.request
+          identity = os.environ['INPUT_ID']
+          if not identity.isdecimal(): raise SystemExit('No valid internal artifact ID')
+          url = 'https://api.github.com/repos/' + os.environ['GITHUB_REPOSITORY'] + '/actions/artifacts/' + identity
+          headers = {'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json'}
+          try:
+              with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=30) as response:
+                  artifact = json.load(response)
+              if artifact['workflow_run']['id'] != int(os.environ['GITHUB_RUN_ID']) or not artifact['name'].startswith('internal-unsigned-MAIN-do-not-install-'):
+                  raise SystemExit('Refusing to remove an unrelated artifact')
+              urllib.request.urlopen(urllib.request.Request(url, headers=headers, method='DELETE'), timeout=30).close()
+          except Exception:
+              raise SystemExit('Internal artifact cleanup failed; do not install transport APK; it expires after one day')
+          PY

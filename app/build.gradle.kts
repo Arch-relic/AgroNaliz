@@ -78,3 +78,16 @@ androidComponents {
         }
     }
 }
+
+// Optional main-only update metadata; debugTest outputs retain their own version policy.
+androidComponents {
+    onVariants(selector().withBuildType("debug")) { variant ->
+        val code = providers.gradleProperty("mainVersionCode").map { value ->
+            value.toIntOrNull()?.takeIf { it in 1..2100000000 }
+                ?: throw GradleException("mainVersionCode must be an integer in 1..2100000000")
+        }
+        variant.outputs.forEach { output ->
+            if (providers.gradleProperty("mainVersionCode").isPresent) output.versionCode.set(code)
+        }
+    }
+}
