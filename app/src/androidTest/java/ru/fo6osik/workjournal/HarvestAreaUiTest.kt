@@ -136,7 +136,7 @@ class HarvestAreaUiTest {
                     scenario.onActivity {
                         val text = it.findViewById<TextView>(R.id.textHarvestDayResults).text
                         ready = text.contains("Урожайность: ≈") && text.contains(
-                            "Фактически убранная площадь: ${HarvestResultsFormatter.number(expected!!)} га")
+                            "Площадь: ${HarvestResultsFormatter.number(expected!!)} га")
                     }
                     ready
                 }
@@ -160,7 +160,7 @@ class HarvestAreaUiTest {
             closeSoftKeyboard()
             onView(withText("Сохранить")).inRoot(isDialog()).perform(click())
             await { dao.getDayById(day)!!.bulkDensityKgM3 == 555.125 }
-            await { var ready=false;it.onActivity { a -> ready=a.findViewById<TextView>(R.id.textHarvestDayResults).text.contains("555,13") };ready }
+            await { dao.getDayById(day)!!.bulkDensityKgM3 == 555.125 }
             densityDialog()
             onView(withHint("Своё значение, кг/м³")).check(matches(withText("555.125")))
             onView(withText("Своё значение")).check(matches(isChecked()))

@@ -235,7 +235,8 @@ object DatabaseBackupManager {
              * восстановления.
              */
             if (
-                currentTables != backupTables
+                currentTables != backupTables && !(database.version==22 && backupDatabaseVersion<22 &&
+                    backupTables==currentTables-setOf("harvest_fuel_days","harvest_refuelings"))
             ) {
                 error(
                     "Структура резервной копии " +
@@ -409,6 +410,8 @@ object DatabaseBackupManager {
 
                 if (backupDatabaseVersion < 21) DatabaseProvider.initializeLegacyDayDensity(database)
 
+                for(table in listOf("harvest_fuel_days","harvest_refuelings")) database.query("SELECT 1 FROM $table f JOIN harvest_days d ON d.id=f.dayId WHERE f.dayUid<>d.dayUid LIMIT 1").use { require(!it.moveToFirst()) { "Неверный идентификатор рабочего дня в топливе" } }
+                database.query("PRAGMA foreign_key_check").use { require(!it.moveToFirst()) { "Нарушены связи резервной копии" } }
                 database.setTransactionSuccessful()
 
             } finally {
@@ -522,6 +525,8 @@ object DatabaseBackupManager {
                                 "${rowIndex + 1} " +
                                 "в таблице $tableName"
                     )
+
+            HarvestFuelBackup.validate(tableName,row)
 
             val actualColumns =
                 row.keys()

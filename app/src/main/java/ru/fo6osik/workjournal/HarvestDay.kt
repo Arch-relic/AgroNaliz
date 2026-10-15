@@ -100,6 +100,8 @@ data class HarvestDay(
     val reminderSettingsInitialized: Boolean = true,
 
     // null = фактически убранная площадь неизвестна, никогда не означает ноль.
+    val moisturePercent: Double? = null,
+
     val harvestedAreaHa: Double? = null,
     val bulkDensityKgM3: Double? = null,
     val densityMode: String? = null,

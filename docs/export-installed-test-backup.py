@@ -24,13 +24,15 @@ def validate_backup(raw, target_room_version):
     if root.get('backupFormatVersion') != 1:
         raise ValueError('Unsupported backup format')
     version = root.get('databaseVersion')
-    if type(version) is not int or version not in (20, 21):
-        raise ValueError('Only documented Room v20/v21 backups are supported')
-    if target_room_version not in (20, 21) or version > target_room_version:
+    if type(version) is not int or version not in (20, 21, 22):
+        raise ValueError('Only documented Room v20/v21/v22 backups are supported')
+    if target_room_version not in (20, 21, 22) or version > target_room_version:
         raise ValueError('Database downgrade blocked; keep the installed application and backup')
     tables = root.get('tables')
     if not isinstance(tables, dict) or not REQUIRED.issubset(tables):
         raise ValueError('Required backup tables are missing')
+    if version==22 and not {'harvest_fuel_days','harvest_refuelings'}.issubset(tables):
+        raise ValueError('Fuel tables missing from v22 backup')
     for rows in tables.values():
         if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
             raise ValueError('Malformed backup rows')
@@ -88,7 +90,7 @@ def main():
     parser.add_argument('--serial', required=True, help='Explicit owner-approved device serial')
     parser.add_argument('--backup-name', required=True, help='Existing basename from files/test-backups')
     parser.add_argument('--output', required=True, help='New private JSON file outside Git')
-    parser.add_argument('--target-room-version', required=True, type=int, choices=[20, 21])
+    parser.add_argument('--target-room-version', required=True, type=int, choices=[20, 21, 22])
     args = parser.parse_args()
     raw = read_backup(args.adb, args.serial, args.backup_name)
     version, counts = validate_backup(raw, args.target_room_version)

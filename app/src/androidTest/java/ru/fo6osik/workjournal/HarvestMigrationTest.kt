@@ -49,7 +49,7 @@ class HarvestMigrationTest {
         checkTest()
         val room = DatabaseProvider.getDatabase(context)
         val db = room.openHelper.writableDatabase // Room validates the entire migrated schema here.
-        assertEquals(21, db.version)
+        assertEquals(22, db.version)
         fun verify() {
             db.query("SELECT * FROM harvest_days WHERE id=4301").use { cursor ->
                 assertTrue(cursor.moveToFirst())
@@ -102,7 +102,7 @@ class HarvestMigrationTest {
         }
         val legacyTables = legacy.getJSONObject("tables")
         val newTables = migrated.getJSONObject("tables")
-        assertEquals(legacyTables.keys().asSequence().toSet(), newTables.keys().asSequence().toSet())
+        assertEquals(legacyTables.keys().asSequence().toSet()+setOf("harvest_fuel_days","harvest_refuelings"), newTables.keys().asSequence().toSet())
         // Every stored value in every table survives; not just the harvest fixture.
         for (table in legacyTables.keys()) {
             val oldRows = legacyTables.getJSONArray(table)

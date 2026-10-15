@@ -304,6 +304,9 @@ class HarvestProcessActivity : AppCompatActivity() {
                 bunkersByDay[day.id].orEmpty().map { it.fillLevel }, day.harvestedAreaHa, day.bulkDensityKgM3
             ) }
         )
+        textTotalBunkers.text = "Бункеров: ${allBunkers.size}"
+        textTotalVolume.text = "Объём: ${result.volumeM3?.let { HarvestResultsFormatter.range(it,"м³") } ?: "—"}"
+        textAverageBunkerVolume.visibility = View.GONE
         textHarvestResults.text = HarvestResultsFormatter.results(result, campaign = true)
 
         renderDays(

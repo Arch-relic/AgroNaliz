@@ -40,14 +40,18 @@
             android:textStyle="bold"
             android:paddingBottom="18dp" />
 
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
         <TextView
             android:id="@+id/textHarvestDayTime"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="wrap_content"
             android:text="Начало: —&#10;Конец: —"
             android:textSize="18sp"
             android:padding="8dp"
             android:paddingBottom="16dp" />
+        <ImageButton android:id="@+id/buttonHarvestFuel" android:layout_width="48dp" android:layout_height="48dp" android:src="@drawable/ic_harvest_fuel" android:contentDescription="Топливо за день" android:background="?attr/selectableItemBackgroundBorderless" />
+        </LinearLayout>
 
         <Button
             android:id="@+id/buttonEditHarvestDay"
@@ -96,6 +100,7 @@
             android:textSize="18sp"
             android:paddingBottom="12dp" />
 
+        <Button android:id="@+id/buttonEditHarvestMoisture" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Влажность урожая" />
         <Button
             android:id="@+id/buttonEditHarvestArea"
             android:layout_width="match_parent"
