@@ -2,6 +2,20 @@
 
 Дата: 2026-10-15.
 
+## PR #30: исправление выбора окна Espresso (2026-10-15)
+Исследован Android PR checks https://github.com/Arch-relic/AgroNaliz/actions/runs/38700776280, job116308148384. APK/JVM/catalog/provider checks прошли. В 07:53:51 UTC есть ISOLATION SUCCESS: раздельные UID/Room/preferences/files/cache/document store/external/FileProvider и неизменность main подтверждены. В 07:55:12 UTC упал HarvestAreaUiTest.zeroAreaKeepsFinishDialogOpenAndDayActive, строка114, при вводе нуля. RootViewWithoutFocusException показывает выбранный BASE_APPLICATION (Activity) с has-window-focus=false вместо модального диалога. Это дефект синхронизации/выбора окна UI-теста, не упавшее утверждение изоляции. Диагностика не доказывает отсутствие любых возможных дефектов приложения, но конкретный сбой не является нарушением разделения данных. В отличие от прежнего повтора без исправления, теперь устранён ошибочный root matcher.
+
+Изменены только:
+- app/src/androidTest/java/ru/fo6osik/workjournal/HarvestAreaUiTest.kt — dialogView выбирает isDialog + decor с нужным контролом; ввод/кнопки/валидация и закрытие клавиатуры выполняются в нужном окне; после TimePicker проверяется18:00. Все7 @Test и проверки БД/ошибки/отмены/площади/статусов сохранены.
+- app/src/androidTest/java/ru/fo6osik/workjournal/HarvestFuelUiTest.kt — ввод/очистка влажности и закрытие клавиатуры привязаны к диалогу; оба @Test сохранены.
+- docs/run-harvest-checks.py — HarvestAreaUiTest7 запускается дважды; ОБА прохода обязательны, первая ошибка прерывает job, исключения не подавляются. Всего33 harvest instrumentation executions вместо26, полный Android набор ожидает57 вместо50. Обновлена подпись реальной схемы20→22.
+- docs/codex-handoff.md — этот отчёт. Удалений нет. Android production-код, Room, APK IDs, подписи и workflows не менялись.
+
+Ветка remote feature/harvest-moisture-fuel, опорный main68cef94fcf1db9939154d9ad7289ac424ca7089f, исходный headb34c6f47b0284d5ac75d197b4d153897dea58f46. Текущая правка ещё не проверена CI; SHA/новые результаты будут зафиксированы после запуска. git diff --check и Python syntax проверены. source /workspace/agronaliz-env.sh; agrogradle :app:assembleDebug :app:test снова остановился до компиляции из-за запрета сокетов/usable wildcard IP; локальный успех Android не заявляется. Полные проверки выполняет GitHub runner. PR30 остаётся Draft, merge/основной release запрещены. Ни одна проверка изоляции/подписи/данных не отключена, таймауты не увеличены.
+
+Результаты предыдущих этапов ниже являются историческими, не результатом текущей правки.
+
+
 ## Итог повторной проверки последнего кода и guard
 Проверенный head 87a491f723a2b98185e9f65937d2a5aadfef60c1:
 - Android PR checks https://github.com/Arch-relic/AgroNaliz/actions/runs/38697088623 — SUCCESS после одного повтора только упавшего задания. В первой попытке Espresso RootViewWithoutFocusException в HarvestAreaUiTest.finishWithoutAreaKeepsUnknownAndCampaignQuestion; тесты/код ради повтора не изменялись, проверки не ослаблялись. На повторе все50 instrumentation test executions пройдены, включая fuel10 и Room21→22. Возможная нестабильность фокуса автоматизированного UI остаётся известным ограничением, не скрывать первый сбой.

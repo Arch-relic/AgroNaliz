@@ -22,11 +22,11 @@ class HarvestFuelUiTest {
     @Test fun moistureCompletedEditAndClear(){
         open().use {
             onView(withId(R.id.buttonEditHarvestMoisture)).perform(scrollTo(),click())
-            onView(withHint("Влажность урожая, %")).perform(replaceText("18,5"));androidx.test.espresso.Espresso.closeSoftKeyboard()
+            onView(withHint("Влажность урожая, %")).inRoot(isDialog()).perform(replaceText("18,5"),androidx.test.espresso.action.ViewActions.closeSoftKeyboard())
             onView(withText("Сохранить")).inRoot(isDialog()).perform(click())
             await { DatabaseProvider.getDatabase(context).harvestDao().getDayById(9001)!!.moisturePercent==18.5 }
             onView(withId(R.id.buttonEditHarvestMoisture)).perform(scrollTo(),click())
-            onView(withHint("Влажность урожая, %")).perform(replaceText(""));androidx.test.espresso.Espresso.closeSoftKeyboard()
+            onView(withHint("Влажность урожая, %")).inRoot(isDialog()).perform(replaceText(""),androidx.test.espresso.action.ViewActions.closeSoftKeyboard())
             onView(withText("Сохранить")).inRoot(isDialog()).perform(click())
             await { DatabaseProvider.getDatabase(context).harvestDao().getDayById(9001)!!.moisturePercent==null }
             DatabaseProvider.getDatabase(context).harvestDao().updateMoisture(9001,14.25)

@@ -4,10 +4,11 @@ import android.content.Intent
 import android.widget.TextView
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.espresso.action.ViewActions.*
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.RootMatchers.isDialog
+import androidx.test.espresso.matcher.RootMatchers.withDecorView
+import org.hamcrest.Matchers.allOf
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -50,10 +51,19 @@ class HarvestAreaUiTest {
         }
         return scenario
     }
+    // The Activity remains visible behind a modal dialog but cannot take window focus.
+    // Select the dialog containing this control instead of Espresso's default Activity root.
+    private fun dialogView(id: Int) = onView(withId(id)).inRoot(
+        allOf(isDialog(), withDecorView(hasDescendant(withId(id))))
+    )
+    private fun closeDialogKeyboard(id: Int) {
+        dialogView(id).perform(androidx.test.espresso.action.ViewActions.closeSoftKeyboard())
+    }
+
     private fun finishDialog() {
         onView(withId(R.id.buttonFinishHarvestDay)).perform(scrollTo(), click())
-        onView(withId(R.id.textFinishHarvestDayTime)).perform(click())
-        onView(isAssignableFrom(android.widget.TimePicker::class.java)).perform(object : androidx.test.espresso.ViewAction {
+        dialogView(R.id.textFinishHarvestDayTime).perform(click())
+        onView(isAssignableFrom(android.widget.TimePicker::class.java)).inRoot(isDialog()).perform(object : androidx.test.espresso.ViewAction {
             override fun getDescription() = "Select deterministic end time after fixture bunker"
             override fun getConstraints(): org.hamcrest.Matcher<android.view.View> = isAssignableFrom(android.widget.TimePicker::class.java)
             override fun perform(controller: androidx.test.espresso.UiController, view: android.view.View) {
@@ -62,15 +72,17 @@ class HarvestAreaUiTest {
                 controller.loopMainThreadUntilIdle()
             }
         })
-        onView(withId(android.R.id.button1)).perform(click())
+        onView(withId(android.R.id.button1)).inRoot(isDialog()).perform(click())
+        dialogView(R.id.textFinishHarvestDayTime).check(matches(withText("18:00")))
+        closeDialogKeyboard(R.id.editFinishHarvestDayArea)
     }
 
     @Test fun finishWithoutAreaKeepsUnknownAndCampaignQuestion() {
         val day = fixture()
         open(day).use {
             finishDialog()
-            onView(withId(R.id.buttonConfirmFinishHarvestDay)).perform(scrollTo(), click())
-            onView(withText("Уборочная кампания окончена?")).check(matches(isDisplayed()))
+            dialogView(R.id.buttonConfirmFinishHarvestDay).perform(scrollTo(), click())
+            onView(withText("Уборочная кампания окончена?")).inRoot(isDialog()).check(matches(isDisplayed()))
             onView(withText("Нет")).inRoot(isDialog()).perform(click())
             await { dao.getDayById(day)!!.status == "COMPLETED" }
             assertNull(dao.getDayById(day)!!.harvestedAreaHa)
@@ -81,9 +93,9 @@ class HarvestAreaUiTest {
         val day = fixture()
         open(day).use {
             finishDialog()
-            onView(withId(R.id.editFinishHarvestDayArea)).perform(replaceText("12,375"))
-            closeSoftKeyboard()
-            onView(withId(R.id.buttonConfirmFinishHarvestDay)).perform(scrollTo(), click())
+            dialogView(R.id.editFinishHarvestDayArea).perform(replaceText("12,375"))
+            closeDialogKeyboard(R.id.editFinishHarvestDayArea)
+            dialogView(R.id.buttonConfirmFinishHarvestDay).perform(scrollTo(), click())
             onView(withText("Да")).inRoot(isDialog()).perform(click())
             await { dao.getDayById(day)!!.status == "COMPLETED" }
             assertEquals(12.375, dao.getDayById(day)!!.harvestedAreaHa!!, 0.0)
@@ -95,14 +107,14 @@ class HarvestAreaUiTest {
         val before = dao.getDayById(day)
         open(day).use {
             finishDialog()
-            onView(withId(R.id.editFinishHarvestDayArea)).perform(replaceText("2.5"))
-            closeSoftKeyboard()
-            onView(withId(R.id.buttonCancelFinishHarvestDay)).perform(scrollTo(), click())
+            dialogView(R.id.editFinishHarvestDayArea).perform(replaceText("2.5"))
+            closeDialogKeyboard(R.id.editFinishHarvestDayArea)
+            dialogView(R.id.buttonCancelFinishHarvestDay).perform(scrollTo(), click())
             assertEquals(before, dao.getDayById(day))
             finishDialog()
-            onView(withId(R.id.editFinishHarvestDayArea)).perform(replaceText("3,5"))
-            closeSoftKeyboard()
-            onView(withId(R.id.buttonConfirmFinishHarvestDay)).perform(scrollTo(), click())
+            dialogView(R.id.editFinishHarvestDayArea).perform(replaceText("3,5"))
+            closeDialogKeyboard(R.id.editFinishHarvestDayArea)
+            dialogView(R.id.buttonConfirmFinishHarvestDay).perform(scrollTo(), click())
             onView(withText("Отмена")).inRoot(isDialog()).perform(click())
             assertEquals(before, dao.getDayById(day))
         }
@@ -111,12 +123,12 @@ class HarvestAreaUiTest {
         val day = fixture()
         open(day).use {
             finishDialog()
-            onView(withId(R.id.editFinishHarvestDayArea)).perform(replaceText("0"))
-            closeSoftKeyboard()
-            onView(withId(R.id.buttonConfirmFinishHarvestDay)).perform(scrollTo(), click())
-            onView(withId(R.id.editFinishHarvestDayArea)).check(matches(hasErrorText(context.getString(R.string.harvest_positive_number))))
+            dialogView(R.id.editFinishHarvestDayArea).perform(replaceText("0"))
+            closeDialogKeyboard(R.id.editFinishHarvestDayArea)
+            dialogView(R.id.buttonConfirmFinishHarvestDay).perform(scrollTo(), click())
+            dialogView(R.id.editFinishHarvestDayArea).check(matches(hasErrorText(context.getString(R.string.harvest_positive_number))))
             assertEquals("ACTIVE", dao.getDayById(day)!!.status)
-            onView(withId(R.id.buttonCancelFinishHarvestDay)).perform(scrollTo(), click())
+            dialogView(R.id.buttonCancelFinishHarvestDay).perform(scrollTo(), click())
         }
     }
     @Test fun addAndEditAreaAfterCampaignCompletionUpdatesYieldAndPreservesDay() {
@@ -126,8 +138,8 @@ class HarvestAreaUiTest {
             onView(withId(R.id.buttonEditHarvestArea)).check(matches(withText("Добавить площадь")))
             for (input in listOf("2,5", "3.125")) {
                 onView(withId(R.id.buttonEditHarvestArea)).perform(scrollTo(), click())
-                onView(withId(R.id.editHarvestNumber)).perform(replaceText(input))
-                closeSoftKeyboard()
+                dialogView(R.id.editHarvestNumber).perform(replaceText(input))
+                closeDialogKeyboard(R.id.editHarvestNumber)
                 onView(withText("Сохранить")).inRoot(isDialog()).perform(click())
                 val expected = HarvestCalculator.parseOptionalPositive(input)
                 await { dao.getDayById(day)!!.harvestedAreaHa == expected }
@@ -156,8 +168,7 @@ class HarvestAreaUiTest {
             }
             densityDialog()
             onView(withText("Своё значение")).perform(click())
-            onView(withHint("Своё значение, кг/м³")).perform(replaceText("555,125"))
-            closeSoftKeyboard()
+            onView(withHint("Своё значение, кг/м³")).inRoot(isDialog()).perform(replaceText("555,125"), androidx.test.espresso.action.ViewActions.closeSoftKeyboard())
             onView(withText("Сохранить")).inRoot(isDialog()).perform(click())
             await { dao.getDayById(day)!!.bulkDensityKgM3 == 555.125 }
             await { dao.getDayById(day)!!.bulkDensityKgM3 == 555.125 }
@@ -184,15 +195,15 @@ class HarvestAreaUiTest {
                     controller.loopMainThreadUntilIdle()
                 }
             })
-            onView(withId(R.id.buttonConfirmEditHarvestDay)).perform(scrollTo(), click())
+            dialogView(R.id.buttonConfirmEditHarvestDay).perform(scrollTo(), click())
             await { dao.getDayById(day)!!.status == "ACTIVE" }
             assertEquals(before.copy(status="ACTIVE",endTime=null),dao.getDayById(day))
             assertEquals("IN_PROGRESS",dao.getProcessById(before.processId)!!.status)
             scenario.recreate()
             await { var ready=false;scenario.onActivity { ready=it.findViewById<android.widget.Button>(R.id.buttonFinishHarvestDay).visibility==android.view.View.VISIBLE && it.findViewById<TextView>(R.id.textHarvestDayResults).text.isNotEmpty() };ready }
             finishDialog()
-            onView(withId(R.id.editFinishHarvestDayArea)).check(matches(withText("3.125")))
-            onView(withId(R.id.buttonCancelFinishHarvestDay)).perform(scrollTo(), click())
+            dialogView(R.id.editFinishHarvestDayArea).check(matches(withText("3.125")))
+            dialogView(R.id.buttonCancelFinishHarvestDay).perform(scrollTo(), click())
         }
     }
 
