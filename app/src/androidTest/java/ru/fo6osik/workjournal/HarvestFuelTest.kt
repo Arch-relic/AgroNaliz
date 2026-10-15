@@ -54,7 +54,9 @@ class HarvestFuelTest {
         dao.updateDayDetails(9001,"2026-10-10","08:00",null,"ACTIVE")
         assertEquals(2,fuel.getRefills(9001).size)
         assertEquals(80.0,fuel.getDay(9001)!!.startPercent!!,0.0)
-        dao.completeDay(9001,"19:00");dao.completeProcess(8001,"2026-10-10")
+        dao.updateMoisture(9001,null)
+        dao.completeDay(9001,"19:00",3.125,14.25);dao.completeProcess(8001,"2026-10-10")
+        assertEquals(14.25,dao.getDayById(9001)!!.moisturePercent!!,0.0)
         assertEquals(555.125,dao.getDayById(9001)!!.bulkDensityKgM3!!,0.0)
         val used=HarvestFuelCalculator.calculate(80.0,55.0,fuel.getRefills(9001).map { HarvestFuelCalculator.Refill(it.beforePercent,it.afterPercent,it.scope=="BEFORE_DAY") },3.125)
         assertEquals(85.0,used.consumed!!,0.0);assertEquals(27.2,used.perHa!!,0.000001)
@@ -79,7 +81,14 @@ class HarvestFuelTest {
         assertTrue(DatabaseBackupManager.importBackup(context,uri).isSuccess)
         assertEquals(14.25,db.harvestDao().getDayById(9001)!!.moisturePercent!!,0.0)
         assertEquals(2,db.harvestFuelDao().getRefills(9001).size)
-        val count=db.harvestFuelDao().getRefills(9001).size
+        val originals=db.harvestFuelDao().getRefills(9001)
+        val count=originals.size
+        // Only synthetic fixture rows are removed; exercise actual new-row merge import.
+        db.openHelper.writableDatabase.execSQL("DELETE FROM harvest_refuelings WHERE dayId=9001")
+        db.openHelper.writableDatabase.execSQL("DELETE FROM harvest_fuel_days WHERE dayId=9001")
+        assertTrue(DataImportManager.importData(context,uri).isSuccess)
+        assertEquals(originals.map { it.refuelUid }.toSet(),db.harvestFuelDao().getRefills(9001).map { it.refuelUid }.toSet())
+        assertEquals(80.0,db.harvestFuelDao().getDay(9001)!!.startPercent!!,0.0)
         assertTrue(DataImportManager.importData(context,uri).isSuccess)
         assertEquals(count,db.harvestFuelDao().getRefills(9001).size)
     }
