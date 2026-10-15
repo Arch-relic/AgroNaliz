@@ -2,6 +2,7 @@ package ru.fo6osik.workjournal
 import android.content.Intent
 import android.view.View
 import android.widget.TimePicker
+import androidx.test.espresso.NoMatchingViewException
 import androidx.test.espresso.ViewAction
 import androidx.test.espresso.UiController
 import androidx.test.espresso.matcher.RootMatchers.withDecorView
@@ -82,8 +83,13 @@ class HarvestFuelUiTest {
         await { temporaryRefill()!=null }
     }
     private fun editTemporary() {
-        onView(allOf(withText("Изменить"),hasSibling(withText(org.hamcrest.Matchers.containsString("41% → 81%")))))
-            .inRoot(isDialog()).perform(scrollTo(),click())
+        val edit=onView(allOf(withText("Изменить"),hasSibling(withText(org.hamcrest.Matchers.containsString("41% → 81%")))))
+            .inRoot(allOf(isDialog(),withDecorView(hasDescendant(withText("Топливо за день")))))
+        await {
+            try { edit.check(matches(withEffectiveVisibility(Visibility.VISIBLE)));true }
+            catch(_:NoMatchingViewException) { false }
+        }
+        edit.perform(scrollTo(),click())
     }
     @Test fun pickerSavesLeadingZerosAndEditsExistingTime() {
         try { open().use {
