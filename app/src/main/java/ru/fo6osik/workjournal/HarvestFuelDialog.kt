@@ -1,5 +1,8 @@
 package ru.fo6osik.workjournal
 
+import android.app.TimePickerDialog
+import java.util.Calendar
+import java.util.Locale
 import android.text.InputType
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
@@ -76,9 +79,24 @@ class HarvestFuelDialog(private val host:AppCompatActivity,private val day:Harve
     private fun reload() { val values=db.harvestFuelDao().getRefills(day.id);host.runOnUiThread { rows=values;render();changed() } }
     private fun edit(row:HarvestRefueling?) {
         val form=column();val before=input("До заправки, %",row?.beforePercent);val after=input("После заправки, %",row?.afterPercent)
-        val time=EditText(host).apply { hint="Время, ЧЧ:ММ (необязательно)";setText(row?.time ?: "") }
+        var selectedTime=row?.time
+        val time=Button(host).apply { contentDescription="Время заправки" }
+        fun showTime() { time.text=selectedTime?.let { "Время: $it" } ?: "Выбрать время (необязательно)" }
+        showTime()
+        time.setOnClickListener {
+            val now=Calendar.getInstance()
+            val minutes=selectedTime?.let(HarvestChronology::minutes)
+            TimePickerDialog(host,{ _,hour,minute ->
+                selectedTime=String.format(Locale.ROOT,"%02d:%02d",hour,minute)
+                showTime()
+            },minutes?.div(60) ?: now.get(Calendar.HOUR_OF_DAY),minutes?.rem(60) ?: now.get(Calendar.MINUTE),true).show()
+        }
+        val clearTime=Button(host).apply {
+            text="Очистить время"
+            setOnClickListener { selectedTime=null;showTime() }
+        }
         val scope=CheckBox(host).apply { text="Между сменами, перед этим рабочим днём";isChecked=row?.scope=="BEFORE_DAY" }
-        form.addView(before);form.addView(after);form.addView(time);form.addView(scope)
+        form.addView(before);form.addView(after);form.addView(time);form.addView(clearTime);form.addView(scope)
         val dialog=AlertDialog.Builder(host).setTitle(if(row==null)"Добавить заправку" else "Изменить заправку")
             .setView(form).setNegativeButton("Отмена",null).setPositiveButton("Сохранить",null).create()
         dialog.setOnShowListener { dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
@@ -86,7 +104,7 @@ class HarvestFuelDialog(private val host:AppCompatActivity,private val day:Harve
                 val a=requireNotNull(HarvestFuelCalculator.parse(before.text.toString())) { "Укажите оба показания" }
                 val b=requireNotNull(HarvestFuelCalculator.parse(after.text.toString())) { "Укажите оба показания" }
                 require(b>=a) { "После заправки уровень не ниже, чем до" }
-                val t=time.text.toString().trim().takeIf { it.isNotEmpty() };if(t!=null)HarvestChronology.minutes(t)
+                val t=selectedTime;if(t!=null)HarvestChronology.minutes(t)
                 val period=if(scope.isChecked)"BEFORE_DAY" else "DAY"
                 dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled=false
                 work { db.harvestFuelDao().saveRefill(day.id,row?.id,a,b,t,period);reload();host.runOnUiThread { dialog.dismiss() } }
