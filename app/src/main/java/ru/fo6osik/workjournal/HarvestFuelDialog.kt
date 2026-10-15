@@ -98,7 +98,7 @@ class HarvestFuelDialog(private val host:AppCompatActivity,private val day:Harve
         val scope=CheckBox(host).apply { text="Между сменами, перед этим рабочим днём";isChecked=row?.scope=="BEFORE_DAY" }
         form.addView(before);form.addView(after);form.addView(time);form.addView(clearTime);form.addView(scope)
         val dialog=AlertDialog.Builder(host).setTitle(if(row==null)"Добавить заправку" else "Изменить заправку")
-            .setView(form).setNegativeButton("Отмена",null).setPositiveButton("Сохранить",null).create()
+            .setView(ScrollView(host).apply { addView(form) }).setNegativeButton("Отмена",null).setPositiveButton("Сохранить",null).create()
         dialog.setOnShowListener { dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
             try {
                 val a=requireNotNull(HarvestFuelCalculator.parse(before.text.toString())) { "Укажите оба показания" }
