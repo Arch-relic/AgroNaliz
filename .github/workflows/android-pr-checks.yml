@@ -106,6 +106,8 @@ jobs:
               output.write(f"test_name=app-TEST-{branch}-{sha}\n")
           PY
       - name: Upload debug APK
+        # PR validation must not publish the main application APK.
+        if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.apk.outputs.name }}
