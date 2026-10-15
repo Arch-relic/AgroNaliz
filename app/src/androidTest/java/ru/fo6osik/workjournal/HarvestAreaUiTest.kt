@@ -63,7 +63,9 @@ class HarvestAreaUiTest {
     private fun finishDialog() {
         onView(withId(R.id.buttonFinishHarvestDay)).perform(scrollTo(), click())
         dialogView(R.id.textFinishHarvestDayTime).perform(click())
-        onView(isAssignableFrom(android.widget.TimePicker::class.java)).inRoot(isDialog()).perform(object : androidx.test.espresso.ViewAction {
+        onView(isAssignableFrom(android.widget.TimePicker::class.java)).inRoot(
+            allOf(isDialog(), withDecorView(hasDescendant(isAssignableFrom(android.widget.TimePicker::class.java))))
+        ).perform(object : androidx.test.espresso.ViewAction {
             override fun getDescription() = "Select deterministic end time after fixture bunker"
             override fun getConstraints(): org.hamcrest.Matcher<android.view.View> = isAssignableFrom(android.widget.TimePicker::class.java)
             override fun perform(controller: androidx.test.espresso.UiController, view: android.view.View) {
@@ -72,7 +74,7 @@ class HarvestAreaUiTest {
                 controller.loopMainThreadUntilIdle()
             }
         })
-        onView(withId(android.R.id.button1)).inRoot(isDialog()).perform(click())
+        dialogView(android.R.id.button1).perform(click())
         dialogView(R.id.textFinishHarvestDayTime).check(matches(withText("18:00")))
         closeDialogKeyboard(R.id.editFinishHarvestDayArea)
     }
