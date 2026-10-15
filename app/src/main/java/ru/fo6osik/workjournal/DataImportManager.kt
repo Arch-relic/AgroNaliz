@@ -82,6 +82,7 @@ object DataImportManager {
                 sourceDatabaseVersion != 18 &&
                 sourceDatabaseVersion != 19 &&
                 sourceDatabaseVersion != 20 &&
+                sourceDatabaseVersion != 21 &&
                 sourceDatabaseVersion != database.version
             ) {
                 error(
@@ -346,6 +347,8 @@ val seasonProcessMap =
                         harvestProcessMap,
                         counter
                     )
+
+                HarvestFuelBackup.importFuel(database,tables,harvestDayMap,vehicleMap)
 
                 importHarvestBunkers(
                     database,
@@ -777,6 +780,8 @@ val seasonProcessMap =
                 "combine_specs"
             )
         }
+
+        if(sourceDatabaseVersion>=22) requiredTables.addAll(listOf("harvest_fuel_days","harvest_refuelings"))
 
         for (tableName in requiredTables) {
 
@@ -4451,6 +4456,9 @@ private fun importHarvestDays(
                 require((density == null) == (mode == null))
                 if (density == null) putNull("bulkDensityKgM3") else put("bulkDensityKgM3", density)
                 if (mode == null) putNull("densityMode") else put("densityMode", mode)
+                HarvestFuelBackup.validate("harvest_days",row)
+                val moisture=jsonNullableDouble(row,"moisturePercent")
+                if(moisture==null)putNull("moisturePercent") else put("moisturePercent",moisture)
                 val harvestValue = jsonNullableDouble(row, "harvestedAreaHa")
                 require(harvestValue == null || HarvestCalculator.positive(harvestValue) != null) {
                     "Некорректное значение harvestedAreaHa в файле импорта"

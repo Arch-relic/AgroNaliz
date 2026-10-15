@@ -1,4 +1,4 @@
-"""Real v20 -> v21 TEST APK update and harvest tests, only on the disposable CI emulator.
+"""Real v20 -> v22 TEST APK update and harvest tests, only on the disposable CI emulator.
 
 Run AFTER run-build-isolation-checks.py (which uninstalls TEST and leaves synthetic main).
 Never install, remove or migrate a user's existing application.
@@ -46,7 +46,10 @@ def main():
     instrument("HarvestPersistenceTest", count=5)
     adb("shell", "pm", "grant", test_id, "android.permission.POST_NOTIFICATIONS")
     adb("shell", "appops", "set", test_id, "SCHEDULE_EXACT_ALARM", "allow")
-    instrument("HarvestAreaUiTest", count=7)
+    # Both complete passes must succeed: exercise modal-root transitions repeatedly.
+    # This is a stability check, not a retry; any failure aborts the job.
+    for _ in range(2):
+        instrument("HarvestAreaUiTest", count=7)
     instrument("HarvestBackupTest", count=3)
     instrument("HarvestLifecycleTest", count=5)
     instrument("HarvestCampaignStateUiTest", count=2)
@@ -56,9 +59,9 @@ def main():
     isolation["instrument"]("ru.fo6osik.workjournal", "verifyMainAfterTest")
     adb("uninstall", test_id)
     isolation["instrument"]("ru.fo6osik.workjournal", "verifyMainAfterTest")
-    print("HARVEST SUCCESS: 26 harvest instrumentation tests; real Room v20 -> v21 upgrade; "
+    print("HARVEST SUCCESS: 33 harvest instrumentation tests; real Room v20 -> v22 upgrade; "
           "all legacy rows/timers/events retained; optional area completion/editing; "
-          "v20/v21 backups and v21 import; synthetic main unchanged", flush=True)
+          "legacy/current backups and current import; synthetic main unchanged", flush=True)
 
 
 if __name__ == "__main__":

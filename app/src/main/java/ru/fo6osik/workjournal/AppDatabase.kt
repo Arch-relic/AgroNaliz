@@ -6,6 +6,7 @@ import androidx.room.RoomDatabase
 @Database(
     entities = [
         Vehicle::class,
+        HarvestFuelDay::class, HarvestRefueling::class,
         MaintenanceRecord::class,
 
         CarBrand::class,
@@ -43,10 +44,11 @@ import androidx.room.RoomDatabase
         HarvestBunker::class,
         CombineSpec::class
     ],
-    version = 21,
+    version = 22,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
+    abstract fun harvestFuelDao(): HarvestFuelDao
 
     abstract fun vehicleDao(): VehicleDao
 

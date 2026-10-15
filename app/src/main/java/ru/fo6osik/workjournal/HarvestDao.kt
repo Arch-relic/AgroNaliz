@@ -46,6 +46,7 @@ interface HarvestDao {
     @Transaction
     fun insertDay(day: HarvestDay): Long {
         val process = requireNotNull(getProcessById(day.processId))
+        require(HarvestFuelCalculator.valid(day.moisturePercent))
         HarvestChronology.minutes(day.startTime)
         require(day.workDate >= process.startDate) { "Дата дня раньше начала кампании" }
         require(day.status in setOf("ACTIVE", "COMPLETED"))
@@ -352,6 +353,19 @@ interface HarvestDao {
         val day = requireNotNull(getDayById(dayId))
         HarvestChronology.validateEnd(day.startTime, endTime, getBunkersForDay(dayId).map { it.fillTime })
         return completeDayRaw(dayId, endTime, harvestedAreaHa)
+    }
+
+    @Query("UPDATE harvest_days SET moisturePercent=:value WHERE id=:id")
+    fun updateMoistureRaw(id:Int,value:Double?):Int
+    fun updateMoisture(id:Int,value:Double?):Int {
+        require(HarvestFuelCalculator.valid(value)) { "Влажность: от 0 до 100%" }
+        return updateMoistureRaw(id,value)
+    }
+    @Transaction fun completeDay(dayId:Int,endTime:String,harvestedAreaHa:Double?,moisture:Double?):Int {
+        require(HarvestFuelCalculator.valid(moisture)) { "Влажность: от 0 до 100%" }
+        val count=completeDay(dayId,endTime,harvestedAreaHa)
+        if(count==1) updateMoistureRaw(dayId,moisture)
+        return count
     }
 
     @Query("UPDATE harvest_days SET harvestedAreaHa = :harvestedAreaHa WHERE id = :dayId AND status = 'COMPLETED'")

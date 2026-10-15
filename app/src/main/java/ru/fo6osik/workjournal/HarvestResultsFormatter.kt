@@ -24,20 +24,11 @@ object HarvestResultsFormatter {
     }
 
     fun results(result: HarvestCalculator.Result, campaign: Boolean): String {
-        val mass = result.massTonnes?.let { "≈ ${range(it, "т")}" }
-            ?: "Не рассчитана: проверьте объём бункера, заполнение и плотность культуры"
-        val area = if (!campaign && !result.areasComplete) "Не указана"
-            else if (!result.knownAreaHa.isFinite()) "Не рассчитана: слишком большое значение"
-            else "${number(result.knownAreaHa)} га"
-        val tonnes = result.yieldTonnesPerHa
-        val centners = result.yieldCentnersPerHa
-        val yield = if (tonnes != null && centners != null)
-            "≈ ${range(centners, "ц/га")} (${range(tonnes, "т/га")})"
-        else "Не рассчитана"
-        val incomplete = if (campaign && (!result.areasComplete || !result.massesComplete))
-            "\nНеполные данные: масса — сумма только известных масс; урожайность — только по дням с известными массой и площадью (${result.includedYieldDays} из ${result.dayCount})." else ""
-        val areaLabel = if (campaign) "Сумма известных убранных площадей" else "Фактически убранная площадь"
-        return "Приблизительная масса: $mass\n$areaLabel: $area\nУрожайность: $yield$incomplete" +
-            "\nОценка зависит от влажности, засорённости и состояния зерна."
+        val mass=result.massTonnes?.let { "≈ ${range(it,"т")}" } ?: "—"
+        val area=if(result.knownAreaHa>0 && result.knownAreaHa.isFinite()) "${number(result.knownAreaHa)} га" else "—"
+        val yield=result.yieldTonnesPerHa?.let { "≈ ${range(it,"т/га")}" } ?: "—"
+        val incomplete=if(campaign && (!result.areasComplete || !result.massesComplete))
+            "\nНеполные данные · урожайность по ${result.includedYieldDays}/${result.dayCount} дням" else ""
+        return "Масса: $mass\nПлощадь: $area\nУрожайность: $yield$incomplete"
     }
 }

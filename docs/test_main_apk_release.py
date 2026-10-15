@@ -144,7 +144,7 @@ class MainApkRelease(unittest.TestCase):
 
     def test_room_floor_only_audited_versions(self):
         self.preflight(room='19',expect_failure=True)
-        self.preflight(room='22',expect_failure=True)
+        self.preflight(room='23',expect_failure=True)
     def test_installed_code_gate_before_private_key_decode(self):
         def tool(command):
             return "package: name='ru.fo6osik.workjournal' versionCode='53'"
@@ -156,5 +156,5 @@ class MainApkRelease(unittest.TestCase):
             self.assertIn('strictly greater',str(caught.exception))
 
     def test_future_target_room_needs_new_audit(self):
-        with patch('pathlib.Path.read_text',return_value='version = 22'):
+        with patch('pathlib.Path.read_text',return_value='version = 23'):
             self.preflight(expect_failure=True)

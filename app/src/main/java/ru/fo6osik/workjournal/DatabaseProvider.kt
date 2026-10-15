@@ -1693,6 +1693,19 @@ private val MIGRATION_16_17 =
         }
     }
 
+    val MIGRATION_21_22 = object : Migration(21,22) {
+        override fun migrate(database:SupportSQLiteDatabase) {
+            database.execSQL("ALTER TABLE harvest_days ADD COLUMN moisturePercent REAL")
+            database.execSQL("""CREATE TABLE IF NOT EXISTS harvest_fuel_days (dayId INTEGER NOT NULL PRIMARY KEY,dayUid TEXT NOT NULL,vehicleId INTEGER,vehicleNameSnapshot TEXT NOT NULL,startPercent REAL,endPercent REAL,FOREIGN KEY(dayId) REFERENCES harvest_days(id) ON UPDATE NO ACTION ON DELETE CASCADE,FOREIGN KEY(vehicleId) REFERENCES vehicles(id) ON UPDATE NO ACTION ON DELETE SET NULL)""")
+            database.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_harvest_fuel_days_dayUid ON harvest_fuel_days(dayUid)")
+            database.execSQL("CREATE INDEX IF NOT EXISTS index_harvest_fuel_days_vehicleId ON harvest_fuel_days(vehicleId)")
+            database.execSQL("""CREATE TABLE IF NOT EXISTS harvest_refuelings (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,refuelUid TEXT NOT NULL,dayId INTEGER NOT NULL,dayUid TEXT NOT NULL,vehicleId INTEGER,vehicleNameSnapshot TEXT NOT NULL,scope TEXT NOT NULL,beforePercent REAL NOT NULL,afterPercent REAL NOT NULL,time TEXT,createdAt INTEGER NOT NULL,FOREIGN KEY(dayId) REFERENCES harvest_days(id) ON UPDATE NO ACTION ON DELETE CASCADE,FOREIGN KEY(vehicleId) REFERENCES vehicles(id) ON UPDATE NO ACTION ON DELETE SET NULL)""")
+            database.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_harvest_refuelings_refuelUid ON harvest_refuelings(refuelUid)")
+            database.execSQL("CREATE INDEX IF NOT EXISTS index_harvest_refuelings_dayId ON harvest_refuelings(dayId)")
+            database.execSQL("CREATE INDEX IF NOT EXISTS index_harvest_refuelings_vehicleId ON harvest_refuelings(vehicleId)")
+        }
+    }
+
     fun getDatabase(
         context: Context
     ): AppDatabase {
@@ -1724,7 +1737,8 @@ private val MIGRATION_16_17 =
     MIGRATION_17_18,
     MIGRATION_18_19,
     MIGRATION_19_20,
-    MIGRATION_20_21
+    MIGRATION_20_21,
+    MIGRATION_21_22
 )
                     .build()
 

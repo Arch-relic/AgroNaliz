@@ -136,6 +136,10 @@ class HarvestDayActivity : AppCompatActivity() {
         textHarvestResults = findViewById(R.id.textHarvestDayResults)
         buttonEditArea = findViewById(R.id.buttonEditHarvestArea)
         buttonEditArea.setOnClickListener { showAreaDialog() }
+        findViewById<android.widget.ImageButton>(R.id.buttonHarvestFuel).setOnClickListener {
+            currentDay?.let { HarvestFuelDialog(this,it) { loadDay() }.show() }
+        }
+        findViewById<Button>(R.id.buttonEditHarvestMoisture).setOnClickListener { showMoistureDialog() }
 
         textProcessTitle =
             findViewById(
@@ -540,8 +544,12 @@ class HarvestDayActivity : AppCompatActivity() {
             process.bunkerVolumeM3,
             HarvestCalculator.DayInput(bunkers.map { it.fillLevel }, day.harvestedAreaHa, day.bulkDensityKgM3)
         )
-        textHarvestResults.text = HarvestResultsFormatter.density(day.bulkDensityKgM3, day.densityMode) +
-            "\n" + HarvestResultsFormatter.results(result, campaign = false)
+        textBunkerCount.text = "Бункеров: ${bunkers.size}"
+        textEstimatedVolume.text = "Объём: ${result.volumeM3?.let { HarvestResultsFormatter.range(it,"м³") } ?: "—"}"
+        textAverageVolume.visibility = View.GONE
+        textHarvestResults.text = HarvestResultsFormatter.results(result, campaign = false) +
+            (day.moisturePercent?.let { "\nВлажность: ${HarvestResultsFormatter.number(it)}%" } ?: "")
+        textHarvestResults.contentDescription = "Изменить влажность урожая"
         buttonEditArea.visibility = if (day.status == "COMPLETED") View.VISIBLE else View.GONE
         buttonEditArea.setText(if (day.harvestedAreaHa == null) R.string.harvest_add_area else R.string.harvest_change_area)
 
@@ -3177,6 +3185,23 @@ class HarvestDayActivity : AppCompatActivity() {
         dialog.show()
     }
 
+    private fun showMoistureDialog() {
+        val day=currentDay ?: return
+        val input=EditText(this).apply {
+            hint="Влажность урожая, %";inputType=android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
+            setText(day.moisturePercent?.let(HarvestResultsFormatter::number) ?: "")
+        }
+        val dialog=AlertDialog.Builder(this).setTitle("Влажность урожая").setView(input)
+            .setNegativeButton("Отмена",null).setPositiveButton("Сохранить",null).create()
+        dialog.setOnShowListener { dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            try {
+                val value=HarvestFuelCalculator.parse(input.text.toString())
+                Thread { DatabaseProvider.getDatabase(applicationContext).harvestDao().updateMoisture(day.id,value)
+                    runOnUiThread { dialog.dismiss();loadDay() } }.start()
+            }catch(e:IllegalArgumentException){input.error=e.message}
+        } };dialog.show()
+    }
+
     private fun showAreaDialog() {
         val day = currentDay ?: return
         if (day.status != "COMPLETED") return
@@ -3242,6 +3267,8 @@ class HarvestDayActivity : AppCompatActivity() {
 
         val editArea = dialogView.findViewById<EditText>(R.id.editFinishHarvestDayArea)
         editArea.setText(day.harvestedAreaHa?.let { java.math.BigDecimal.valueOf(it).toPlainString() } ?: "")
+        val editMoisture=dialogView.findViewById<EditText>(R.id.editFinishHarvestDayMoisture)
+        editMoisture.setText(day.moisturePercent?.let(HarvestResultsFormatter::number) ?: "")
 
         val buttonConfirm =
             dialogView.findViewById<Button>(
@@ -3292,6 +3319,8 @@ class HarvestDayActivity : AppCompatActivity() {
                 editArea.error = getString(R.string.harvest_positive_number)
                 return@setOnClickListener
             }
+            val moisture=try { HarvestFuelCalculator.parse(editMoisture.text.toString()) }
+                catch(e:IllegalArgumentException) { editMoisture.error=e.message;return@setOnClickListener }
             val endTime =
                 textEndTime
                     .text
@@ -3302,7 +3331,7 @@ class HarvestDayActivity : AppCompatActivity() {
             showCampaignFinishedDialog(
                 day,
                 endTime,
-                area
+                area, moisture
             )
         }
 
@@ -3312,7 +3341,8 @@ class HarvestDayActivity : AppCompatActivity() {
     private fun showCampaignFinishedDialog(
         day: HarvestDay,
         endTime: String,
-        harvestedAreaHa: Double?
+        harvestedAreaHa: Double?,
+        moisture:Double?
     ) {
         AlertDialog
             .Builder(this)
@@ -3329,7 +3359,7 @@ class HarvestDayActivity : AppCompatActivity() {
                     day,
                     endTime,
                     true,
-                    harvestedAreaHa
+                    harvestedAreaHa, moisture
                 )
             }
             .setNegativeButton(
@@ -3339,7 +3369,7 @@ class HarvestDayActivity : AppCompatActivity() {
                     day,
                     endTime,
                     false,
-                    harvestedAreaHa
+                    harvestedAreaHa, moisture
                 )
             }
             .setNeutralButton(
@@ -3353,7 +3383,8 @@ class HarvestDayActivity : AppCompatActivity() {
         day: HarvestDay,
         endTime: String,
         finishProcess: Boolean,
-        harvestedAreaHa: Double?
+        harvestedAreaHa: Double?,
+        moisture:Double?
     ) {
         Thread {
             try {
@@ -3369,7 +3400,7 @@ class HarvestDayActivity : AppCompatActivity() {
                         .completeDay(
                             day.id,
                             endTime,
-                            harvestedAreaHa
+                            harvestedAreaHa, moisture
                         ) == 1) { "День уже завершён или удалён" }
 
                     if (

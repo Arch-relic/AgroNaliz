@@ -53,7 +53,7 @@ class MainUpdateTest {
     }
     private fun verifyRetained(db:SupportSQLiteDatabase,file:String) {
         val old=JSONObject(java.io.File(context.filesDir,file).readText());val current=snapshot(db)
-        assertEquals(old.keys().asSequence().toSet(),current.keys().asSequence().toSet())
+        assertEquals(old.keys().asSequence().toSet()+setOf("harvest_fuel_days","harvest_refuelings"),current.keys().asSequence().toSet())
         for(table in old.keys()) {
             val before=old.getJSONArray(table);val after=current.getJSONArray(table)
             assertEquals(table,before.length(),after.length())
@@ -97,7 +97,7 @@ class MainUpdateTest {
         guard()
         val room = DatabaseProvider.getDatabase(context)
         val db = room.openHelper.writableDatabase // Room validates the entire migrated schema here.
-        assertEquals(21, db.version)
+        assertEquals(22, db.version)
         fun verify() {
             db.query("SELECT * FROM harvest_days WHERE id=4301").use { cursor ->
                 assertTrue(cursor.moveToFirst())
@@ -149,7 +149,7 @@ class MainUpdateTest {
         guard()
         val room=DatabaseProvider.getDatabase(context)
         val db=room.openHelper.readableDatabase
-        assertEquals(21,db.version)
+        assertEquals(22,db.version)
         verifyRetained(db,"main-v21-snapshot.json")
         db.query("PRAGMA foreign_key_check").use { assertFalse(it.moveToFirst()) }
         room.close()

@@ -11,7 +11,7 @@ v=importlib.util.module_from_spec(spec);spec.loader.exec_module(v)
 class VerifyMainUpdate(unittest.TestCase):
     def report(self):
         return dict(applicationId=v.APP,versionCode=3000001,certificateSha256=v.CERT,apkSha256=hashlib.sha256(b'fixture').hexdigest(),
-                    roomVersion=21,installedVersionCode=53,installedRoomVersion=20,sourceSha='a'*40)
+                    roomVersion=22,installedVersionCode=53,installedRoomVersion=20,sourceSha='a'*40)
     def check(self,report=None,old=None,new=None,room=20):
         v.validate(report or self.report(),b'fixture',old or (53,v.CERT),new or (3000001,v.CERT),room)
     def test_valid_53_room20_to_higher_room21(self):self.check()
@@ -28,7 +28,7 @@ class VerifyMainUpdate(unittest.TestCase):
             r=self.report();r[key]=val
             with self.assertRaises(ValueError):self.check(r)
     def test_room_downgrade_or_unknown(self):
-        for room in [19,22]:
+        for room in [19,23]:
             with self.assertRaises(ValueError):self.check(room=room)
         r=self.report();r['roomVersion']=20
         with self.assertRaises(ValueError):self.check(r)
