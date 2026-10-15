@@ -53,8 +53,12 @@ class HarvestAreaUiTest {
     }
     // The Activity remains visible behind a modal dialog but cannot take window focus.
     // Select the dialog containing this control instead of Espresso's default Activity root.
+    // AppCompat keeps unused (GONE) android buttons in the parent dialog's decor.
+    // Effective visibility excludes those; off-screen controls still allow scrollTo().
     private fun dialogView(id: Int) = onView(withId(id)).inRoot(
-        allOf(isDialog(), withDecorView(hasDescendant(withId(id))))
+        allOf(isDialog(), withDecorView(hasDescendant(allOf(
+            withId(id), withEffectiveVisibility(androidx.test.espresso.matcher.ViewMatchers.Visibility.VISIBLE)
+        ))))
     )
     private fun closeDialogKeyboard(id: Int) {
         dialogView(id).perform(androidx.test.espresso.action.ViewActions.closeSoftKeyboard())
