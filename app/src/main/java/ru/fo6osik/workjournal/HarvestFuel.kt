@@ -35,8 +35,8 @@ interface HarvestFuelDao {
         hp.combineNameSnapshot AS vehicleNameSnapshot, NULL AS startPercent, NULL AS endPercent
         FROM harvest_days hd JOIN harvest_processes hp ON hp.id=hd.processId WHERE hd.id=:id""") fun initial(id:Int):HarvestFuelDay?
     @Query("""SELECT fd.* FROM harvest_fuel_days fd JOIN harvest_days hd ON hd.id=fd.dayId
-        JOIN harvest_days current ON current.id=:id
-        WHERE fd.vehicleId=:vehicle AND hd.workDate<current.workDate
+        JOIN harvest_days anchor_day ON anchor_day.id=:id
+        WHERE fd.vehicleId=:vehicle AND hd.workDate<anchor_day.workDate
         ORDER BY hd.workDate DESC,hd.id DESC LIMIT 1""") fun previous(id:Int,vehicle:Int):HarvestFuelDay?
     @Transaction fun ensure(id:Int):HarvestFuelDay {
         getDay(id)?.let { return it }
