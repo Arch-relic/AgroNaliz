@@ -10,9 +10,9 @@ def adb(*args):
     return result.stdout
 
 
-def instrument(app_id, method):
+def instrument(app_id, method, test_class="BuildVariantIsolationTest"):
     output = adb("shell", "am", "instrument", "-w", "-e", "class",
-                 "ru.fo6osik.workjournal.BuildVariantIsolationTest#" + method,
+                 "ru.fo6osik.workjournal." + test_class + "#" + method,
                  app_id + ".test/androidx.test.runner.AndroidJUnitRunner")
     if not re.search(r"OK \(1 test\)", output) or "FAILURES!!!" in output:
         raise RuntimeError("Isolation instrumentation failed: " + app_id + ":" + method)
@@ -37,6 +37,8 @@ def main():
     packages = adb("shell", "pm", "list", "packages")
     for app_id in [main_id, test_id]:
         assert "package:" + app_id in packages.splitlines()
+    instrument(main_id, "showsInstalledVersion", "AppVersionUiTest")
+    instrument(test_id, "showsInstalledVersion", "AppVersionUiTest")
     instrument(main_id, "seedAndCheckSandbox")
     instrument(test_id, "seedAndCheckSandbox")
     instrument(test_id, "testBackupProviderAndExternalWriteGuard")

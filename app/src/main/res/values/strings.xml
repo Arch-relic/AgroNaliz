@@ -1,4 +1,6 @@
 <resources>
 <string name="app_name">АгроУчёт — КФХ Губановы</string>
+<string name="app_version">Версия %1$s</string>
+<string name="app_version_test">Версия %1$s · TEST</string>
 </resources>
 

@@ -3,6 +3,7 @@ package ru.fo6osik.workjournal
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
+import android.widget.TextView
 import android.content.Intent
 
 class MainActivity : AppCompatActivity() {
@@ -14,6 +15,11 @@ class MainActivity : AppCompatActivity() {
         setContentView(
 		   R.layout.activity_main
 		   )
+
+        findViewById<TextView>(R.id.textAppVersion).text = getString(
+            if (BuildConfig.BUILD_TYPE == "debugTest") R.string.app_version_test else R.string.app_version,
+            BuildConfig.VERSION_NAME
+        )
 		   
 		val buttonMachines = 
 		    findViewById<Button>(

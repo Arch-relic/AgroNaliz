@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fillViewport="true">
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="24dp">
 
@@ -66,6 +70,14 @@
     android:gravity="center"
     android:layout_marginBottom="8dp" />
 
+<TextView
+    android:id="@+id/textAppVersion"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:textSize="12sp"
+    android:gravity="center"
+    android:layout_marginBottom="8dp" />
+
 <Button
     android:id="@+id/buttonDeveloperCatalog"
     android:layout_width="match_parent"
@@ -79,3 +91,4 @@
     android:text="Резервное копирование" />
 	
 </LinearLayout>
+</ScrollView>
