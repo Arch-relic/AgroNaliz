@@ -6,12 +6,48 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.*
+import org.junit.Before
+import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /** Run on a fresh disposable TEST installation before migration fixtures. */
 @RunWith(AndroidJUnit4::class)
 class HarvestQuickAccessUiTest {
+    private val context = InstrumentationRegistry.getInstrumentation().targetContext
+    private val db get() = DatabaseProvider.getDatabase(context)
+    private val fixtureProcesses = mutableListOf<Int>()
+
+    @Before fun checkIsolatedEnvironment() {
+        check(context.packageName == "ru.fo6osik.workjournal.debugtest")
+        check(android.os.Build.HARDWARE in setOf("ranchu", "goldfish"))
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            assertEquals("Runner must grant notifications after the fresh TEST install",
+                android.content.pm.PackageManager.PERMISSION_GRANTED,
+                context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS))
+        }
+        if (android.os.Build.VERSION.SDK_INT >= 31) {
+            assertTrue("Runner must allow exact alarms before opening an active day",
+                context.getSystemService(android.app.AlarmManager::class.java).canScheduleExactAlarms())
+        }
+        assertTrue("Quick-access tests require an isolated fixture", db.harvestDao().getActiveProcesses().isEmpty())
+    }
+
+    @After fun removeOwnedFixturesEvenAfterFailure() {
+        if (fixtureProcesses.isEmpty()) return
+        // Never clear the database or touch another test's records. These IDs are created below.
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            val monitor = androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry.getInstance()
+            val activities = androidx.test.runner.lifecycle.Stage.values().flatMap { monitor.getActivitiesInStage(it) }.toSet()
+            activities.filter { it.packageName == context.packageName && !it.isFinishing }.forEach { it.finish() }
+        }
+        for (id in fixtureProcesses) {
+            for (day in db.harvestDao().getDaysForProcess(id)) HarvestReminderManager.cancelForFinishedDay(context, day.id)
+            db.openHelper.writableDatabase.execSQL("DELETE FROM harvest_processes WHERE id = ?", arrayOf(id))
+            assertNull(db.harvestDao().getProcessById(id))
+        }
+    }
+
     @Test fun refreshesOnResumeAndAfterFinalCampaignCompletion() {
         val context=InstrumentationRegistry.getInstrumentation().targetContext
         check(context.packageName=="ru.fo6osik.workjournal.debugtest")
@@ -33,7 +69,7 @@ class HarvestQuickAccessUiTest {
             await(scenario,false)
             scenario.moveToState(androidx.lifecycle.Lifecycle.State.CREATED)
             val p=db.harvestDao().createProcess(HarvestProcess(processUid="synthetic-quick-ui",startDate="2026-10-16",
-                fieldId=null,fieldNameSnapshot="synthetic",crop="Другое",combineVehicleId=null,combineNameSnapshot="synthetic")).toInt()
+                fieldId=null,fieldNameSnapshot="synthetic",crop="Другое",combineVehicleId=null,combineNameSnapshot="synthetic")).toInt().also { fixtureProcesses.add(it) }
             scenario.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED);await(scenario,true)
             scenario.recreate();await(scenario,true)
             scenario.moveToState(androidx.lifecycle.Lifecycle.State.CREATED)
@@ -52,7 +88,7 @@ class HarvestQuickAccessUiTest {
         val db=DatabaseProvider.getDatabase(context);val dao=db.harvestDao()
         check(dao.getActiveProcesses().isEmpty())
         fun campaign(name:String)=dao.createProcess(HarvestProcess(processUid=java.util.UUID.randomUUID().toString(),
-            startDate="2026-10-16",fieldId=null,fieldNameSnapshot=name,crop="Другое",combineVehicleId=null,combineNameSnapshot="synthetic")).toInt()
+            startDate="2026-10-16",fieldId=null,fieldNameSnapshot=name,crop="Другое",combineVehicleId=null,combineNameSnapshot="synthetic")).toInt().also { fixtureProcesses.add(it) }
         fun waitFor(type:Class<*>,key:String?=null,id:Int=0) {
             val stop=System.nanoTime()+10_000_000_000L
             while(System.nanoTime()<stop) {
@@ -67,7 +103,16 @@ class HarvestQuickAccessUiTest {
                 if(ready)return
                 Thread.sleep(50)
             }
-            fail("Expected resumed activity: ${type.simpleName}")
+            var observed = ""
+            InstrumentationRegistry.getInstrumentation().runOnMainSync {
+                val monitor = androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry.getInstance()
+                observed = androidx.test.runner.lifecycle.Stage.values().flatMap { stage ->
+                    monitor.getActivitiesInStage(stage).map { activity ->
+                        "${activity.javaClass.simpleName}:$stage:extra=${key?.let { activity.intent.getIntExtra(it,-1) }}"
+                    }
+                }.joinToString()
+            }
+            fail("Expected resumed activity: ${type.simpleName}, id=$id; observed=$observed")
         }
         fun clickContinue() {
             waitFor(MainActivity::class.java)

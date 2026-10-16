@@ -19,6 +19,10 @@ def main():
     adb('shell', 'svc', 'power', 'stayon', 'true')
     adb('install', current)
     adb('install', '-r', tests)
+    # This is a fresh install: permissions from the earlier, uninstalled fixture are gone.
+    # Match the existing harvest UI runner; leave the application's permission flow intact.
+    adb('shell', 'pm', 'grant', APP, 'android.permission.POST_NOTIFICATIONS')
+    adb('shell', 'appops', 'set', APP, 'SCHEDULE_EXACT_ALARM', 'allow')
     instrument('HarvestQuickAccessUiTest', count=2)
     instrument('Harvest108Test', count=5)
     instrument('HarvestFullBackup108Test', count=4)
