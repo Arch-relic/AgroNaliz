@@ -44,6 +44,8 @@ jobs:
           ./gradlew -PtestVersionCode="$TEST_VERSION_CODE" -PtestBuildType=debugTest :app:assembleDebugTestAndroidTest --no-daemon --stacktrace --console=plain
       - name: Validate document catalog tests
         run: python3 -m unittest discover -s docs -p 'test_validate_document_catalog.py' -v
+      - name: Verify app version and monotonic release policy
+        run: python3 -m unittest discover -s docs -p 'test_app_version.py' -v
       - name: Verify APK identifiers and provider isolation
         run: python3 docs/verify-build-variants.py
       - name: Test TEST signer and read-only backup tools without production secrets

@@ -15,6 +15,13 @@ def verify(variant, expected_id, expected_label=None):
     badging = subprocess.check_output([str(AAPT), "dump", "badging", str(apk)], text=True)
     actual_id = re.search(r"^package: name='([^']+)'", badging, re.MULTILINE).group(1)
     assert actual_id == expected_id, (variant, actual_id)
+    actual_name = re.search(r"versionName='([^']+)'", badging).group(1)
+    declared = re.search(r'versionName\s*=\s*"([^"\n]+)"', Path("app/build.gradle.kts").read_text()).group(1)
+    assert re.fullmatch(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)", declared), declared
+    assert actual_name == declared == "1.0.7", (variant, actual_name, declared)
+    actual_code = int(re.search(r"versionCode='([0-9]+)'", badging).group(1))
+    expected_code = int(os.environ.get("TEST_VERSION_CODE", "1")) if variant == "debugTest" else 1
+    assert actual_code == expected_code, (variant, actual_code, expected_code)
     if expected_label:
         assert f"application-label:'{expected_label}'" in badging, badging
     manifests = list(Path("app/build/intermediates/merged_manifests").glob(f"{variant}/**/AndroidManifest.xml"))
@@ -40,7 +47,7 @@ def verify(variant, expected_id, expected_label=None):
         assert paths[0].tag == "files-path" and paths[0].get("path") == "test-backups/"
     else:
         assert not any(x.endswith(".testbackups") for x in authorities)
-    print(f"Verified {apk}: applicationId={actual_id}, authorities={sorted(authorities)}")
+    print(f"Verified {apk}: applicationId={actual_id}, versionName={actual_name}, versionCode={actual_code}, authorities={sorted(authorities)}")
     return authorities
 
 

@@ -60,6 +60,7 @@ def main():
         copy=root/'portable-copy.json';export['save_copy'](raw,copy)
         if copy.read_bytes()!=raw:raise RuntimeError('Backup copy changed')
         adb('install','-r',str(signed[1]));instrument('verifyAfterSameKeyUpdate')
+        isolation['instrument'](APP,'showsInstalledVersion','AppVersionUiTest')
         rejected=subprocess.run(['adb','install','-r',str(signed[2])],capture_output=True,text=True)
         if rejected.returncode==0 or 'INSTALL_FAILED_UPDATE_INCOMPATIBLE' not in rejected.stdout+rejected.stderr:
             raise RuntimeError('Android must reject a different TEST certificate')
