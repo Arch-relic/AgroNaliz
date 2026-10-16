@@ -12,7 +12,7 @@ def main():
     adb('install','-r','app/build/outputs/apk/debugTest/app-debugTest.apk')
     for method in ['verify22','completedEditsAndReopenPreserve','betweenDaysIsIndependent','newBackupAndMergeRoundTrip','legacyBackupAndImport','invalidValuesRollback']:
         instrument('HarvestFuelTest',method)
-    instrument('HarvestFuelUiTest',count=2)
+    instrument('HarvestFuelUiTest',count=5)
     adb('shell','am','force-stop',APP)
     instrument('HarvestFuelTest','restartPreserved')
     adb('uninstall',APP)
