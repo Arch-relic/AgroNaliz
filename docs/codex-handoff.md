@@ -1,17 +1,37 @@
-# Этап: подписанный TEST артефакт 1.0.8 из PR33
+# Этап завершён: стабильный TEST1.0.8 опубликован как Actions artifact
 
-16 октября 2026. Работа в отдельной test-artifact/1.0.8-pr33 на исходниках PR33
-5c1c74b9299f13537369da6180747140063f7ab5; main 4d9ecfe7b7fb83a12f191d40855fdcd1c13cbaee.
-Пользователь явно разрешил подготовить и опубликовать скачиваемую TEST APK без
-merge/релиза MAIN/установки на устройство. Телефонные certificate/code/Room неизвестны.
+16 октября2026. Отдельная ветка test-artifact/1.0.8-pr33 от PR33 head
+5c1c74b9299f13537369da6180747140063f7ab5; main4d9ecfe7b7fb83a12f191d40855fdcd1c13cbaee
+и PR33 не изменены/не merged. Draft PR34 направлен в feature/harvest-1-0-8:
+https://github.com/Arch-relic/AgroNaliz/pull/34 . PR33 тоже остаётся Draft.
 
-Переиспользован существующий TEST signer и Secrets, сертификат последнего стабильного
-run38923846794:3FE57967C15F81EE39EA2B9B88DD96A7506C1B5B9032606ECBEA04BBDB15EE3C,
-code2000006. Точный owner-only push allowlist для этой ветки, первая попытка,
-изменение workflow; default main dispatch сохранён. PR/fork секретов не получают,
-sign job по-прежнему без checkout/Gradle; MAIN workflow не меняется.
-Новый gate требует TEST1.0.8/Room23/большийcode/тот же стабильныйсертификат и SHA;
-verification.json явно NOT_CONFIRMED для совместимости телефона.
+Publish stable TEST APK #7 SUCCESS:
+https://github.com/Arch-relic/AgroNaliz/actions/runs/38933732351
+Скачать ZIP:
+https://github.com/Arch-relic/AgroNaliz/actions/runs/38933732351/artifacts/12059653830
+Имя app-TEST-stable-pr33-1.0.8-f881f41f61565867e67e084e195e101346f422d5-v2000007,
+содержит app-TEST-stable.apk и verification.json, хранится до30 октября2026.
+
+Проверенный исходный SHA f881f41f61565867e67e084e195e101346f422d5.
+Локальный идентичный ca7119b, tree c444d77aafd33a0674635504fef3f75dc95edbc4.
+Следующий коммит меняет только отчёты; APK остаётся из указанного проверенного SHA,
+сам SHA документирующего коммита не называется проверенным. Незакоммиченных изменений
+на момент завершения нет. Android-код тот же, что прошёл CI97 в PR33.
+
+Использован существующий TEST workflow, TEST Secrets и inline signer, build
+без секретов/sign без checkout и Gradle, прежний pinned сертификат. Для этой
+явно разрешённой владельцем публикации добавлен только owner-only push по точной
+ветке и изменению TEST workflow, run_attempt1. PR/fork/остальные refs не подписывают.
+Главный ручной main dispatch сохранён; MAIN workflows не изменены. История версий
+того же workflow и concurrency сохранены; отчётный push не публикует ещё одну APK.
+
+Проверены фактические package ru.fo6osik.workjournal.debugtest, versionName1.0.8,
+code2000007 (> последнего2000006), Room23 и SHA сертификата
+3FE57967C15F81EE39EA2B9B88DD96A7506C1B5B9032606ECBEA04BBDB15EE3C — совпадает с
+последним успешным стабильным TEST38923846794. Signer verify и gate прошли до upload.
+Пользователь подтвердил, что телефонные certificate/code/Room НЕИЗВЕСТНЫ.
+Поэтому совместимость с телефоном НЕ ПОДТВЕРЖДЕНА; verification.json содержит
+NOT_CONFIRMED. Не обещать обновление с сохранением данных по одному GitHub pin.
 
 Изменённые/новые файлы этого этапа:
 - .github/workflows/test-apk-publish.yml
@@ -19,13 +39,29 @@ verification.json явно NOT_CONFIRMED для совместимости те�
 - docs/test_test_preview_artifact.py (новый)
 - docs/test-apk-1.0.8-artifact.md (новый)
 - docs/test-apk.md
+- docs/test-apk-signing.md
 - docs/codex-handoff.md
-Удалений нет. Production Android-код/данные/подписи MAIN не изменены.
-Локальные тесты: 78, 76 успешно, 2 без APK пропущены; diff --check успешно.
-Проверенного CI SHA нового механизма, запуска и artifact пока нет: будут дописаны
-после публикации. Изменения пока не закоммичены. Существующий PR33 остаётся Draft;
-для узкого изменения TEST публикации будет отдельный Draft PR в feature-ветку,
-не в main. Подробности и инструкция смартфона: [test-apk-1.0.8-artifact.md](test-apk-1.0.8-artifact.md).
+Удалений нет. Production-код/MAIN подписи/пользовательские данные не менялись.
+
+Результаты: :app:assembleDebugTest и :app:testDebugTestUnitTest SUCCESS,
+JVM-тесты выполнены заново (не UP-TO-DATE). Python Actions78:77 успешно,1 пропущен
+(SDK-тест MAIN APK, которая не строится этим TEST job). Локально78:76 успешно,
+2 без APK пропущены; отдельная проверка JSON roundtrip синтетического report успешна.
+Diff --check успешно. Sign job SUCCESS, временный ключ/транспорт удалены, финальный
+artifact остался. Tool download подтвердил доступность ZIP; локальный повторный
+SDK-анализ скачанного ZIP не делался. SHA APK находится в verification.json;
+ZIP digest отдельно указан в полном отчёте, их не путать.
+
+[Полный отчёт и инструкция получения сертификата/code/Room на смартфоне](test-apk-1.0.8-artifact.md).
+В App Manager: сведения установленной TEST для code, подписи для полного SHA256.
+Room точно из доступного JSON databaseVersion; если частный JSON недоступен на
+смартфоне, оставить неизвестной, не обходить защиту. Приватный ключ не отправлять.
+Не удалять/очищать TEST, не устанавливать APK автоматически. Для старой установки
+с другим сертификатом нужен соответствующий исходный ключ, новый его не заменит.
+
+Остановиться для review/метаданных телефона. Не merge, не MAIN Release, не установка
+на пользовательские устройства, не восстановление рабочей базы. Условия выполнены:
+APK опубликована как Actions artifact без изменения main и без пользовательских данных.
 
 ---
 
