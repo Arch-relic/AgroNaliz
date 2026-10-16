@@ -1,6 +1,8 @@
 package ru.fo6osik.workjournal
 
+import android.util.TypedValue
 import android.view.Gravity
+import kotlin.math.roundToInt
 import android.widget.TextView
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
@@ -32,7 +34,11 @@ class AppVersionUiTest {
             scenario.onActivity { activity ->
                 val version = activity.findViewById<TextView>(R.id.textAppVersion)
                 assertEquals(Gravity.CENTER, version.gravity)
-                assertEquals(12f * activity.resources.displayMetrics.scaledDensity, version.textSize, 0.1f)
+                // XML dimensions use getDimensionPixelSize: account for SP conversion and pixel rounding.
+                val expectedSize = TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_SP, 12f, activity.resources.displayMetrics
+                ).roundToInt().toFloat()
+                assertEquals(expectedSize, version.textSize, 0.1f)
             }
             // Both developer actions remain reachable in the same scrolling screen.
             onView(withId(R.id.buttonDeveloperCatalog)).perform(scrollTo()).check(matches(isDisplayed()))
