@@ -213,4 +213,46 @@ class HarvestAreaUiTest {
         }
     }
 
+    @Test fun finishWithAllFourValuesPreservesInitialFuel() {
+        val day = fixture()
+        val fuel = DatabaseProvider.getDatabase(context).harvestFuelDao()
+        fuel.saveLevels(day, 80.0, null)
+        fuel.saveRefill(day, null, 30.0, 90.0, "12:30", "DAY")
+        open(day).use {
+            finishDialog()
+            dialogView(R.id.editFinishHarvestDayArea).perform(replaceText("60"))
+            closeDialogKeyboard(R.id.editFinishHarvestDayArea)
+            dialogView(R.id.editFinishHarvestDayMoisture).perform(scrollTo(), replaceText("14,125"))
+            closeDialogKeyboard(R.id.editFinishHarvestDayMoisture)
+            dialogView(R.id.editFinishHarvestDayFuel).perform(scrollTo(), replaceText("55"))
+            closeDialogKeyboard(R.id.editFinishHarvestDayFuel)
+            dialogView(R.id.buttonConfirmFinishHarvestDay).perform(scrollTo(), click())
+            onView(withText("Да")).inRoot(isDialog()).perform(click())
+            await { dao.getDayById(day)!!.status == "COMPLETED" }
+            assertEquals("18:00", dao.getDayById(day)!!.endTime)
+            assertEquals(60.0, dao.getDayById(day)!!.harvestedAreaHa!!, 0.0)
+            assertEquals(14.125, dao.getDayById(day)!!.moisturePercent!!, 0.0)
+            assertEquals(80.0, fuel.getDay(day)!!.startPercent!!, 0.0)
+            assertEquals(55.0, fuel.getDay(day)!!.endPercent!!, 0.0)
+            assertEquals(1, fuel.getRefills(day).size)
+        }
+    }
+
+    @Test fun reopenedDayPrefillsMoistureAndEndFuelWithoutRounding() {
+        val day = fixture(completed = true)
+        val fuel = DatabaseProvider.getDatabase(context).harvestFuelDao()
+        dao.updateMoisture(day, 14.125)
+        fuel.saveLevels(day, 80.0, 55.125)
+        val saved = dao.getDayById(day)!!
+        dao.updateDayDetails(day, saved.workDate, saved.startTime, null, "ACTIVE")
+        open(day).use {
+            finishDialog()
+            dialogView(R.id.editFinishHarvestDayMoisture).check(matches(withText("14.125")))
+            dialogView(R.id.editFinishHarvestDayFuel).check(matches(withText("55.125")))
+            dialogView(R.id.buttonCancelFinishHarvestDay).perform(scrollTo(), click())
+            assertEquals(80.0, fuel.getDay(day)!!.startPercent!!, 0.0)
+            assertEquals(55.125, fuel.getDay(day)!!.endPercent!!, 0.0)
+        }
+    }
+
 }

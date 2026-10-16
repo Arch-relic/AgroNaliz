@@ -1,113 +1,85 @@
-# Передача контекста: версия 1.0.7
+# Передача контекста: АгроНализ 1.0.8, уборка и полный JSON-бэкап
 
-Дата: 16 октября 2026. Реализация завершена, Draft PR создан; исходный код и все проверки прошли CI. Цель: единый MAJOR.MINOR.PATCH и строка версии главного экрана.
+Дата: 16 октября 2026. Статус: код и тесты подготовлены, Android ещё не проверен.
+Задача: единое завершение дня с топливом, быстрый доступ, три площади и Room23,
+полное/объединяющее резервное копирование уборки.
 
-Ветка feature/app-version-1-0-7, опорный main
-160566ba888938bb7dd5065666a3cbe770d7b174 (merge PR31 с TimePicker).
-Локальный worktree создан из файлово идентичного зеркала; коммиты GitHub
-основаны на указанном настоящем main. Draft PR #32: https://github.com/Arch-relic/AgroNaliz/pull/32 (Draft, не объединён).
-Первый опубликованный SHA: 513a0b586a4aa27208aa81f18a7298bf65754ef6.
-Для него Main APK safe update checks 38852372791 прошёл; Android PR checks
-38852372731 выявил ошибку нового UI-теста размера текста: XML округляет 12sp
-до 32px, тест ошибочно ждал 31.5px. Исправлен только тест: TypedValue.applyDimension
-и roundToInt, допуск 0.1px сохранён. Текст версии и центрирование уже прошли.
-После исправления полный CI повторён успешно для коммита
-**a6cf1c4ad739ed8313373ad6d4d74980b15eed3c** (оба запуска с первой попытки).
-Никаких изменений приложения ради ошибки размера теста не сделано.
-Этот итоговый отчёт сохраняется следующим коммитом: после проверенного a6cf1c4
-меняется только документация, исходники и тесты остаются теми же.
+Ветка: feature/harvest-1-0-8. Опорный main:
+4d9ecfe7b7fb83a12f191d40855fdcd1c13cbaee, подтверждён GitHub-коннектором.
+На момент записи исходники незакоммичены; SHA проверенного коммита пока нет.
+Проверены локальные файлы, а не Android APK. Публикация ветки и SHA будут уточнены.
 
-Общий versionName установлен 1.0.7. MainActivity отображает BuildConfig.VERSION_NAME;
-суффикс TEST выбирается по BuildConfig.BUILD_TYPE == debugTest. Строка по центру,
-12sp, между заголовком «Для разработчика» и кнопками. Номер в XML не дублируется.
-Главный экран обёрнут ScrollView с fillViewport: сохраняется нижний блок на большом
-экране и доступ к нему на небольшом. Существующие кнопки и обработчики сохранены.
-Правила и восемь этапов 1.0.0–1.0.7 документированы отдельно.
+Полный технический отчёт, результаты и ручная инструкция:
+[harvest-1.0.8-review.md](harvest-1.0.8-review.md).
 
-versionCode не менялся: main выпуск 3000000+run_number, TEST выпуск
-2000000+run_number, preview TEST 1000000+run_number; параметры Gradle и защиты
-от равного/меньшего кода и старого запуска сохранены. Локальный defaultCode=1
-не является опубликованным обновлением. Пакеты, ключи/сертификаты и защищённые
-workflow выпуска не изменялись. Room остаётся v22; миграций в этой задаче нет.
+Существенные решения: общий формат JSON сохранён; снимок площади только при новом
+создании, исторические площади NULL; конечное топливо меняется отдельно от начального;
+все завершения в одной транзакции; повторный импорт сохраняет местные строки по UID,
+коллизия родителя отклоняется. Масса диапазоном, неполнота явно указана.
+Room22→23 добавляет два nullable REAL без перерасчёта/очистки.
 
-Изменённые/новые файлы:
-- app/build.gradle.kts
-- app/src/main/java/ru/fo6osik/workjournal/MainActivity.kt
-- app/src/main/res/layout/activity_main.xml
-- app/src/main/res/values/strings.xml
-- app/src/androidTest/java/ru/fo6osik/workjournal/AppVersionUiTest.kt (новый)
+Проверки: 72 Python-теста (70 успешно, 2 пропущены без APK), 28 чистых Kotlin/JUnit
+тестов успешно через локальный компилятор Gradle 8.13. Команды/ограничения — в отчёте.
+Проектный agrogradle :app:assembleDebug :app:test остановился до компиляции:
+Could not determine a usable wildcard IP for this machine. Дополнительный сетевой
+запуск прерван пользователем; его нельзя считать успешным. Android-тесты не запускались.
+
+Draft PR пока отсутствует: ожидается ответ о запрете установки MAIN даже в одноразовом
+CI-эмуляторе. Создание PR автоматически запускает существующие проверки установки
+MAIN; пользователь запретил её установку без уточнения среды. Вопрос отправлен,
+ответ не получен. Не создавать PR до разрешения этого противоречия и не менять
+защищённые workflows публикации. Отдельный feature push эти CI не запускает.
+Не выпускать APK, не ставить на устройство, не merge, не восстанавливать рабочую базу.
+
+Нужно продолжить: уточнить CI-ограничение; создать Draft PR после ответа, выполнить
+Android CI, исправить реальные ошибки, записать номера запусков/точные результаты
+и PR URL сюда. Если CI MAIN запрещён, согласовать конкретное изменение проверок;
+не обходить пользовательский запрет. Ручная проверка владельцем остаётся невыполненной.
+
+Изменённые/созданные файлы (пути относительно репозитория):
 - .github/workflows/android-pr-checks.yml
-- docs/run-build-isolation-checks.py
-- docs/run-test-signing-checks.py
-- docs/verify-build-variants.py
-- docs/test_app_version.py (новый)
-- docs/version-history.md (новый)
+- app/build.gradle.kts
+- app/src/androidTest/java/ru/fo6osik/workjournal/AppVersionUiTest.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/Harvest108Test.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/HarvestAreaUiTest.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/HarvestFuelTest.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/HarvestFullBackup108Test.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/HarvestMigrationTest.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/HarvestQuickAccessUiTest.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/HarvestRoom23MigrationTest.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/MainUpdateTest.kt
+- app/src/main/java/ru/fo6osik/workjournal/AppDatabase.kt
+- app/src/main/java/ru/fo6osik/workjournal/DataImportManager.kt
+- app/src/main/java/ru/fo6osik/workjournal/DatabaseBackupManager.kt
+- app/src/main/java/ru/fo6osik/workjournal/DatabaseProvider.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestActivity.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestBackupCompatibility.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestBackupIntegrity.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestCampaignMetrics.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestDao.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestDayActivity.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestDayCompletion.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestFuel.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestFuelBackup.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestProcess.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestProcessActivity.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestQuickAccess.kt
+- app/src/main/java/ru/fo6osik/workjournal/MainActivity.kt
+- app/src/main/res/layout/activity_backup_restore.xml
+- app/src/main/res/layout/activity_harvest_process.xml
+- app/src/main/res/layout/activity_main.xml
+- app/src/main/res/layout/dialog_finish_harvest_day.xml
+- app/src/test/java/ru/fo6osik/workjournal/HarvestCampaignMetricsTest.kt
 - docs/codex-handoff.md
-Удалений нет. PDF-просмотрщик, модели, DAO, AppDatabase, миграции и backup-код
-не изменялись. Проверить git diff перед отправкой.
+- docs/export-installed-test-backup.py
+- docs/harvest-1.0.8-review.md
+- docs/run-harvest-108-checks.py
+- docs/run-harvest-checks.py
+- docs/run-harvest-jvm-checks.py
+- docs/test_app_version.py
+- docs/test_main_apk_release.py
+- docs/test_test_backup_export.py
+- docs/verify-build-variants.py
+- docs/version-history.md
 
-Проверки:
-- python3 -m unittest discover -s docs -p 'test_app_version.py' -v: 5/5 успешно.
-  Выполняется настоящий публичный preflight main/TEST с поддельным HTTP:
-  рост code, отказ равному/меньшему code и публикации старого запуска.
-- python3 -m unittest discover -s docs -p 'test_*py' -q: 69 тестов,
-  67 успешно, 2 пропущены без APK, ошибок нет.
-- git diff --check: успешно; отдельный git diff --exit-code для AppDatabase,
-  HarvestDay, HarvestFuel, HarvestDao, DatabaseBackupManager и двух защищённых
-  publish workflow подтвердил отсутствие изменений.
-- source /workspace/agronaliz-env.sh; agrogradle :app:assembleDebug :app:test:
-  локальная среда остановила Gradle до компиляции: Could not determine a usable
-  wildcard IP for this machine (FileLockContentionHandler). Не считать сборку
-  успешной; требуется подтверждение GitHub Actions.
-- AppVersionUiTest запускается на main и TEST в изолированном CI-эмуляторе,
-  затем повторно после TEST install -r с тем же синтетическим ключом и более
-  высоким code. Проверяет установленный versionName, точную подпись версии,
-  TEST-маркер, центрирование, размер текста, прокрутку/доступность кнопок, Room22.
-- verify-build-variants.py проверяет versionName и versionCode реальных APK.
-- Все прежние проверки изоляции, миграций, топлива/уборки/TimePicker и подписи
-  остаются обязательными и прошли в перечисленных ниже запусках.
-
-Публикации APK и установки на пользовательский телефон нет. Никакие данные
-пользователя не очищаются. Android CI работает исключительно с синтетическими
-данными одноразового эмулятора, как и существующие проверки проекта.
-Итоговые проверки для a6cf1c4:
-
-- Android PR checks #91: https://github.com/Arch-relic/AgroNaliz/actions/runs/38853218550 — SUCCESS.
-  assembleDebug, assembleDebugTest, обе instrumentation APK и обе JVM-задачи
-  testDebugUnitTest/testDebugTestUnitTest прошли. JVM-задачи выполнены заново
-  (не UP-TO-DATE); число JVM-тестов стандартный лог Gradle не выводит, XML есть
-  в diagnostics. 13 проверок каталога, 5 новых проверок версий и 25 проверок
-  инструментов TEST прошли, пропусков/ошибок нет.
-  63 инструментальных выполнения: три запуска AppVersionUiTest (main, TEST,
-  TEST после install-r); все прежние 60 выполнений сохранены, включая обе
-  серии HarvestAreaUiTest по 7 тестов и 5 HarvestFuelUiTest.
-  Проверены Room20 →22, Room21 →22, старые/новые backup, события, таймеры,
-  площадь/плотность/влажность/топливо, перезапуск, изоляция пользовательских
-  пространств, отказ Android от другого TEST-ключа с сохранением данных.
-- Main APK safe update checks #19: https://github.com/Arch-relic/AgroNaliz/actions/runs/38853218661 — SUCCESS.
-  18+8 Python-проверок, три Android-проверки обновления без очистки. Начальная
-  синтетическая APK versionCode53/Room20 обновлена до текущей Room22 и затем
-  повторно с повышенным code, база/настройки/файлы/сертификат сохранены.
-  Старое имя шага и итоговая строка Room21 в этом workflow не менялись;
-  фактическая текущая версия 22 подтверждается тестами и AppDatabase.
-- Реальные APK: main ru.fo6osik.workjournal, versionName1.0.7, default debug
-  versionCode1; TEST ru.fo6osik.workjournal.debugtest, versionName1.0.7,
-  preview code1000091. При TEST-обновлении code1000092 строго выше1000091.
-  Code1 не является номером опубликованного основного обновления: он не
-  менялся; защищённый выпуск по-прежнему задаёт mainVersionCode=3000000+run.
-- Runtime AppVersionUiTest подтвердил Room22 во всех трёх запусках. Diff с main
-  не содержит изменений моделей, DAO, AppDatabase, миграций или backup-кода.
-- Upload debug APK = SKIPPED: основная APK не опубликована. Workflow выпуска
-  main/TEST не запускались, production signing secrets не использовались.
-
-Проверенные исходники и тесты закоммичены; незакоммиченной разработки нет.
-Непроверенное: реальный смартфон, нестандартный масштаб шрифта и разные размеры
-экранов. Ручная проверка остаётся владельцу; числовой код установленного TEST
-и реальные данные телефона здесь не запрашивались и не менялись.
-
-Следующий этап: владелец проверяет Draft PR; только после своего решения о
-слиянии запускает существующий защищённый test-apk-publish.yml на main, указывает
-фактический установленный TEST versionCode/Room и проверяет обновление с прежним
-сертификатом на смартфоне. На главном экране должно быть «Версия 1.0.7 · TEST»;
-только затем отдельно рассматривается обновление основной версии.
-Не выполнять merge и не запускать выпуск основной APK.
+Удалённых файлов нет. Ключи, applicationId и защищённая публикация не изменены.

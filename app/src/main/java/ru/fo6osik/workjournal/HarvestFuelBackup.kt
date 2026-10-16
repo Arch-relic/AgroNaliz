@@ -45,6 +45,12 @@ object HarvestFuelBackup {
                 // Merge import preserves existing readings and records on repeated/old imports.
                 val exists=if(table=="harvest_fuel_days") db.query("SELECT 1 FROM harvest_fuel_days WHERE dayId=?",arrayOf(mapped)).use { it.moveToFirst() }
                     else db.query("SELECT 1 FROM harvest_refuelings WHERE refuelUid=?",arrayOf(row.getString("refuelUid"))).use { it.moveToFirst() }
+                if (exists && table == "harvest_refuelings") {
+                    db.query("SELECT dayId FROM harvest_refuelings WHERE refuelUid=?", arrayOf(row.getString("refuelUid"))).use {
+                        check(it.moveToFirst())
+                        require(it.getLong(0) == mapped) { "UID заправки относится к другому рабочему дню" }
+                    }
+                }
                 if(!exists)db.insert(table,android.database.sqlite.SQLiteDatabase.CONFLICT_ABORT,values)
             }
         }

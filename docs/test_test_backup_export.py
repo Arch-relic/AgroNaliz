@@ -17,6 +17,25 @@ class TestBackupExport(unittest.TestCase):
             'harvest_days':[{'id':3,'processId':2}], 'harvest_bunkers':[{'id':4,'dayId':3}]})).encode()
     def test_v20_and_v21_compatible(self):
         for v in [20,21]:self.assertEqual(v,export.validate_backup(self.fixture(v),21)[0])
+    def test_room22_and_room23_supported_with_null_historical_areas(self):
+        for version in (22, 23):
+            data=json.loads(self.fixture(version))
+            data['tables'].update(harvest_fuel_days=[],harvest_refuelings=[])
+            if version==23:
+                data['tables']['harvest_processes'][0].update(fieldAreaSnapshotHa=None,actualPlantedAreaHa=95.0)
+            self.assertEqual(version,export.validate_backup(json.dumps(data).encode(),23)[0])
+            if version==23:
+                with self.assertRaises(ValueError):export.validate_backup(json.dumps(data).encode(),22)
+
+    def test_room23_missing_or_invalid_campaign_area_is_rejected(self):
+        for value in ('missing',-1,0,'95',True):
+            data=json.loads(self.fixture(23))
+            data['tables'].update(harvest_fuel_days=[],harvest_refuelings=[])
+            row=data['tables']['harvest_processes'][0]
+            row.update(fieldAreaSnapshotHa=None,actualPlantedAreaHa=value)
+            if value=='missing':del row['actualPlantedAreaHa']
+            with self.assertRaises(ValueError):export.validate_backup(json.dumps(data).encode(),23)
+
     def test_v21_downgrade_is_blocked(self):
         with self.assertRaises(ValueError):export.validate_backup(self.fixture(21),20)
     def test_broken_relationship_rejected(self):

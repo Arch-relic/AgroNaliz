@@ -50,6 +50,16 @@
     android:layout_marginTop="16dp"
     android:text="Опции" />
 
+    <Button
+        android:id="@+id/buttonContinueHarvest"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp"
+        android:text="ПРОДОЛЖИТЬ УБОРКУ"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
     <Space
     android:layout_width="match_parent"
     android:layout_height="0dp"

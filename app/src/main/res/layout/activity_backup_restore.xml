@@ -50,7 +50,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Будет создан JSON-файл со всеми данными приложения."
+            android:text="Будет создан JSON-файл со всеми данными приложения, включая раздел «Уборка»: кампании, рабочие дни, бункеры и топливо."
             android:textSize="14sp"/>
 
         <Button

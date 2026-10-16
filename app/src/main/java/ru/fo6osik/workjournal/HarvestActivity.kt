@@ -672,7 +672,7 @@ class HarvestActivity : AppCompatActivity() {
                     newProcessId =
                         database
                             .harvestDao()
-                            .insertProcess(
+                            .createProcess(
                                 process
                             )
                             .toInt()

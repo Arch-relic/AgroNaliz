@@ -3268,7 +3268,24 @@ class HarvestDayActivity : AppCompatActivity() {
         val editArea = dialogView.findViewById<EditText>(R.id.editFinishHarvestDayArea)
         editArea.setText(day.harvestedAreaHa?.let { java.math.BigDecimal.valueOf(it).toPlainString() } ?: "")
         val editMoisture=dialogView.findViewById<EditText>(R.id.editFinishHarvestDayMoisture)
-        editMoisture.setText(day.moisturePercent?.let(HarvestResultsFormatter::number) ?: "")
+        editMoisture.setText(day.moisturePercent?.let { java.math.BigDecimal.valueOf(it).toPlainString() } ?: "")
+
+        val fuelConfirm = dialogView.findViewById<Button>(R.id.buttonConfirmFinishHarvestDay)
+        fuelConfirm.isEnabled = false
+        val editFuel = dialogView.findViewById<EditText>(R.id.editFinishHarvestDayFuel)
+        editFuel.isEnabled = false
+        Thread {
+            try {
+                val fuel = DatabaseProvider.getDatabase(applicationContext).harvestFuelDao().getDay(day.id)
+                runOnUiThread {
+                    editFuel.setText(fuel?.endPercent?.let { java.math.BigDecimal.valueOf(it).toPlainString() } ?: "")
+                    editFuel.isEnabled = true
+                    fuelConfirm.isEnabled = true
+                }
+            } catch (e: Exception) {
+                runOnUiThread { Toast.makeText(this, "Не удалось загрузить топливо: ${e.message}", Toast.LENGTH_LONG).show() }
+            }
+        }.start()
 
         val buttonConfirm =
             dialogView.findViewById<Button>(
@@ -3282,6 +3299,11 @@ class HarvestDayActivity : AppCompatActivity() {
 
         val timeCalendar =
             Calendar.getInstance()
+
+        day.endTime?.split(":")?.let {
+            timeCalendar.set(Calendar.HOUR_OF_DAY, it[0].toInt())
+            timeCalendar.set(Calendar.MINUTE, it[1].toInt())
+        }
 
         fun updateTime() {
             textEndTime.text =
@@ -3321,6 +3343,8 @@ class HarvestDayActivity : AppCompatActivity() {
             }
             val moisture=try { HarvestFuelCalculator.parse(editMoisture.text.toString()) }
                 catch(e:IllegalArgumentException) { editMoisture.error=e.message;return@setOnClickListener }
+            val endFuel = try { HarvestFuelCalculator.parse(editFuel.text.toString()) }
+                catch (e: IllegalArgumentException) { editFuel.error = e.message; return@setOnClickListener }
             val endTime =
                 textEndTime
                     .text
@@ -3331,7 +3355,7 @@ class HarvestDayActivity : AppCompatActivity() {
             showCampaignFinishedDialog(
                 day,
                 endTime,
-                area, moisture
+                area, moisture, endFuel
             )
         }
 
@@ -3342,7 +3366,8 @@ class HarvestDayActivity : AppCompatActivity() {
         day: HarvestDay,
         endTime: String,
         harvestedAreaHa: Double?,
-        moisture:Double?
+        moisture:Double?,
+        endFuel: Double?
     ) {
         AlertDialog
             .Builder(this)
@@ -3359,7 +3384,7 @@ class HarvestDayActivity : AppCompatActivity() {
                     day,
                     endTime,
                     true,
-                    harvestedAreaHa, moisture
+                    harvestedAreaHa, moisture, endFuel
                 )
             }
             .setNegativeButton(
@@ -3369,7 +3394,7 @@ class HarvestDayActivity : AppCompatActivity() {
                     day,
                     endTime,
                     false,
-                    harvestedAreaHa, moisture
+                    harvestedAreaHa, moisture, endFuel
                 )
             }
             .setNeutralButton(
@@ -3384,7 +3409,8 @@ class HarvestDayActivity : AppCompatActivity() {
         endTime: String,
         finishProcess: Boolean,
         harvestedAreaHa: Double?,
-        moisture:Double?
+        moisture:Double?,
+        endFuel: Double?
     ) {
         Thread {
             try {
@@ -3394,26 +3420,8 @@ class HarvestDayActivity : AppCompatActivity() {
                             applicationContext
                         )
 
-                database.runInTransaction {
-                    check(database
-                        .harvestDao()
-                        .completeDay(
-                            day.id,
-                            endTime,
-                            harvestedAreaHa, moisture
-                        ) == 1) { "День уже завершён или удалён" }
-
-                    if (
-                        finishProcess
-                    ) {
-                        database
-                            .harvestDao()
-                            .completeProcess(
-                                day.processId,
-                                day.workDate
-                            )
-                    }
-                }
+                HarvestDayCompletion.save(database, day.id, endTime, harvestedAreaHa,
+                    moisture, endFuel, finishProcess)
 
                 runOnUiThread {
                     HarvestReminderManager

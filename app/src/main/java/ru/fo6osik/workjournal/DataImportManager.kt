@@ -35,9 +35,13 @@ object DataImportManager {
         }
     }
 
-    suspend fun importData(
+    suspend fun importData(context: Context, uri: Uri): Result<ImportSummary> =
+        importData(context, uri, DatabaseProvider.getDatabase(context))
+
+    internal suspend fun importData(
         context: Context,
-        uri: Uri
+        uri: Uri,
+        roomDatabase: AppDatabase
     ): Result<ImportSummary> = withContext(Dispatchers.IO) {
 
         runCatching {
@@ -68,9 +72,6 @@ object DataImportManager {
                 )
             }
 
-            val roomDatabase =
-                DatabaseProvider.getDatabase(context)
-
             val database =
                 roomDatabase.openHelper.writableDatabase
 
@@ -83,6 +84,7 @@ object DataImportManager {
                 sourceDatabaseVersion != 19 &&
                 sourceDatabaseVersion != 20 &&
                 sourceDatabaseVersion != 21 &&
+                sourceDatabaseVersion != 22 &&
                 sourceDatabaseVersion != database.version
             ) {
                 error(
@@ -100,6 +102,13 @@ object DataImportManager {
                 tables,
                 sourceDatabaseVersion
             )
+
+            if (sourceDatabaseVersion >= 18) {
+                val harvestTables = setOf("harvest_processes", "harvest_days", "harvest_bunkers") +
+                    if (sourceDatabaseVersion >= 22) setOf("harvest_fuel_days", "harvest_refuelings") else emptySet()
+                DatabaseBackupManager.validateBackupRows(database, tables, harvestTables, sourceDatabaseVersion)
+                HarvestBackupIntegrity.validate(tables)
+            }
 
             val counter =
                 Counter()
@@ -4118,6 +4127,12 @@ private fun importHarvestProcesses(
                     )
                 )
 
+                for (name in listOf("fieldAreaSnapshotHa", "actualPlantedAreaHa")) {
+                    val area = jsonNullableDouble(row, name)
+                    require(area == null || HarvestCalculator.positive(area) != null) { "Некорректная площадь $name" }
+                    if (area == null) putNull(name) else put(name, area)
+                }
+
                 val bunkerVolumeM3 =
                     jsonNullableDouble(
                         row,
@@ -4278,6 +4293,8 @@ private fun importHarvestDays(
             )
 
         if (existingId != null) {
+            val owner = querySingleId(database, "SELECT processId FROM harvest_days WHERE id = ?", arrayOf(existingId))
+            require(owner == harvestProcessMap[row.getLong("processId")]) { "UID рабочего дня относится к другой кампании" }
             idMap[oldId] =
                 existingId
 
@@ -4527,6 +4544,8 @@ private fun importHarvestBunkers(
             )
 
         if (exists) {
+            val owner = querySingleId(database, "SELECT dayId FROM harvest_bunkers WHERE bunkerUid = ?", arrayOf(bunkerUid))
+            require(owner == harvestDayMap[row.getLong("dayId")]) { "UID бункера относится к другому рабочему дню" }
             counter.skipped()
             continue
         }

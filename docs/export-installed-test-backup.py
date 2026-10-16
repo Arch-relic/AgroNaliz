@@ -6,6 +6,7 @@ The destination must be outside Git working trees and must not already exist.
 import argparse
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -24,15 +25,15 @@ def validate_backup(raw, target_room_version):
     if root.get('backupFormatVersion') != 1:
         raise ValueError('Unsupported backup format')
     version = root.get('databaseVersion')
-    if type(version) is not int or version not in (20, 21, 22):
-        raise ValueError('Only documented Room v20/v21/v22 backups are supported')
-    if target_room_version not in (20, 21, 22) or version > target_room_version:
+    if type(version) is not int or version not in (20, 21, 22, 23):
+        raise ValueError('Only documented Room v20/v21/v22/v23 backups are supported')
+    if target_room_version not in (20, 21, 22, 23) or version > target_room_version:
         raise ValueError('Database downgrade blocked; keep the installed application and backup')
     tables = root.get('tables')
     if not isinstance(tables, dict) or not REQUIRED.issubset(tables):
         raise ValueError('Required backup tables are missing')
-    if version==22 and not {'harvest_fuel_days','harvest_refuelings'}.issubset(tables):
-        raise ValueError('Fuel tables missing from v22 backup')
+    if version>=22 and not {'harvest_fuel_days','harvest_refuelings'}.issubset(tables):
+        raise ValueError('Fuel tables missing from Room22+ backup')
     for rows in tables.values():
         if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
             raise ValueError('Malformed backup rows')
@@ -48,6 +49,14 @@ def validate_backup(raw, target_room_version):
             raise ValueError('Broken field relationship')
         if row.get('combineVehicleId') is not None and row['combineVehicleId'] not in vehicles:
             raise ValueError('Broken vehicle relationship')
+    if version >= 23:
+        for row in tables['harvest_processes']:
+            for column in ('fieldAreaSnapshotHa', 'actualPlantedAreaHa'):
+                if column not in row:
+                    raise ValueError('Room23 campaign area column missing')
+                value = row[column]
+                if value is not None and (type(value) not in (float, int) or not math.isfinite(value) or value <= 0):
+                    raise ValueError('Invalid campaign area')
     if any(r.get('processId') not in processes for r in tables['harvest_days']):
         raise ValueError('Broken day relationship')
     if any(r.get('dayId') not in days for r in tables['harvest_bunkers']):
@@ -90,7 +99,7 @@ def main():
     parser.add_argument('--serial', required=True, help='Explicit owner-approved device serial')
     parser.add_argument('--backup-name', required=True, help='Existing basename from files/test-backups')
     parser.add_argument('--output', required=True, help='New private JSON file outside Git')
-    parser.add_argument('--target-room-version', required=True, type=int, choices=[20, 21, 22])
+    parser.add_argument('--target-room-version', required=True, type=int, choices=[20, 21, 22, 23])
     args = parser.parse_args()
     raw = read_backup(args.adb, args.serial, args.backup_name)
     version, counts = validate_backup(raw, args.target_room_version)

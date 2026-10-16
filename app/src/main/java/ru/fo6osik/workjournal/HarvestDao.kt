@@ -35,6 +35,26 @@ data class HarvestDaySummary(
 @Dao
 interface HarvestDao {
 
+    @Query("SELECT * FROM harvest_processes WHERE status = 'IN_PROGRESS' ORDER BY startDate DESC, id DESC")
+    fun getActiveProcesses(): List<HarvestProcess>
+
+    @Query("SELECT areaHa FROM fields WHERE id = :fieldId")
+    fun getFieldArea(fieldId: Int): Double?
+
+    @Transaction
+    fun createProcess(process: HarvestProcess): Long {
+        val area = process.fieldId?.let { getFieldArea(it) }
+        return insertProcess(process.copy(fieldAreaSnapshotHa = area, actualPlantedAreaHa = area))
+    }
+
+    @Query("UPDATE harvest_processes SET actualPlantedAreaHa = :area WHERE id = :id")
+    fun updateActualAreaRaw(id: Int, area: Double?): Int
+
+    fun updateActualArea(id: Int, area: Double?): Int {
+        require(area == null || HarvestCalculator.positive(area) != null)
+        return updateActualAreaRaw(id, area)
+    }
+
     @Insert
     fun insertProcess(
         process: HarvestProcess

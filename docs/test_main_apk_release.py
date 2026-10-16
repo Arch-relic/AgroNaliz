@@ -108,8 +108,14 @@ class MainApkRelease(unittest.TestCase):
                 exec(compile(PREFLIGHT,'test-release-preflight','exec'),{})
             return Path(folder+'/outputs').read_text()
     def test_version_increases_per_new_run(self):
-        self.assertIn('version_code=3000010',self.preflight(10,previous=[9]))
-        self.assertIn('version_code=3000011',self.preflight(11,previous=[10]))
+        # Version ordering is tested with the already audited Room22 schema.
+        # Do not authorize the production Room23 release as part of harvest development.
+        original=Path.read_text
+        def audited(path,*args,**kwargs):
+            return 'version = 22' if path.name=='AppDatabase.kt' else original(path,*args,**kwargs)
+        with patch('pathlib.Path.read_text',audited):
+            self.assertIn('version_code=3000010',self.preflight(10,previous=[9]))
+            self.assertIn('version_code=3000011',self.preflight(11,previous=[10]))
     def test_version_must_exceed_installed_and_android_bounds(self):
         self.preflight(10,floor='3000010',expect_failure=True)
         self.preflight(2100000000,expect_failure=True)

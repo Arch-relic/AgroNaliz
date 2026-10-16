@@ -49,7 +49,7 @@ def main():
     # Both complete passes must succeed: exercise modal-root transitions repeatedly.
     # This is a stability check, not a retry; any failure aborts the job.
     for _ in range(2):
-        instrument("HarvestAreaUiTest", count=7)
+        instrument("HarvestAreaUiTest", count=9)
     instrument("HarvestBackupTest", count=3)
     instrument("HarvestLifecycleTest", count=5)
     instrument("HarvestCampaignStateUiTest", count=2)

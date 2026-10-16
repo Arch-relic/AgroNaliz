@@ -153,9 +153,42 @@ class HarvestProcessActivity : AppCompatActivity() {
                 .putExtra(HarvestDayActivity.EXTRA_DAY_ID, active.id))
         }
 
+        findViewById<Button>(R.id.buttonEditHarvestActualArea).setOnClickListener { showActualAreaDialog() }
+
         buttonEditProcess.setOnClickListener {
             showEditProcessDialog()
         }
+    }
+
+    private fun showActualAreaDialog() {
+        val process = currentProcess ?: return
+        val view = layoutInflater.inflate(R.layout.dialog_harvest_number, null)
+        val input = view.findViewById<EditText>(R.id.editHarvestNumber)
+        input.hint = "Фактическая площадь посева, га (необязательно)"
+        view.findViewById<TextView>(R.id.textHarvestNumberNote).text =
+            "Пустое поле — площадь неизвестна. Можно изменять во время уборки и после её завершения."
+        input.setText(process.actualPlantedAreaHa?.let { java.math.BigDecimal.valueOf(it).toPlainString() } ?: "")
+        val dialog = AlertDialog.Builder(this).setTitle("Фактическая площадь посева")
+            .setView(view).setPositiveButton("Сохранить", null).setNegativeButton("Отмена", null).create()
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val area = try { HarvestCalculator.parseOptionalPositive(input.text.toString()) }
+                    catch (e: IllegalArgumentException) { input.error = e.message; return@setOnClickListener }
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false
+                Thread {
+                    try {
+                        check(DatabaseProvider.getDatabase(applicationContext).harvestDao().updateActualArea(process.id, area) == 1)
+                        runOnUiThread { dialog.dismiss(); loadProcess() }
+                    } catch (e: Exception) {
+                        runOnUiThread {
+                            dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true
+                            input.error = "Ошибка сохранения: ${e.message}"
+                        }
+                    }
+                }.start()
+            }
+        }
+        dialog.show()
     }
 
     override fun onResume() {
@@ -307,7 +340,12 @@ class HarvestProcessActivity : AppCompatActivity() {
         textTotalBunkers.text = "Бункеров: ${allBunkers.size}"
         textTotalVolume.text = "Объём: ${result.volumeM3?.let { HarvestResultsFormatter.range(it,"м³") } ?: "—"}"
         textAverageBunkerVolume.visibility = View.GONE
-        textHarvestResults.text = HarvestResultsFormatter.results(result, campaign = true)
+        fun input(day: HarvestDaySummary) = HarvestCalculator.DayInput(
+            bunkersByDay[day.id].orEmpty().map { it.fillLevel }, day.harvestedAreaHa, day.bulkDensityKgM3)
+        textHarvestResults.text = HarvestCampaignMetrics.text(process.fieldAreaSnapshotHa, process.actualPlantedAreaHa,
+            process.status == "IN_PROGRESS", HarvestCampaignMetrics.calculate(
+            process.bunkerVolumeM3, process.actualPlantedAreaHa,
+            days.filter { it.status == "COMPLETED" }.map(::input), days.map(::input)))
 
         renderDays(
             days,

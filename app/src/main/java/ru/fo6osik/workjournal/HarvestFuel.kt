@@ -43,6 +43,15 @@ interface HarvestFuelDao {
         val fresh=requireNotNull(initial(id)) { "Рабочий день удалён" };insertDayRaw(fresh)
         return requireNotNull(getDay(id))
     }
+    @Query("UPDATE harvest_fuel_days SET endPercent=:end WHERE dayId=:id")
+    fun endLevelRaw(id: Int, end: Double?)
+
+    @Transaction fun saveEndLevel(id: Int, end: Double?) {
+        require(HarvestFuelCalculator.valid(end)) { "Топливо: от 0 до 100%" }
+        ensure(id)
+        endLevelRaw(id, end)
+    }
+
     @Transaction fun saveLevels(id:Int,start:Double?,end:Double?) {
         require(HarvestFuelCalculator.valid(start) && HarvestFuelCalculator.valid(end)) { "Уровень: от 0 до 100%" }
         ensure(id);levelsRaw(id,start,end)

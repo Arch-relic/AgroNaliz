@@ -52,7 +52,9 @@
         android:inputType="numberDecimal"
         android:digits="0123456789,."
         android:singleLine="true" />
-        <EditText android:id="@+id/editFinishHarvestDayMoisture" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Влажность урожая, % (необязательно)" android:inputType="numberDecimal" />
+        <EditText android:id="@+id/editFinishHarvestDayMoisture" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Влажность урожая, % (необязательно)" android:inputType="numberDecimal" android:digits="0123456789,." />
+
+    <EditText android:id="@+id/editFinishHarvestDayFuel" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Топливо на конец дня, % (необязательно)" android:inputType="numberDecimal" android:digits="0123456789,." />
 
     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
         android:text="Время до начала смены относится к следующим суткам. Смена — менее 24 часов."
