@@ -1,3 +1,36 @@
+# Этап: подписанный TEST артефакт 1.0.8 из PR33
+
+16 октября 2026. Работа в отдельной test-artifact/1.0.8-pr33 на исходниках PR33
+5c1c74b9299f13537369da6180747140063f7ab5; main 4d9ecfe7b7fb83a12f191d40855fdcd1c13cbaee.
+Пользователь явно разрешил подготовить и опубликовать скачиваемую TEST APK без
+merge/релиза MAIN/установки на устройство. Телефонные certificate/code/Room неизвестны.
+
+Переиспользован существующий TEST signer и Secrets, сертификат последнего стабильного
+run38923846794:3FE57967C15F81EE39EA2B9B88DD96A7506C1B5B9032606ECBEA04BBDB15EE3C,
+code2000006. Точный owner-only push allowlist для этой ветки, первая попытка,
+изменение workflow; default main dispatch сохранён. PR/fork секретов не получают,
+sign job по-прежнему без checkout/Gradle; MAIN workflow не меняется.
+Новый gate требует TEST1.0.8/Room23/большийcode/тот же стабильныйсертификат и SHA;
+verification.json явно NOT_CONFIRMED для совместимости телефона.
+
+Изменённые/новые файлы этого этапа:
+- .github/workflows/test-apk-publish.yml
+- docs/test_test_apk_signing.py
+- docs/test_test_preview_artifact.py (новый)
+- docs/test-apk-1.0.8-artifact.md (новый)
+- docs/test-apk.md
+- docs/codex-handoff.md
+Удалений нет. Production Android-код/данные/подписи MAIN не изменены.
+Локальные тесты: 78, 76 успешно, 2 без APK пропущены; diff --check успешно.
+Проверенного CI SHA нового механизма, запуска и artifact пока нет: будут дописаны
+после публикации. Изменения пока не закоммичены. Существующий PR33 остаётся Draft;
+для узкого изменения TEST публикации будет отдельный Draft PR в feature-ветку,
+не в main. Подробности и инструкция смартфона: [test-apk-1.0.8-artifact.md](test-apk-1.0.8-artifact.md).
+
+---
+
+История предыдущего этапа:
+
 # Передача контекста: PR #33, быстрый доступ исправлен, полный CI успешен
 
 16 октября 2026. Ветка feature/harvest-1-0-8. Опорный main:
