@@ -1,3 +1,42 @@
+# Этап: отдельный MAIN1.0.7 Room22→1.0.8 Room23 CI, политика не меняется
+
+17 октября2026, feature/harvest-1-0-8 / Draft PR33.
+HEAD до задачи888a9a6d4fab86c45c3f580bd699da5ec5051f02 против проверенного8702bf6:
+только docs/codex-handoff.md, docs/main-1.0.8-release-audit.md,
+docs/main-1.0.8-verification.json. Product/tests/signers совпадали.
+main4d9ecfe7b7fb83a12f191d40855fdcd1c13cbaee.
+
+Добавлен отдельный readonly CI workflow без Secrets/публикации APK. Старый MAIN
+workflow/подпись/guard не меняются. Пин MAIN исторически совпадает с TEST, но пакеты
+разные; прежний MAIN сертификат сохранять, смена исключительно ради разделения
+не требуется. Предложение политики отдельно, не применено.
+
+Новые файлы:
+- .github/workflows/main-room23-checks.yml
+- app/src/androidTest/java/ru/fo6osik/workjournal/MainRoom23MigrationTest.kt
+- docs/run-main-room23-checks.py
+- docs/verify-main-room23-inputs.py
+- docs/main-room23-release-policy-proposal.md
+Изменён docs/codex-handoff.md. Удалений нет.
+
+CI строит baselineMAIN1.0.7/code3000003/Room22 из pinned4d9ecfe7, currentMAIN
+1.0.8/code3000004/Room23, обе с общим одноразовым CI debug certificate.
+Тест seed в22 и verify23 до/после force-stop сравнивает все старые колонки всех
+таблиц JSON, активные/завершённые кампании/дни, технику/поля, бункеры/события,
+влажность/топливо/обе заправки, prefs/timers/files/certificate, NULL новых площадей,
+foreign_key_check, массу/расход. JSON23 восстанавливается в отдельную in-memory базу
+и сравнивается со всем экспортом. Никаких uninstall/clear/downgrade flags;
+runner отказывает, если MAIN/TEST уже установлена, и требует disposable emulator.
+
+Существующий unsigned release build анализируется aapt2/apksigner, не подписывается
+и не публикуется. В diagnostics только JSON/hash и test reports, никаких APK.
+Новые сборки/CI ещё не завершены. После прогона записать фактические SHA/результаты,
+обновить BLOCKED auditJSON без разрешения production sign, остановиться для решения.
+
+---
+
+История предыдущего аудита:
+
 # Этап: финальный аудит MAIN1.0.8 — выпуск BLOCKED
 
 17 октября2026. feature/harvest-1-0-8, Draft PR33 открыт, не merged.
