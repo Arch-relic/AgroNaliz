@@ -1,6 +1,11 @@
 name: Publish stable TEST APK
 
 on:
+  # Owner-authorized, isolated publication of the already reviewed PR33 source.
+  # A report-only push does not publish another APK. No pull_request trigger or keys.
+  push:
+    branches: ['test-artifact/1.0.8-pr33']
+    paths: ['.github/workflows/test-apk-publish.yml']
   workflow_dispatch:
     inputs:
       minimum_installed_version_code:
@@ -23,7 +28,7 @@ concurrency:
 
 jobs:
   build:
-    if: github.ref == 'refs/heads/main' && github.actor == github.repository_owner && github.run_attempt == 1
+    if: github.actor == github.repository_owner && github.run_attempt == 1 && ((github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || (github.event_name == 'push' && github.ref == 'refs/heads/test-artifact/1.0.8-pr33'))
     runs-on: ubuntu-latest
     timeout-minutes: 40
     permissions:
@@ -44,8 +49,9 @@ jobs:
       - name: Validate immutable TEST release sequence and database floor
         id: metadata
         env:
-          INSTALLED_CODE: ${{ inputs.minimum_installed_version_code }}
-          INSTALLED_ROOM: ${{ inputs.minimum_room_version }}
+          # Push floor is the last published stable TEST, not a claimed phone reading.
+          INSTALLED_CODE: ${{ inputs.minimum_installed_version_code || '2000008' }}
+          INSTALLED_ROOM: ${{ inputs.minimum_room_version || '23' }}
           GH_TOKEN: ${{ github.token }}
         run: |
           python3 - <<'PY'
@@ -71,12 +77,16 @@ jobs:
               raise SystemExit('Cannot verify TEST release sequence; no APK published')
           if any(run['run_number'] >= number for run in previous):
               raise SystemExit('Out-of-order TEST publication blocked; dispatch a new run')
-          artifact = 'internal-unsigned-TEST-do-not-install-main-' + os.environ['GITHUB_SHA'][:12] + '-v' + str(code)
+          label = 'pr33-1.0.8' if os.environ.get('GITHUB_REF') == 'refs/heads/test-artifact/1.0.8-pr33' else 'main'
+          artifact = 'internal-unsigned-TEST-do-not-install-' + label + '-' + os.environ['GITHUB_SHA'][:12] + '-v' + str(code)
           with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
               output.write(f'artifact={artifact}\nversion_code={code}\nroom_version={room}\n')
           with open(os.environ['GITHUB_ENV'], 'a') as output:
               output.write(f'TEST_VERSION_CODE={code}\n')
           PY
+      - name: Verify application source matches reviewed PR33 head
+        if: github.ref == 'refs/heads/test-artifact/1.0.8-pr33'
+        run: test "$(git rev-parse HEAD:app)" = "ec39c15f708120ddba4397f06264d95120bae2a7"
       - name: Install SDK
         run: |
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;35.0.0"
@@ -84,6 +94,8 @@ jobs:
           chmod +x ./gradlew
       - name: Build and test TEST APK without signing secrets
         run: ./gradlew -PtestVersionCode="$TEST_VERSION_CODE" :app:assembleDebugTest :app:testDebugTestUnitTest --no-daemon --stacktrace --console=plain
+      - name: Check publication guards and TEST signer with synthetic data
+        run: python3 -m unittest discover -s docs -p 'test_*py' -v
       - uses: actions/upload-artifact@v4
         id: input
         with:
@@ -94,7 +106,7 @@ jobs:
 
   sign:
     needs: build
-    if: github.ref == 'refs/heads/main' && github.actor == github.repository_owner && github.run_attempt == 1
+    if: github.actor == github.repository_owner && github.run_attempt == 1 && ((github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || (github.event_name == 'push' && github.ref == 'refs/heads/test-artifact/1.0.8-pr33'))
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -230,10 +242,59 @@ jobs:
                   print('Signing failed; no signed APK published (details suppressed)', file=sys.stderr)
                   sys.exit(1)
           PY
+      - name: Verify PR33 signed APK against last stable TEST
+        if: github.ref == 'refs/heads/test-artifact/1.0.8-pr33'
+        env:
+          EXPECTED_CODE: ${{ needs.build.outputs.version_code }}
+          EXPECTED_SOURCE: ${{ needs.build.outputs.source_sha }}
+        run: |
+          python3 - <<'PY'
+          import json, os, re, subprocess
+          from pathlib import Path
+
+          LAST_CERT = '3FE57967C15F81EE39EA2B9B88DD96A7506C1B5B9032606ECBEA04BBDB15EE3C'
+          LAST_CODE = 2000008
+
+          def validate(report, badging, expected_code, expected_source):
+              package = re.search(r"^package: name='([^']+)' versionCode='([0-9]+)' versionName='([^']+)'", badging, re.MULTILINE)
+              if not package or package.groups() != ('ru.fo6osik.workjournal.debugtest', str(expected_code), '1.0.8'):
+                  raise ValueError('Expected TEST applicationId, checked versionCode and versionName 1.0.8')
+              if expected_code <= LAST_CODE or expected_code > 2100000000:
+                  raise ValueError('TEST update code must exceed last stable publication')
+              if report.get('applicationId') != package.group(1) or report.get('versionCode') != expected_code:
+                  raise ValueError('Signed verification report identity mismatch')
+              if report.get('certificateSha256') != LAST_CERT:
+                  raise ValueError('TEST certificate differs from last stable publication; nothing published')
+              if report.get('roomVersion') != 23 or report.get('sourceSha') != expected_source:
+                  raise ValueError('Expected PR33 Room23 and checked source SHA')
+              return dict(report, versionName='1.0.8', comparedStableVersionCode=LAST_CODE,
+                          comparedStableRun=39027611032, installedPhoneCompatibility='MATCHES_PREVIOUS_INSTALLED_APK',
+                          installedPhoneVersionCode=2000008,
+                          installedPhoneCertificateSha256=LAST_CERT,
+                          reviewedPr33SourceSha='8702bf6cfcd7a783236bd2bb325795b3cee154d7')
+
+          def main():
+              folder = Path(os.environ['RUNNER_TEMP']) / 'agronaliz-test-output'
+              apk = folder / 'app-TEST-stable.apk'
+              report_file = folder / 'verification.json'
+              sdk = Path(os.environ['ANDROID_HOME']) / 'build-tools/35.0.0'
+              badging = subprocess.check_output([str(sdk / 'aapt2'), 'dump', 'badging', str(apk)], text=True)
+              report = validate(json.loads(report_file.read_text()), badging,
+                                int(os.environ['EXPECTED_CODE']), os.environ['EXPECTED_SOURCE'])
+              report_file.write_text(json.dumps(report, indent=2) + '\n')
+              with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as stream:
+                  stream.write('TEST 1.0.8: `ru.fo6osik.workjournal.debugtest`\n\n')
+                  stream.write('versionCode: ' + str(report['versionCode']) + ' > 2000008; Room23\n\n')
+                  stream.write('Verified certificate SHA-256: `' + LAST_CERT + '`\n\n')
+                  stream.write('Matches previously published TEST APK2000008 (run39027611032), identified by the user as installed. Same package and full certificate, strictly higher versionCode. Do not uninstall or clear TEST.\n')
+
+          if __name__ == '__main__':
+              main()
+          PY
       - name: Publish verified TEST APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-TEST-stable-main-${{ github.sha }}-v${{ needs.build.outputs.version_code }}
+          name: app-TEST-stable-${{ github.ref_name == 'main' && 'main' || 'pr33-1.0.8' }}-${{ github.sha }}-v${{ needs.build.outputs.version_code }}
           path: |
             ${{ runner.temp }}/agronaliz-test-output/app-TEST-stable.apk
             ${{ runner.temp }}/agronaliz-test-output/verification.json

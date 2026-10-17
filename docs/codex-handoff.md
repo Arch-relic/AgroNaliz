@@ -1,3 +1,62 @@
+# Этап: заключительная TEST APK2000009 из финального PR33
+
+17 октября 2026. Завершено, остановиться. Ветка test-artifact/1.0.8-pr33,
+[Draft PR34](https://github.com/Arch-relic/AgroNaliz/pull/34) в feature-ветку PR33.
+PR33/head8702bf6cfcd7a783236bd2bb325795b3cee154d7 и main
+4d9ecfe7b7fb83a12f191d40855fdcd1c13cbaee не изменялись, оба PR не merged.
+App tree ec39c15f708120ddba4397f06264d95120bae2a7 совпадает с PR33 и проверен build
+job до сборки. В APK единая buttonDataBackup → BackupRestoreActivity без нижнего
+дубликата; все прежние Main/Options изменения сохранены.
+
+**[Publish stable TEST APK #9 SUCCESS](https://github.com/Arch-relic/AgroNaliz/actions/runs/39030516729)**.
+**[Скачать ZIP](https://github.com/Arch-relic/AgroNaliz/actions/runs/39030516729/artifacts/12100277385)**.
+Один итоговый artifact, внутри app-TEST-stable.apk и verification.json; транспорт
+удалён. Хранение до31 октября2026 11:58UTC.
+Проверено SDK: ru.fo6osik.workjournal.debugtest, versionName1.0.8, code2000009,
+Room23, сертификат3FE57967C15F81EE39EA2B9B88DD96A7506C1B5B9032606ECBEA04BBDB15EE3C.
+Он совпадает с прежней APK2000008 (run39027611032), которую пользователь указал
+как установленную. Пакет тот же, code больше2000008, Room23→23 без downgrade;
+совместимость обновления показанного APK подтверждена. Использованы прежние TEST
+Secrets/pin/signing; owner/ref/attempt guards и cleanup не ослаблены.
+JSON: MATCHES_PREVIOUS_INSTALLED_APK, installedPhoneVersionCode2000008, reviewedPr33SHA.
+
+Проверенный опубликованный SHA5e544fff1ffaa0c052a6245e74f2d8ca9bfc4a2d;
+локальный2bcbc66, tree cfb2de7b6c2d4e740881512428c9fb5b65ed05a2.
+Разница SHA из-за API. Следующий коммит меняет только отчёты, не код/APK;
+не выдавать SHA самого отчётного коммита за проверенный Android-результат.
+
+Свежий CI: :app:assembleDebugTest :app:testDebugTestUnitTest — BUILD SUCCESSFUL,
+JVM-задача заново, не UP-TO-DATE; число JVM-тестов не печатается в стандартном логе.
+python3 -m unittest discover -s docs -p 'test_*py' -v:78/77pass/1skip MAIN SDK
+без MAIN APK; TEST SDK и mismatch прошли. Локально78/76pass/2skip без APK,
+diff --check успешен. Подпись/final gate/cleanup успешны. Полный инструментальный
+CI PR33 #102/#29 успешен ранее, здесь не повторялся и не называется новым.
+Локальный Gradle повторно не запускался: Android-код не менялся, известная
+ошибка wildcard IP остаётся. Реальный смартфон/рабочая база не проверялись.
+
+Собственные изменённые файлы относительно прошлой публикации:
+- .github/workflows/test-apk-publish.yml
+- docs/test_test_preview_artifact.py
+- docs/test-apk-1.0.8-artifact.md
+- docs/test-apk-signing.md
+- docs/codex-handoff.md
+Синхронизированы без изменений из последнего проверенного PR33:
+- app/src/main/java/ru/fo6osik/workjournal/OptionsActivity.kt
+- app/src/main/res/layout/activity_options.xml
+- app/src/androidTest/java/ru/fo6osik/workjournal/AppVersionUiTest.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/MainScreenLayoutUiTest.kt
+Удалений нет; после отчётного коммита незакоммиченных файлов нет.
+
+MAIN, подписи/id, базы, миграции и пользовательские данные не изменялись.
+Установок, удаления приложения, очистки/восстановления пользовательской базы,
+merge и релизов нет. Всё дальнейшее — ручное обновление владельцем поверх2000008
+без удаления/очистки, затем проверка собственных данных и единого backup-меню.
+[Отчёт и инструкция](test-apk-1.0.8-artifact.md). После публикации остановиться.
+
+---
+
+История исходного этапа PR33:
+
 # Этап: единый пункт резервного копирования в Options
 
 17 октября 2026. Завершено, остановиться для дальнейших указаний.

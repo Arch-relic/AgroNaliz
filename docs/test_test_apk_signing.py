@@ -80,9 +80,25 @@ class TestApkSigning(unittest.TestCase):
         with patch('subprocess.run',return_value=subprocess.CompletedProcess([],1,'private-alias','private-password')):
             with self.assertRaises(ERROR) as caught:PROGRAM['tool'](['apksigner'])
             self.assertNotIn('private-alias',str(caught.exception));self.assertNotIn('private-password',str(caught.exception))
-    def test_only_owner_main_dispatch_can_use_secrets(self):
+    def test_only_owner_approved_source_events_can_use_secrets(self):
+        from types import SimpleNamespace
         self.assertNotIn('pull_request:',WORKFLOW);self.assertNotIn('pull_request_target:',WORKFLOW)
-        self.assertEqual(2,WORKFLOW.count("github.ref == 'refs/heads/main' && github.actor == github.repository_owner && github.run_attempt == 1"))
+        gates=re.findall(r'^    if: (.+)$',WORKFLOW,re.MULTILINE)
+        self.assertEqual(2,len(gates));self.assertEqual(gates[0],gates[1])
+        code=gates[0].replace('&&',' and ').replace('||',' or ')
+        for event,ref,actor,attempt,allowed in [
+            ('workflow_dispatch','refs/heads/main','owner',1,True),
+            ('push','refs/heads/test-artifact/1.0.8-pr33','owner',1,True),
+            ('push','refs/heads/main','owner',1,False),
+            ('pull_request','refs/heads/test-artifact/1.0.8-pr33','owner',1,False),
+            ('push','refs/heads/feature/harvest-1-0-8','owner',1,False),
+            ('workflow_dispatch','refs/heads/test-artifact/1.0.8-pr33','owner',1,False),
+            ('push','refs/heads/test-artifact/1.0.8-pr33','contributor',1,False),
+            ('push','refs/heads/test-artifact/1.0.8-pr33','owner',2,False),
+        ]:
+            github=SimpleNamespace(event_name=event,ref=ref,actor=actor,repository_owner='owner',run_attempt=attempt)
+            self.assertEqual(allowed,eval(code,{'github':github}), (event,ref,actor,attempt))
+        self.assertIn("paths: ['.github/workflows/test-apk-publish.yml']",WORKFLOW)
         build,sign=WORKFLOW.split('\n  sign:\n',1)
         self.assertNotIn('${{ secrets.',build);self.assertNotIn('actions/checkout',sign);self.assertNotIn('./gradlew',sign)
         self.assertNotIn('secrets.ANDROID_',WORKFLOW)
