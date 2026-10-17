@@ -50,7 +50,7 @@ jobs:
         id: metadata
         env:
           # Push floor is the last published stable TEST, not a claimed phone reading.
-          INSTALLED_CODE: ${{ inputs.minimum_installed_version_code || '2000006' }}
+          INSTALLED_CODE: ${{ inputs.minimum_installed_version_code || '2000007' }}
           INSTALLED_ROOM: ${{ inputs.minimum_room_version || '23' }}
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -84,6 +84,9 @@ jobs:
           with open(os.environ['GITHUB_ENV'], 'a') as output:
               output.write(f'TEST_VERSION_CODE={code}\n')
           PY
+      - name: Verify application source matches reviewed PR33 head
+        if: github.ref == 'refs/heads/test-artifact/1.0.8-pr33'
+        run: test "$(git rev-parse HEAD:app)" = "0dbcf734e40f6529ed82870e08a536c8e06db4f4"
       - name: Install SDK
         run: |
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;35.0.0"
@@ -250,7 +253,7 @@ jobs:
           from pathlib import Path
 
           LAST_CERT = '3FE57967C15F81EE39EA2B9B88DD96A7506C1B5B9032606ECBEA04BBDB15EE3C'
-          LAST_CODE = 2000006
+          LAST_CODE = 2000007
 
           def validate(report, badging, expected_code, expected_source):
               package = re.search(r"^package: name='([^']+)' versionCode='([0-9]+)' versionName='([^']+)'", badging, re.MULTILINE)
@@ -265,7 +268,10 @@ jobs:
               if report.get('roomVersion') != 23 or report.get('sourceSha') != expected_source:
                   raise ValueError('Expected PR33 Room23 and checked source SHA')
               return dict(report, versionName='1.0.8', comparedStableVersionCode=LAST_CODE,
-                          comparedStableRun=38923846794, installedPhoneCompatibility='NOT_CONFIRMED')
+                          comparedStableRun=38933732351, installedPhoneCompatibility='MATCHES_PROVIDED_SCREENSHOTS',
+                          installedPhoneVersionCode=2000005,
+                          installedPhoneCertificateSha256=LAST_CERT,
+                          reviewedPr33SourceSha='791fa7e418e11e88c7c1f43ba6c41eb0ce0eedc8')
 
           def main():
               folder = Path(os.environ['RUNNER_TEMP']) / 'agronaliz-test-output'
@@ -278,9 +284,9 @@ jobs:
               report_file.write_text(json.dumps(report, indent=2) + '\n')
               with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as stream:
                   stream.write('TEST 1.0.8: `ru.fo6osik.workjournal.debugtest`\n\n')
-                  stream.write('versionCode: ' + str(report['versionCode']) + ' > 2000006; Room23\n\n')
+                  stream.write('versionCode: ' + str(report['versionCode']) + ' > 2000007; Room23\n\n')
                   stream.write('Verified certificate SHA-256: `' + LAST_CERT + '`\n\n')
-                  stream.write('Matches stable TEST run 38923846794. Installed phone certificate/code/Room are unknown: update compatibility is NOT CONFIRMED. Do not uninstall or clear the installed TEST.\n')
+                  stream.write('Matches stable TEST run 38933732351 and the certificate shown in the provided phone screenshot; new versionCode exceeds shown installed code 2000005 and last published code 2000007. Compatibility is based on those screenshots; recheck if installation has changed. Do not uninstall or clear TEST.\n')
 
           if __name__ == '__main__':
               main()

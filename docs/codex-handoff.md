@@ -1,67 +1,87 @@
-# Этап завершён: стабильный TEST1.0.8 опубликован как Actions artifact
+# Этап: свежая TEST APK 1.0.8 с последней компоновкой
 
-16 октября2026. Отдельная ветка test-artifact/1.0.8-pr33 от PR33 head
-5c1c74b9299f13537369da6180747140063f7ab5; main4d9ecfe7b7fb83a12f191d40855fdcd1c13cbaee
-и PR33 не изменены/не merged. Draft PR34 направлен в feature/harvest-1-0-8:
-https://github.com/Arch-relic/AgroNaliz/pull/34 . PR33 тоже остаётся Draft.
+17 октября 2026. Подготовка в существующей `test-artifact/1.0.8-pr33`, Draft PR34
+в `feature/harvest-1-0-8`. PR33 не изменяется и не объединяется.
+Источник app — текущий PR33 head `791fa7e418e11e88c7c1f43ba6c41eb0ce0eedc8`,
+app tree `0dbcf734e40f6529ed82870e08a536c8e06db4f4`; соответствие проверяет build job.
+Main остаётся `4d9ecfe7b7fb83a12f191d40855fdcd1c13cbaee`.
 
-Publish stable TEST APK #7 SUCCESS:
-https://github.com/Arch-relic/AgroNaliz/actions/runs/38933732351
-Скачать ZIP:
-https://github.com/Arch-relic/AgroNaliz/actions/runs/38933732351/artifacts/12059653830
-Имя app-TEST-stable-pr33-1.0.8-f881f41f61565867e67e084e195e101346f422d5-v2000007,
-содержит app-TEST-stable.apk и verification.json, хранится до30 октября2026.
+На предоставленных скриншотах установленной TEST: пакет ru.fo6osik.workjournal.debugtest,
+версия 1.0.7, code2000005, сертификат SHA256
+3FE57967C15F81EE39EA2B9B88DD96A7506C1B5B9032606ECBEA04BBDB15EE3C.
+Он совпадает с прежним стабильным TEST. Floor поднят до последнего опубликованного
+code2000007; прежний workflow/Secrets/signing pin, изоляция build/sign и cleanup сохранены.
+Новый upload требует тот же полный сертификат, Room23, версию1.0.8, возрастающий code.
+При ошибке APK для установки не публикуется. Скриншоты не показывают состояние базы;
+сохранность миграции и TEST update проверена в полном CI PR33 #100.
 
-Проверенный исходный SHA f881f41f61565867e67e084e195e101346f422d5.
-Локальный идентичный ca7119b, tree c444d77aafd33a0674635504fef3f75dc95edbc4.
-Следующий коммит меняет только отчёты; APK остаётся из указанного проверенного SHA,
-сам SHA документирующего коммита не называется проверенным. Незакоммиченных изменений
-на момент завершения нет. Android-код тот же, что прошёл CI97 в PR33.
+Подготовка: Android-код не менялся, обновлены workflow, тест gate и отчёты;
+источник приложения перенесён из текущего PR33. Результаты новой сборки будут
+добавлены после Actions; пока опубликованной APK этой компоновки нет.
+Установки на смартфон, очистки, восстановления пользовательской базы и MAIN нет.
 
-Использован существующий TEST workflow, TEST Secrets и inline signer, build
-без секретов/sign без checkout и Gradle, прежний pinned сертификат. Для этой
-явно разрешённой владельцем публикации добавлен только owner-only push по точной
-ветке и изменению TEST workflow, run_attempt1. PR/fork/остальные refs не подписывают.
-Главный ручной main dispatch сохранён; MAIN workflows не изменены. История версий
-того же workflow и concurrency сохранены; отчётный push не публикует ещё одну APK.
+# Этап: окончательная компоновка главного экрана 1.0.8
 
-Проверены фактические package ru.fo6osik.workjournal.debugtest, versionName1.0.8,
-code2000007 (> последнего2000006), Room23 и SHA сертификата
-3FE57967C15F81EE39EA2B9B88DD96A7506C1B5B9032606ECBEA04BBDB15EE3C — совпадает с
-последним успешным стабильным TEST38923846794. Signer verify и gate прошли до upload.
-Пользователь подтвердил, что телефонные certificate/code/Room НЕИЗВЕСТНЫ.
-Поэтому совместимость с телефоном НЕ ПОДТВЕРЖДЕНА; verification.json содержит
-NOT_CONFIRMED. Не обещать обновление с сохранением данных по одному GitHub pin.
+17 октября 2026. Задача завершена. Только существующая `feature/harvest-1-0-8`.
+[PR #33](https://github.com/Arch-relic/AgroNaliz/pull/33) открыт, Draft, не merged.
+Main: `4d9ecfe7b7fb83a12f191d40855fdcd1c13cbaee`; head до задачи:
+`5c1c74b9299f13537369da6180747140063f7ab5`.
 
-Изменённые/новые файлы этого этапа:
-- .github/workflows/test-apk-publish.yml
-- docs/test_test_apk_signing.py
-- docs/test_test_preview_artifact.py (новый)
-- docs/test-apk-1.0.8-artifact.md (новый)
-- docs/test-apk.md
-- docs/test-apk-signing.md
+Проверенный GitHub SHA `51570722d4b909ae3fa203eccb2678f89e1c6392`;
+локальный `20811d4`, одинаковый tree `3013b840f499c7cdecc3bae76ae516bd19d51ad7`.
+Публикация через API объясняет разницу SHA. Последующий коммит меняет только два
+отчёта, не исходники/тесты; не считать SHA самого документирующего коммита проверенным.
+
+Developer-блок целиком внизу Options с прежними переходами и MAIN/TEST-маркером.
+Main: прежний gap 56dp + 16dp перед Options; уборка min96dp, прежняя ширина,
+центрирование, гибкое место сверху, 24dp снизу, GONE без фиксированной обёртки.
+Оба экрана scroll/fillViewport; fitsSystemWindows на внешнем FrameLayout.
+Бизнес-логика/Room23/миграции/backup/подписи/id/workflows не менялись.
+
+Изменены/добавлены (пути от корня, удалений нет):
+- app/src/main/java/ru/fo6osik/workjournal/MainActivity.kt
+- app/src/main/java/ru/fo6osik/workjournal/OptionsActivity.kt
+- app/src/main/res/layout/activity_main.xml
+- app/src/main/res/layout/activity_options.xml
+- app/src/androidTest/java/ru/fo6osik/workjournal/AppVersionUiTest.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/MainScreenLayoutUiTest.kt (новый)
+- docs/test_app_version.py
+- docs/run-harvest-108-checks.py
+- docs/main-screen-1.0.8-review.md (новый)
 - docs/codex-handoff.md
-Удалений нет. Production-код/MAIN подписи/пользовательские данные не менялись.
 
-Результаты: :app:assembleDebugTest и :app:testDebugTestUnitTest SUCCESS,
-JVM-тесты выполнены заново (не UP-TO-DATE). Python Actions78:77 успешно,1 пропущен
-(SDK-тест MAIN APK, которая не строится этим TEST job). Локально78:76 успешно,
-2 без APK пропущены; отдельная проверка JSON roundtrip синтетического report успешна.
-Diff --check успешно. Sign job SUCCESS, временный ключ/транспорт удалены, финальный
-artifact остался. Tool download подтвердил доступность ZIP; локальный повторный
-SDK-анализ скачанного ZIP не делался. SHA APK находится в verification.json;
-ZIP digest отдельно указан в полном отчёте, их не путать.
+Проверки проверенного SHA:
+- [Android #100 SUCCESS](https://github.com/Arch-relic/AgroNaliz/actions/runs/39016802399):
+  обе APK и instrumentation APK, обе JVM-задачи заново, 46 Python без пропусков,
+  84 успешных инструментальных выполнения / 45 вызовов.
+  Новые UI 3/3 (навигация, геометрия/GONE, compact720×960/font1.6), QuickAccess2/2,
+  Harvest108 5/5, FullBackup4/4, Room22→23 seed/verify/restart 3 вызова — всё успешно.
+  Безопасное обновление TEST и отказ другого ключа без потери данных прошли.
+- [Main #27 SUCCESS](https://github.com/Arch-relic/AgroNaliz/actions/runs/39016802395):
+  сборка/JVM, 26 Python и 3 инструментальных выполнения успешны.
+- Итого CI: 72 Python и 87 инструментальных выполнений, ошибок нет.
+  Число JVM-тестов не печатается в стандартном логе, отчёты в diagnostics;
+  задачи выполнялись заново, не UP-TO-DATE.
+- Локально `python3 -m unittest discover -s docs -p 'test_*py' -q`:72/70pass/2skip
+  без APK. XML parse и diff --check успешны. Проектная команда
+  `source /workspace/agronaliz-env.sh`, `agrogradle :app:assembleDebug :app:test`
+  не стартует: FileLockContentionHandler / usable wildcard IP. Android реально
+  собран и проверен в Actions, локальный результат не считать успешной сборкой.
 
-[Полный отчёт и инструкция получения сертификата/code/Room на смартфоне](test-apk-1.0.8-artifact.md).
-В App Manager: сведения установленной TEST для code, подписи для полного SHA256.
-Room точно из доступного JSON databaseVersion; если частный JSON недоступен на
-смартфоне, оставить неизвестной, не обходить защиту. Приватный ключ не отправлять.
-Не удалять/очищать TEST, не устанавливать APK автоматически. Для старой установки
-с другим сертификатом нужен соответствующий исходный ключ, новый его не заменит.
+Первый #98 и диагностический #99 падали в compact scrollTo(WorkNotes); остальные
+две новые UI-проверки прошли. Координаты println не попали в Actions console.
+В ScrollView расчёт scroll-to не вычитает padding; системные inset вынесены за
+ScrollView, после чего тот же строгий тест прошёл. Утверждения не ослаблены.
 
-Остановиться для review/метаданных телефона. Не merge, не MAIN Release, не установка
-на пользовательские устройства, не восстановление рабочей базы. Условия выполнены:
-APK опубликована как Actions artifact без изменения main и без пользовательских данных.
+[Полный отчёт, ограничения и ручная проверка](main-screen-1.0.8-review.md).
+Физический телефон/OEM/экстремальный font scale не проверены. Старый опубликованный
+TEST APK не содержит эту новую UI-корректировку; новая устанавливаемая APK не
+публиковалась. Данные не затронуты, риска потери данных от UI-изменения не выявлено.
+MAIN устанавливалась только синтетическая в ранее разрешённом одноразовом CI.
+
+Далее: остановиться и ожидать независимый review. Не merge, не релиз и не установка
+на пользовательское устройство. Незавершённых задач кода нет; ручная проверка
+на смартфоне — после отдельной согласованной подготовки TEST APK, без очистки данных.
 
 ---
 

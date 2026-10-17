@@ -23,6 +23,21 @@ def main():
     # Match the existing harvest UI runner; leave the application's permission flow intact.
     adb('shell', 'pm', 'grant', APP, 'android.permission.POST_NOTIFICATIONS')
     adb('shell', 'appops', 'set', APP, 'SCHEDULE_EXACT_ALARM', 'allow')
+    instrument('MainScreenLayoutUiTest', 'navigationAndDeveloperBlock')
+    instrument('MainScreenLayoutUiTest', 'continueBottomHeightAndNoReservedHiddenBlock')
+    original_font = adb('shell', 'settings', 'get', 'system', 'font_scale').strip()
+    try:
+        adb('shell', 'wm', 'size', '720x960')
+        adb('shell', 'settings', 'put', 'system', 'font_scale', '1.6')
+        adb('shell', 'am', 'force-stop', APP)
+        instrument('MainScreenLayoutUiTest', 'compactLargeFont')
+    finally:
+        adb('shell', 'wm', 'size', 'reset')
+        if original_font == 'null':
+            adb('shell', 'settings', 'delete', 'system', 'font_scale')
+        else:
+            adb('shell', 'settings', 'put', 'system', 'font_scale', original_font)
+        adb('shell', 'am', 'force-stop', APP)
     instrument('HarvestQuickAccessUiTest', count=2)
     instrument('Harvest108Test', count=5)
     instrument('HarvestFullBackup108Test', count=4)

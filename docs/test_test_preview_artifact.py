@@ -13,29 +13,31 @@ exec(compile(CODE, 'preview-publication-gate', 'exec'), PROGRAM)
 
 class PreviewArtifactTest(unittest.TestCase):
     def report(self):
-        return dict(applicationId='ru.fo6osik.workjournal.debugtest', versionCode=2000007,
+        return dict(applicationId='ru.fo6osik.workjournal.debugtest', versionCode=2000008,
                     certificateSha256=PROGRAM['LAST_CERT'], roomVersion=23, sourceSha='a'*40)
 
-    def badging(self, package='ru.fo6osik.workjournal.debugtest', code=2000007, name='1.0.8'):
+    def badging(self, package='ru.fo6osik.workjournal.debugtest', code=2000008, name='1.0.8'):
         return f"package: name='{package}' versionCode='{code}' versionName='{name}' platformBuildVersionName='15'\n"
 
-    def validate(self, report=None, badging=None, code=2000007):
+    def validate(self, report=None, badging=None, code=2000008):
         return PROGRAM['validate'](self.report() if report is None else report,
                                    self.badging() if badging is None else badging, code, 'a'*40)
 
-    def test_valid_metadata_stays_explicitly_unconfirmed_for_phone(self):
+    def test_valid_metadata_matches_provided_phone_screenshots(self):
         result = self.validate()
         self.assertEqual('1.0.8', result['versionName'])
-        self.assertEqual(2000006, result['comparedStableVersionCode'])
-        self.assertEqual('NOT_CONFIRMED', result['installedPhoneCompatibility'])
+        self.assertEqual(2000007, result['comparedStableVersionCode'])
+        self.assertEqual('MATCHES_PROVIDED_SCREENSHOTS', result['installedPhoneCompatibility'])
+        self.assertEqual(2000005, result['installedPhoneVersionCode'])
+        self.assertEqual(PROGRAM['LAST_CERT'], result['installedPhoneCertificateSha256'])
 
     def test_main_and_wrong_versions_are_not_published(self):
         for badging in [self.badging(package='ru.fo6osik.workjournal'), self.badging(name='1.0.7'),
-                        self.badging(code=2000008), 'not an APK']:
+                        self.badging(code=2000009), 'not an APK']:
             with self.assertRaises(ValueError): self.validate(badging=badging)
 
     def test_non_increasing_and_out_of_range_codes_blocked(self):
-        for code in [2000006, 1, 2100000001]:
+        for code in [2000007, 1, 2100000001]:
             report = self.report(); report['versionCode'] = code
             with self.assertRaises(ValueError): self.validate(report, self.badging(code=code), code)
 
@@ -44,7 +46,7 @@ class PreviewArtifactTest(unittest.TestCase):
         with self.assertRaises(ValueError): self.validate(report)
 
     def test_different_source_schema_or_report_identity_blocked(self):
-        for name, value in [('sourceSha', 'b'*40), ('roomVersion', 22), ('versionCode', 2000008),
+        for name, value in [('sourceSha', 'b'*40), ('roomVersion', 22), ('versionCode', 2000009),
                             ('applicationId', 'ru.fo6osik.workjournal')]:
             report = copy.deepcopy(self.report()); report[name] = value
             with self.assertRaises(ValueError): self.validate(report)
