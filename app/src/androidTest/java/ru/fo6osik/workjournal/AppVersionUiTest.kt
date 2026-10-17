@@ -28,7 +28,7 @@ class AppVersionUiTest {
         assertTrue(test || context.packageName == "ru.fo6osik.workjournal")
         assertEquals(test, BuildConfig.BUILD_TYPE == "debugTest")
         val expected = "Версия ${installed.versionName}" + if (test) " · TEST" else ""
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+        ActivityScenario.launch(OptionsActivity::class.java).use { scenario ->
             onView(withId(R.id.textAppVersion)).perform(scrollTo())
                 .check(matches(withText(expected))).check(matches(isDisplayed()))
             scenario.onActivity { activity ->
@@ -40,7 +40,7 @@ class AppVersionUiTest {
                 ).roundToInt().toFloat()
                 assertEquals(expectedSize, version.textSize, 0.1f)
             }
-            // Both developer actions remain reachable in the same scrolling screen.
+            // The whole developer block is now at the bottom of the scrolling Options screen.
             onView(withId(R.id.buttonDeveloperCatalog)).perform(scrollTo()).check(matches(isDisplayed()))
             onView(withId(R.id.buttonBackupRestore)).perform(scrollTo()).check(matches(isDisplayed()))
         }

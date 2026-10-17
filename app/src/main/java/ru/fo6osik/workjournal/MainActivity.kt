@@ -3,7 +3,6 @@ package ru.fo6osik.workjournal
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
-import android.widget.TextView
 import android.content.Intent
 
 class MainActivity : AppCompatActivity() {
@@ -85,11 +84,6 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.buttonContinueHarvest).setOnClickListener { refreshHarvest(true) }
 
-        findViewById<TextView>(R.id.textAppVersion).text = getString(
-            if (BuildConfig.BUILD_TYPE == "debugTest") R.string.app_version_test else R.string.app_version,
-            BuildConfig.VERSION_NAME
-        )
-		   
 		val buttonMachines = 
 		    findViewById<Button>(
 			    R.id.buttonMachines
@@ -107,11 +101,6 @@ MachinesActivity::class.java
     startActivity(intent)
 }
 
-    val buttonDeveloperCatalog =
-    findViewById<Button>(
-        R.id.buttonDeveloperCatalog
-    )
-	
 	val buttonFields =
     findViewById<Button>(
         R.id.buttonFields
@@ -123,17 +112,6 @@ buttonFields.setOnClickListener {
         Intent(
             this,
             FieldsActivity::class.java
-        )
-
-    startActivity(intent)
-}
-
-buttonDeveloperCatalog.setOnClickListener {
-
-    val intent =
-        Intent(
-            this,
-            DeveloperCatalogActivity::class.java
         )
 
     startActivity(intent)
@@ -171,17 +149,7 @@ buttonOptions.setOnClickListener {
     startActivity(intent)
 }
 
-findViewById<Button>(
-    R.id.buttonBackupRestore
-).setOnClickListener {
 
-    startActivity(
-        Intent(
-            this,
-            BackupRestoreActivity::class.java
-        )
-    )
-}
 	
     }
 }

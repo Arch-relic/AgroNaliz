@@ -64,11 +64,14 @@ class AppVersionTest(unittest.TestCase):
         root = ET.parse(ROOT / 'app/src/main/res/layout/activity_main.xml').getroot()
         self.assertEqual('ScrollView', root.tag)
         android = '{http://schemas.android.com/apk/res/android}'
-        label = next(x for x in root.iter('TextView') if x.get(android + 'id') == '@+id/textAppVersion')
+        options = ET.parse(ROOT / 'app/src/main/res/layout/activity_options.xml').getroot()
+        self.assertEqual('ScrollView', options.tag)
+        self.assertFalse(any(x.get(android + 'id') == '@+id/textAppVersion' for x in root.iter()))
+        label = next(x for x in options.iter('TextView') if x.get(android + 'id') == '@+id/textAppVersion')
         self.assertIsNone(label.get(android + 'text'))
         self.assertEqual('center', label.get(android + 'gravity'))
         self.assertEqual('12sp', label.get(android + 'textSize'))
-        source = (ROOT / 'app/src/main/java/ru/fo6osik/workjournal/MainActivity.kt').read_text()
+        source = (ROOT / 'app/src/main/java/ru/fo6osik/workjournal/OptionsActivity.kt').read_text()
         self.assertIn('BuildConfig.VERSION_NAME', source)
         self.assertIn('BuildConfig.BUILD_TYPE == "debugTest"', source)
 

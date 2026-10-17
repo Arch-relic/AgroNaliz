@@ -1,3 +1,39 @@
+# Этап: окончательная компоновка главного экрана1.0.8
+
+17 октября2026. Только существующая feature/harvest-1-0-8, Draft PR33:
+https://github.com/Arch-relic/AgroNaliz/pull/33 . Head до изменения
+5c1c74b9299f13537369da6180747140063f7ab5, main4d9ecfe7b7fb83a12f191d40855fdcd1c13cbaee.
+Developer-блок перенесён целиком в низ Options, старая навигация/MAIN/TEST-маркер
+сохранены. Main: прежний gap перед Options, продолжение уборки min96dp у нижнего
+края после гибкого свободного пространства, GONE без fixed-height wrapper.
+Оба экрана scroll/fillViewport/fitsSystemWindows. Бизнес-логика и данные неизменны.
+
+Изменённые/новые файлы:
+- app/src/main/java/ru/fo6osik/workjournal/MainActivity.kt
+- app/src/main/java/ru/fo6osik/workjournal/OptionsActivity.kt
+- app/src/main/res/layout/activity_main.xml
+- app/src/main/res/layout/activity_options.xml
+- app/src/androidTest/java/ru/fo6osik/workjournal/AppVersionUiTest.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/MainScreenLayoutUiTest.kt (новый)
+- docs/test_app_version.py
+- docs/run-harvest-108-checks.py
+- docs/main-screen-1.0.8-review.md (новый)
+- docs/codex-handoff.md
+Удалений нет. Room/DAO/migrations/backup/подпись/id/workflows не менялись.
+
+Локальные проверки:72 Python,70 успешно,2 без APK пропущены, XML parse и diff --check.
+Проектная сборка до компиляции: FileLockContentionHandler / usable wildcard IP.
+Новый Android CI ещё не пройден; проверенного SHA нового кода пока нет, изменения
+на момент записи не закоммичены. Новые UI-тесты охватывают навигацию, геометрию,
+видимость, compact viewport720x960 и font1.6 с восстановлением CI-настроек в finally.
+Далее сохранить в эту ветку, выполнить полный CI, записать точные результаты/SHA
+и остановиться для review. [Полный отчёт](main-screen-1.0.8-review.md).
+Не merge, не релиз, не публиковать/устанавливать APK на смартфон.
+
+---
+
+История предыдущего этапа:
+
 # Передача контекста: PR #33, быстрый доступ исправлен, полный CI успешен
 
 16 октября 2026. Ветка feature/harvest-1-0-8. Опорный main:
