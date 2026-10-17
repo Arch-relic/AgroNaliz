@@ -1,6 +1,8 @@
 package ru.fo6osik.workjournal
 
 import android.app.Activity
+import android.graphics.Rect
+import android.view.ViewGroup
 import android.view.Gravity
 import android.view.View
 import android.widget.Button
@@ -137,7 +139,24 @@ class MainScreenLayoutUiTest {
     }
 
     private fun assertReadable(id: Int) {
-        onView(withId(id)).perform(scrollTo()).check(matches(isDisplayed()))
+        try {
+            onView(withId(id)).perform(scrollTo()).check(matches(isDisplayed()))
+        } catch (failure: Throwable) {
+            instrumentation.runOnMainSync {
+                val activities = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
+                fun dump(view: View, depth: Int) {
+                    val rect = Rect()
+                    val visible = view.getGlobalVisibleRect(rect)
+                    println("LAYOUT ${" ".repeat(depth)}${view.javaClass.simpleName} id=${view.id} " +
+                        "bounds=${view.left},${view.top},${view.right},${view.bottom} " +
+                        "scroll=${view.scrollX},${view.scrollY} padding=${view.paddingTop},${view.paddingBottom} " +
+                        "global=$visible:$rect")
+                    if (view is ViewGroup) for (i in 0 until view.childCount) dump(view.getChildAt(i), depth + 1)
+                }
+                activities.forEach { dump(it.window.decorView, 0) }
+            }
+            throw failure
+        }
         instrumentation.runOnMainSync {
             val activity = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).single()
             val text = activity.findViewById<TextView>(id)
