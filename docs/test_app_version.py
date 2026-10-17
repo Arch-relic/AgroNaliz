@@ -45,9 +45,9 @@ class AppVersionTest(unittest.TestCase):
             self.assertEqual(3000005, preflight('main-apk-publish.yml', 5, 53))
             self.assertEqual(3000006, preflight('main-apk-publish.yml', 6, 3000005, [5]))
 
-    def test_room23_main_publication_remains_blocked(self):
+    def test_room23_main_publication_requires_matching_audit(self):
         with self.assertRaisesRegex(SystemExit, 'separate verified migration audit'):
-            preflight('main-apk-publish.yml', 5, 53)
+            preflight('main-apk-publish.yml', 5, 3000003)
 
     def test_test_release_codes_increase_without_reset(self):
         self.assertEqual(2000005, preflight('test-apk-publish.yml', 5, 53))

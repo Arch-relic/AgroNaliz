@@ -1,3 +1,43 @@
+# Этап: применение согласованной политики MAIN Room23
+
+17 октября 2026. Патч применён только в feature/harvest-1-0-8, Draft PR #33:
+https://github.com/Arch-relic/AgroNaliz/pull/33. PR не объединён.
+main остаётся 4d9ecfe7b7fb83a12f191d40855fdcd1c13cbaee.
+
+До применения проверены remote HEAD b0fe2ffa9d7c22de85a8f28358d34d3ad5c4a9c6
+и проверенный proposal SHA56e65f80a83e3caba1badf9988e31f94964c0b3f: деревья
+совпадают с локальными, после аудита менялись только два отчёта. Patch/manifest
+не изменились, четыре target совпали с beforeSha256; после применения все четыре
+точно совпадают с afterSha256. Дополнительных изменений политики нет.
+
+Изменены .github/workflows/main-apk-publish.yml, docs/test_main_apk_release.py,
+docs/test_app_version.py, docs/main-original-update.md и этот docs/codex-handoff.md.
+Созданных/удалённых файлов нет. docs/patches/main-room23-release-policy.json
+сохраняется как исторический manifest исходного предложения, его статус не live.
+
+Разрешается только Room22→23/1.0.8 с floor>=3000003 и успешным owner/main/manual
+first-attempt audit точного публикуемого SHA, workflow387641531, job/steps integrity,
+restore/restart. Неполное evidence/API error отклоняются. Сохранены main/owner/
+attempt1, оригинальный MAIN certificate pin, exact applicationId, растущий code,
+запрет TEST package даже с тем же сертификатом, изоляция Secrets и cleanup.
+
+Новый локальный запуск python3 -m unittest discover -s docs -p 'test_*.py':
+82 теста, 80 passed, 2 skipped (SDK/APK отсутствуют). Вложенные 24 legacy tests
+не суммируются повторно; 23 passed/1 SDK skip. YAML parse, manifest hashes,
+git diff --check успешны. agrogradle :app:assembleDebug :app:test не стартовал:
+FileLockContentionHandler / Could not determine a usable wildcard IP for this machine.
+Полный GitHub CI запрашивается публикацией этого коммита; результаты и реально
+проверенный remote SHA будут записаны следующим отчётным коммитом. Текущие
+изменения проверены локально до коммита; будущий CI пока не объявляется успешным.
+
+Настоящее MAIN signing, Release, merge, установка на устройства и действия с
+реальными данными не выполняются. MAIN/TEST workflows сборки не изменены.
+После CI требуется review; выпуск потребует отдельного решения, merge и нового
+owner/manual audit точного main SHA. PR audit не допускает production signing.
+
+---
+Предыдущий этап (историческая запись):
+
 # Этап: отделённый патч MAIN Room23 для согласования, НЕ ПРИМЕНЁН
 
 17 октября2026. feature/harvest-1-0-8, Draft PR33, без merge/main push/релиза.

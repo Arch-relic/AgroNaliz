@@ -53,6 +53,9 @@ def sign_fixture(source, folder, key, pin):
                    ANDROID_KEYSTORE_BASE64=base64.b64encode(Path(key).read_bytes()).decode(),
                    ANDROID_KEYSTORE_PASSWORD='android',ANDROID_KEY_ALIAS='androiddebugkey',ANDROID_KEY_PASSWORD='',
                    MAIN_VERSION_CODE=str(identity[1]),INSTALLED_CODE='53',INSTALLED_ROOM='20',MAIN_ROOM_VERSION=re.search(r'version\s*=\s*(\d+)',(ROOT/'app/src/main/java/ru/fo6osik/workjournal/AppDatabase.kt').read_text()).group(1),APK_SOURCE_SHA='a'*40,GITHUB_OUTPUT=str(root/'outputs'))
+    if variables['MAIN_ROOM_VERSION'] == '23':
+        # Synthetic signer fixture only; production receives this from checked build outputs.
+        variables.update(INSTALLED_ROOM='22', MAIN_MIGRATION_AUDIT_RUN_ID='123')
     with patch.dict(os.environ,variables),contextlib.redirect_stdout(io.StringIO()):PROGRAM['main']()
     return root/'agronaliz-main-output/app-main-original.apk'
 
