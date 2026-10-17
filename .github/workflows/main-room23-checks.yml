@@ -1,0 +1,57 @@
+name: MAIN Room22 to23 migration audit
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  main-room23:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install SDK without production secrets
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;35.0.0"
+          sed -i '/^android\.aapt2FromMavenOverride=/d' gradle.properties
+          chmod +x gradlew
+      - name: Build future MAIN fixture, tests and unsigned analysis APK
+        run: ./gradlew -PmainVersionCode=3000004 :app:assembleDebug :app:assembleDebugAndroidTest :app:testDebugUnitTest :app:assembleRelease --no-daemon --stacktrace --console=plain
+      - uses: actions/checkout@v4
+        with:
+          ref: 4d9ecfe7b7fb83a12f191d40855fdcd1c13cbaee
+          path: .main-room22
+      - name: Build exact MAIN1.0.7 Room22 fixture with code3000003
+        run: |
+          sed -i '/^android\.aapt2FromMavenOverride=/d' .main-room22/gradle.properties
+          chmod +x .main-room22/gradlew
+          .main-room22/gradlew -p .main-room22 -PmainVersionCode=3000003 :app:assembleDebug --no-daemon --stacktrace --console=plain
+      - name: Verify fixture identities and unsigned analysis metadata
+        run: python3 docs/verify-main-room23-inputs.py
+      - name: Enable KVM
+        run: sudo chmod 666 /dev/kvm
+      - name: Upgrade synthetic MAIN22, compare all columns, restore separately, restart
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: python3 docs/run-main-room23-checks.py
+      - name: Upload diagnostics and analysis metadata only, never APKs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main-room23-audit-diagnostics
+          path: |
+            app/build/test-results/
+            app/build/reports/tests/
+            main-room23-analysis.json
+          if-no-files-found: warn

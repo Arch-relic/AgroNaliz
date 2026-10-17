@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:fitsSystemWindows="true">
+<ScrollView
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:id="@+id/mainScroll">
 <LinearLayout
+    android:id="@+id/mainContent"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -51,44 +57,21 @@
     android:text="Опции" />
 
     <Space
-    android:layout_width="match_parent"
-    android:layout_height="0dp"
-    android:layout_weight="1" />
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 
-<View
-    android:layout_width="match_parent"
-    android:layout_height="1dp"
-    android:background="#808080"
-    android:layout_marginBottom="12dp" />
+    <Button
+        android:id="@+id/buttonContinueHarvest"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="96dp"
+        android:layout_marginTop="20dp"
+        android:gravity="center"
+        android:text="ПРОДОЛЖИТЬ УБОРКУ"
+        android:textStyle="bold"
+        android:visibility="gone" />
 
-<TextView
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="Для разработчика"
-    android:textStyle="bold"
-    android:textSize="14sp"
-    android:gravity="center"
-    android:layout_marginBottom="8dp" />
-
-<TextView
-    android:id="@+id/textAppVersion"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:textSize="12sp"
-    android:gravity="center"
-    android:layout_marginBottom="8dp" />
-
-<Button
-    android:id="@+id/buttonDeveloperCatalog"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="Справочник техники" />
-	
-	<Button
-    android:id="@+id/buttonBackupRestore"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="Резервное копирование" />
-	
 </LinearLayout>
 </ScrollView>
+</FrameLayout>

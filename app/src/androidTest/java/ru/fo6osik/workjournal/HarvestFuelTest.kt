@@ -25,7 +25,7 @@ class HarvestFuelTest {
         assertTrue(context.getSharedPreferences("fuel-tests",0).edit().putString("legacy",uri.toString()).commit())
     }
     @Test fun verify22()=runBlocking(Dispatchers.IO) {
-        guard();assertEquals(22,db.openHelper.readableDatabase.version)
+        guard();assertEquals(23,db.openHelper.readableDatabase.version)
         val day=db.harvestDao().getDayById(9001)!!
         assertNull(day.moisturePercent);assertEquals(555.125,day.bulkDensityKgM3!!,0.0)
         assertEquals(3.125,day.harvestedAreaHa!!,0.0);assertEquals("CUSTOM",day.densityMode)

@@ -30,13 +30,24 @@ class AppVersionTest(unittest.TestCase):
     def test_single_three_component_version_for_all_variants(self):
         text = (ROOT / 'app/build.gradle.kts').read_text()
         versions = re.findall(r'versionName\s*=\s*"([^"]+)"', text)
-        self.assertEqual(['1.0.7'], versions)
+        self.assertEqual(['1.0.8'], versions)
         self.assertRegex(versions[0], r'^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$')
         self.assertNotIn('versionNameSuffix', text)
 
     def test_main_release_codes_increase_without_reset(self):
-        self.assertEqual(3000005, preflight('main-apk-publish.yml', 5, 53))
-        self.assertEqual(3000006, preflight('main-apk-publish.yml', 6, 3000005, [5]))
+        # Exercise code ordering against the audited Room22 fixture. Production Room23
+        # must remain blocked by the unchanged MAIN release gate until a separate audit.
+        original = Path.read_text
+        def audited(path, *args, **kwargs):
+            if path.name == 'AppDatabase.kt': return 'version = 22'
+            return original(path, *args, **kwargs)
+        with patch('pathlib.Path.read_text', audited):
+            self.assertEqual(3000005, preflight('main-apk-publish.yml', 5, 53))
+            self.assertEqual(3000006, preflight('main-apk-publish.yml', 6, 3000005, [5]))
+
+    def test_room23_main_publication_requires_matching_audit(self):
+        with self.assertRaisesRegex(SystemExit, 'separate verified migration audit'):
+            preflight('main-apk-publish.yml', 5, 3000003)
 
     def test_test_release_codes_increase_without_reset(self):
         self.assertEqual(2000005, preflight('test-apk-publish.yml', 5, 53))
@@ -48,16 +59,21 @@ class AppVersionTest(unittest.TestCase):
                 with self.subTest(workflow=workflow, installed=installed, previous=previous):
                     with self.assertRaises(SystemExit): preflight(workflow, 5, installed, previous)
 
-    def test_room_22_and_dynamic_label(self):
-        self.assertRegex((ROOT / 'app/src/main/java/ru/fo6osik/workjournal/AppDatabase.kt').read_text(), r'version\s*=\s*22\s*,')
+    def test_room_23_and_dynamic_label(self):
+        self.assertRegex((ROOT / 'app/src/main/java/ru/fo6osik/workjournal/AppDatabase.kt').read_text(), r'version\s*=\s*23\s*,')
         root = ET.parse(ROOT / 'app/src/main/res/layout/activity_main.xml').getroot()
-        self.assertEqual('ScrollView', root.tag)
+        self.assertEqual('FrameLayout', root.tag)
+        self.assertIsNotNone(root.find('ScrollView'))
         android = '{http://schemas.android.com/apk/res/android}'
-        label = next(x for x in root.iter('TextView') if x.get(android + 'id') == '@+id/textAppVersion')
+        options = ET.parse(ROOT / 'app/src/main/res/layout/activity_options.xml').getroot()
+        self.assertEqual('FrameLayout', options.tag)
+        self.assertIsNotNone(options.find('ScrollView'))
+        self.assertFalse(any(x.get(android + 'id') == '@+id/textAppVersion' for x in root.iter()))
+        label = next(x for x in options.iter('TextView') if x.get(android + 'id') == '@+id/textAppVersion')
         self.assertIsNone(label.get(android + 'text'))
         self.assertEqual('center', label.get(android + 'gravity'))
         self.assertEqual('12sp', label.get(android + 'textSize'))
-        source = (ROOT / 'app/src/main/java/ru/fo6osik/workjournal/MainActivity.kt').read_text()
+        source = (ROOT / 'app/src/main/java/ru/fo6osik/workjournal/OptionsActivity.kt').read_text()
         self.assertIn('BuildConfig.VERSION_NAME', source)
         self.assertIn('BuildConfig.BUILD_TYPE == "debugTest"', source)
 

@@ -76,6 +76,16 @@ jobs:
           sed -i '/^android\.aapt2FromMavenOverride=/d' .migration-v21/gradle.properties
           chmod +x .migration-v21/gradlew
           .migration-v21/gradlew -p .migration-v21 :app:assembleDebugTest --no-daemon --stacktrace --console=plain
+      - name: Checkout Room22 migration baseline
+        uses: actions/checkout@v4
+        with:
+          ref: 4d9ecfe7b7fb83a12f191d40855fdcd1c13cbaee
+          path: .migration-v22
+      - name: Build baseline Room22 TEST APK
+        run: |
+          sed -i '/^android\.aapt2FromMavenOverride=/d' .migration-v22/gradle.properties
+          chmod +x .migration-v22/gradlew
+          .migration-v22/gradlew -p .migration-v22 :app:assembleDebugTest --no-daemon --stacktrace --console=plain
       - name: Enable emulator KVM
         run: sudo chmod 666 /dev/kvm
       - name: Verify data isolation on Android
@@ -91,6 +101,7 @@ jobs:
             python3 docs/run-build-isolation-checks.py
             python3 docs/run-harvest-checks.py
             python3 docs/run-fuel-checks.py
+            python3 docs/run-harvest-108-checks.py
             python3 docs/run-test-signing-checks.py
       - name: Name debug APK artifact
         id: apk

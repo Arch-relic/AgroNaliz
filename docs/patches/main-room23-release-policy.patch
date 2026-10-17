@@ -1,0 +1,234 @@
+--- a/.github/workflows/main-apk-publish.yml
++++ b/.github/workflows/main-apk-publish.yml
+@@ -4,14 +4,20 @@
+   workflow_dispatch:
+     inputs:
+       minimum_installed_version_code:
+-        default: '53'
++        default: '3000003'
+         description: 'Installed MAIN versionCode; new code must be strictly greater'
+         required: true
+         type: string
+       minimum_room_version:
+-        default: '20'
++        default: '22'
+         description: 'Installed MAIN database version from its JSON backup; prevents downgrade'
+         required: true
++        type: string
++
++      migration_audit_run_id:
++        default: ''
++        description: 'Successful owner/main Room22 to23 audit run for this exact source SHA (required for Room23)'
++        required: false
+         type: string
+ 
+ permissions:
+@@ -30,6 +36,7 @@
+       contents: read
+       actions: read
+     outputs:
++      audit_run_id: ${{ steps.metadata.outputs.audit_run_id }}
+       artifact: ${{ steps.metadata.outputs.artifact }}
+       version_code: ${{ steps.metadata.outputs.version_code }}
+       room_version: ${{ steps.metadata.outputs.room_version }}
+@@ -46,6 +53,7 @@
+         env:
+           INSTALLED_CODE: ${{ inputs.minimum_installed_version_code }}
+           INSTALLED_ROOM: ${{ inputs.minimum_room_version }}
++          AUDIT_RUN_ID: ${{ inputs.migration_audit_run_id }}
+           GH_TOKEN: ${{ github.token }}
+         run: |
+           python3 - <<'PY'
+@@ -60,11 +68,62 @@
+           if code > 2100000000 or code <= positive(os.environ['INSTALLED_CODE']):
+               raise SystemExit('MAIN versionCode must increase and stay within Android limits')
+           room = int(re.search(r'version\s*=\s*(\d+)', Path('app/src/main/java/ru/fo6osik/workjournal/AppDatabase.kt').read_text()).group(1))
+-          if room != 22:
++          installed_room = positive(os.environ['INSTALLED_ROOM'])
++          audit_id = None
++          if room == 22:
++              if installed_room not in (20, 21, 22):
++                  raise SystemExit('Only installed Room20/21/22 updates have been verified')
++          elif room == 23:
++              if installed_room != 22 or positive(os.environ['INSTALLED_CODE']) < 3000003:
++                  raise SystemExit('MAIN1.0.8 requires installed Room22 and a code floor of at least3000003')
++              raw_audit = os.environ.get('AUDIT_RUN_ID', '')
++              if not re.fullmatch(r'[1-9][0-9]*', raw_audit):
++                  raise SystemExit('Room23 needs a separate verified migration audit run ID')
++              audit_id = int(raw_audit)
++              repo = os.environ['GITHUB_REPOSITORY']
++              owner = os.environ.get('GITHUB_REPOSITORY_OWNER')
++              if (repo != 'Arch-relic/AgroNaliz' or owner != 'Arch-relic' or
++                      os.environ.get('GITHUB_REF') != 'refs/heads/main' or
++                      os.environ.get('GITHUB_EVENT_NAME') != 'workflow_dispatch' or
++                      os.environ.get('GITHUB_ACTOR') != owner or os.environ.get('GITHUB_RUN_ATTEMPT') != '1'):
++                  raise SystemExit('MAIN Room23 publication requires original owner/main/first dispatch')
++              version = re.search(r'versionName\s*=\s*"([^"]+)"', Path('app/build.gradle.kts').read_text())
++              if not version or version.group(1) != '1.0.8':
++                  raise SystemExit('Only audited MAIN versionName1.0.8 is authorized for Room23')
++              def audit_get(resource):
++                  request = urllib.request.Request('https://api.github.com/repos/' + repo + resource,
++                      headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json'})
++                  try:
++                      with urllib.request.urlopen(request, timeout=30) as response:
++                          return json.load(response)
++                  except Exception:
++                      raise SystemExit('Cannot verify exact MAIN migration audit; no APK published') from None
++              run = audit_get('/actions/runs/' + str(audit_id))
++              if not (run.get('id') == audit_id and run.get('workflow_id') == 387641531 and
++                      run.get('path') == '.github/workflows/main-room23-checks.yml' and
++                      run.get('head_sha') == os.environ['GITHUB_SHA'] and run.get('head_branch') == 'main' and
++                      run.get('event') == 'workflow_dispatch' and run.get('run_attempt') == 1 and
++                      run.get('status') == 'completed' and run.get('conclusion') == 'success' and
++                      run.get('repository', {}).get('full_name') == repo and
++                      run.get('head_repository', {}).get('full_name') == repo and
++                      run.get('actor', {}).get('login') == owner and run.get('triggering_actor', {}).get('login') == owner):
++                  raise SystemExit('MAIN migration audit identity/source/status mismatch')
++              result = audit_get('/actions/runs/' + str(audit_id) + '/jobs?per_page=100')
++              jobs = result.get('jobs', [])
++              candidates = [job for job in jobs if job.get('name') == 'main-room23']
++              if result.get('total_count') != len(jobs) or len(candidates) != 1:
++                  raise SystemExit('MAIN migration audit job evidence missing or ambiguous')
++              job = candidates[0]
++              steps = {step.get('name') for step in job.get('steps', [])
++                       if step.get('status') == 'completed' and step.get('conclusion') == 'success'}
++              required = {'Build future MAIN fixture, tests and unsigned analysis APK',
++                          'Build exact MAIN1.0.7 Room22 fixture with code3000003',
++                          'Verify fixture identities and unsigned analysis metadata',
++                          'Upgrade synthetic MAIN22, compare all columns, restore separately, restart'}
++              if job.get('status') != 'completed' or job.get('conclusion') != 'success' or not required <= steps:
++                  raise SystemExit('MAIN migration, integrity, restore and restart steps must all succeed')
++          else:
+               raise SystemExit('New Room version needs a separate verified migration audit')
+-          installed_room = positive(os.environ['INSTALLED_ROOM'])
+-          if installed_room not in (20, 21, 22):
+-              raise SystemExit('Only installed Room20/21 updates have been verified; stop for an explicit migration audit')
+           if room < installed_room:
+               raise SystemExit('Database downgrade blocked; use a compatible main revision')
+           url = 'https://api.github.com/repos/' + os.environ['GITHUB_REPOSITORY'] + '/actions/workflows/main-apk-publish.yml/runs?status=completed&per_page=100'
+@@ -78,7 +137,7 @@
+               raise SystemExit('Out-of-order MAIN publication blocked; dispatch a new run')
+           artifact = 'internal-unsigned-MAIN-do-not-install-main-' + os.environ['GITHUB_SHA'][:12] + '-v' + str(code)
+           with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+-              output.write(f'artifact={artifact}\nversion_code={code}\nroom_version={room}\n')
++              output.write(f'artifact={artifact}\nversion_code={code}\nroom_version={room}\naudit_run_id={audit_id or ""}\n')
+           with open(os.environ['GITHUB_ENV'], 'a') as output:
+               output.write(f'MAIN_VERSION_CODE={code}\n')
+           PY
+@@ -124,6 +183,7 @@
+           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+           EXPECTED_CERT_SHA256: 3FE57967C15F81EE39EA2B9B88DD96A7506C1B5B9032606ECBEA04BBDB15EE3C
+           MAIN_VERSION_CODE: ${{ needs.build.outputs.version_code }}
++          MAIN_MIGRATION_AUDIT_RUN_ID: ${{ needs.build.outputs.audit_run_id }}
+           INSTALLED_CODE: ${{ inputs.minimum_installed_version_code }}
+           INSTALLED_ROOM: ${{ inputs.minimum_room_version }}
+           MAIN_ROOM_VERSION: ${{ needs.build.outputs.room_version }}
+@@ -163,6 +223,15 @@
+               if not 1 <= version <= 2100000000:
+                   raise SigningError('MAIN versionCode must be a positive Android integer')
+               return match.group(1), version
++
++          def check_room23_identity(badging):
++              if int(os.environ['MAIN_ROOM_VERSION']) != 23:
++                  return
++              if int(os.environ['INSTALLED_ROOM']) != 22 or not re.fullmatch(r'[1-9][0-9]*', os.environ.get('MAIN_MIGRATION_AUDIT_RUN_ID', '')):
++                  raise SigningError('Room23 requires the checked22-to23 audit output from build')
++              version = re.search(r"^package: .*versionName='([^']+)'", badging, re.MULTILINE)
++              if not version or version.group(1) != '1.0.8':
++                  raise SigningError('MAIN Room23 APK versionName must be1.0.8')
+ 
+           def tool(command):
+               try:
+@@ -186,7 +255,9 @@
+               sdk = Path(os.environ['ANDROID_HOME']) / 'build-tools/35.0.0'
+               runner_temp = Path(os.environ['RUNNER_TEMP'])
+               source = runner_temp / 'agronaliz-main-input/app-debug.apk'
+-              app_id, version = apk_identity(tool([str(sdk / 'aapt2'), 'dump', 'badging', str(source)]))
++              badging = tool([str(sdk / 'aapt2'), 'dump', 'badging', str(source)])
++              app_id, version = apk_identity(badging)
++              check_room23_identity(badging)
+               if version <= int(os.environ['INSTALLED_CODE']):
+                   raise SigningError('Main versionCode must be strictly greater than installed')
+               if int(os.environ['MAIN_ROOM_VERSION']) < int(os.environ['INSTALLED_ROOM']):
+@@ -218,7 +289,9 @@
+                   actual = certificate_digest(tool([str(sdk / 'apksigner'), 'verify', '--print-certs', str(staged)]))
+                   if actual != expected:
+                       raise SigningError('Certificate SHA-256 mismatch; observed public fingerprint: ' + actual)
+-                  if apk_identity(tool([str(sdk / 'aapt2'), 'dump', 'badging', str(staged)])) != (app_id, version):
++                  signed_badging = tool([str(sdk / 'aapt2'), 'dump', 'badging', str(staged)])
++                  check_room23_identity(signed_badging)
++                  if apk_identity(signed_badging) != (app_id, version):
+                       raise SigningError('Signed APK identity/version changed')
+                   output = runner_temp / 'agronaliz-main-output'
+                   output.mkdir(mode=0o700)
+@@ -226,6 +299,9 @@
+                   staged.replace(apk)
+                   report = dict(applicationId=app_id, versionCode=version, certificateSha256=actual,
+                                 apkSha256=hashlib.sha256(apk.read_bytes()).hexdigest(), sourceSha=os.environ['APK_SOURCE_SHA'], roomVersion=int(os.environ['MAIN_ROOM_VERSION']), installedVersionCode=int(os.environ['INSTALLED_CODE']), installedRoomVersion=int(os.environ['INSTALLED_ROOM']))
++                  if int(os.environ['MAIN_ROOM_VERSION']) == 23:
++                      report.update(versionName='1.0.8', auditRunId=int(os.environ['MAIN_MIGRATION_AUDIT_RUN_ID']),
++                                    auditSourceSha=os.environ['APK_SOURCE_SHA'], auditWorkflowId=387641531)
+                   (output / 'verification.json').write_text(json.dumps(report, indent=2) + '\n')
+                   print('Verified MAIN certificate SHA-256: ' + actual)
+                   with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
+--- a/docs/test_main_apk_release.py
++++ b/docs/test_main_apk_release.py
+@@ -53,6 +53,9 @@
+                    ANDROID_KEYSTORE_BASE64=base64.b64encode(Path(key).read_bytes()).decode(),
+                    ANDROID_KEYSTORE_PASSWORD='android',ANDROID_KEY_ALIAS='androiddebugkey',ANDROID_KEY_PASSWORD='',
+                    MAIN_VERSION_CODE=str(identity[1]),INSTALLED_CODE='53',INSTALLED_ROOM='20',MAIN_ROOM_VERSION=re.search(r'version\s*=\s*(\d+)',(ROOT/'app/src/main/java/ru/fo6osik/workjournal/AppDatabase.kt').read_text()).group(1),APK_SOURCE_SHA='a'*40,GITHUB_OUTPUT=str(root/'outputs'))
++    if variables['MAIN_ROOM_VERSION'] == '23':
++        # Synthetic signer fixture only; production receives this from checked build outputs.
++        variables.update(INSTALLED_ROOM='22', MAIN_MIGRATION_AUDIT_RUN_ID='123')
+     with patch.dict(os.environ,variables),contextlib.redirect_stdout(io.StringIO()):PROGRAM['main']()
+     return root/'agronaliz-main-output/app-main-original.apk'
+ 
+--- a/docs/test_app_version.py
++++ b/docs/test_app_version.py
+@@ -45,9 +45,9 @@
+             self.assertEqual(3000005, preflight('main-apk-publish.yml', 5, 53))
+             self.assertEqual(3000006, preflight('main-apk-publish.yml', 6, 3000005, [5]))
+ 
+-    def test_room23_main_publication_remains_blocked(self):
++    def test_room23_main_publication_requires_matching_audit(self):
+         with self.assertRaisesRegex(SystemExit, 'separate verified migration audit'):
+-            preflight('main-apk-publish.yml', 5, 53)
++            preflight('main-apk-publish.yml', 5, 3000003)
+ 
+     def test_test_release_codes_increase_without_reset(self):
+         self.assertEqual(2000005, preflight('test-apk-publish.yml', 5, 53))
+--- a/docs/main-original-update.md
++++ b/docs/main-original-update.md
+@@ -1,3 +1,32 @@
++# MAIN1.0.8 / Room23: защищённый штатный выпуск
++
++После отдельного разрешения и применения этого патча сохраняются main/owner/attempt1,
++оригинальный ANDROID_* signer, pin, package/code/cleanup. Для первого Room23 выпуска
++разрешена только установленная Room22, floor>=3000003 и успешный owner/main manual
++audit main-room23-checks.yml (workflow_id387641531) точно публикуемого SHA, включая
++успешные шаги миграции, целостности, отдельного restore и restart. TEST пакет
++ru.fo6osik.workjournal.debugtest отвергается до декодирования ключа даже при общем cert.
++
++Одно лишь слияние PR с файлом-предложением не разрешает Room23. После применения
++политики и отдельного merge: дождаться CI, owner запускает audit на точном main SHA,
++затем Publish original main APK / main с minimum_installed_version_code=фактический
++(3000003 для проверенного baseline), minimum_room_version=22 и migration_audit_run_id.
++Если main продвинулся между audit и signer, новый audit обязателен. Run number
++вычисляет новый code3000000+N; не фиксировать/сбрасывать его вручную. При re-run нужен
++новый dispatch. verification.json содержит auditRunId/auditSourceSha/versionName,
++оригинальный сертификат и SHA APK. Только временный Actions artifact, не Release.
++
++Создать штатный MAIN JSON-backup до обновления, сохранить вне песочницы приложения
++через SAF, проверить доступность файла и databaseVersion22; не использовать TEST
++backup и не публиковать рабочий JSON. JSON не является полной копией preferences/files.
++Не восстанавливать его поверх рабочей базы ради теста. Обновлять существующую MAIN
++без удаления/очистки; при mismatch package/cert/code остановиться. Физическое устройство
++и текущее состояние production Secrets подтверждаются отдельно, не синтетическим CI.
++
++---
++
++История прежнего MAIN-процесса:
++
+ # Безопасное обновление основного приложения
+ 
+ Пакет: ru.fo6osik.workjournal. Подтверждённые владельцем исходные данные:

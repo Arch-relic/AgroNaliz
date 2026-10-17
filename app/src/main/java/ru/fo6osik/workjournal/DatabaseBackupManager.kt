@@ -22,15 +22,18 @@ object DatabaseBackupManager {
         "room_master_table"
     )
 
-    suspend fun exportBackup(
+    suspend fun exportBackup(context: Context, uri: Uri): Result<Unit> =
+        exportBackup(context, uri, DatabaseProvider.getDatabase(context))
+
+    internal suspend fun exportBackup(
         context: Context,
-        uri: Uri
+        uri: Uri,
+        roomDatabase: AppDatabase
     ): Result<Unit> = withContext(Dispatchers.IO) {
 
         runCatching {
 
             BackupStoragePolicy.requireSafeWrite(context.packageName, uri.scheme, uri.authority)
-            val roomDatabase = DatabaseProvider.getDatabase(context)
             val database = roomDatabase.openHelper.readableDatabase
 
             val root = JSONObject()
@@ -43,90 +46,97 @@ object DatabaseBackupManager {
 
             val tableNames = getTableNames(database)
 
-            for (tableName in tableNames) {
+            database.beginTransaction()
+            try {
+                for (tableName in tableNames) {
 
-                val rows = JSONArray()
+                    val rows = JSONArray()
 
-                database.query(
-                    "SELECT * FROM `${tableName}`"
-                ).use { cursor ->
+                    database.query(
+                        "SELECT * FROM `${tableName}`"
+                    ).use { cursor ->
 
-                    while (cursor.moveToNext()) {
+                        while (cursor.moveToNext()) {
 
-                        val row = JSONObject()
+                            val row = JSONObject()
 
-                        for (columnIndex in 0 until cursor.columnCount) {
+                            for (columnIndex in 0 until cursor.columnCount) {
 
-                            val columnName =
-                                cursor.getColumnName(columnIndex)
+                                val columnName =
+                                    cursor.getColumnName(columnIndex)
 
-                            when (cursor.getType(columnIndex)) {
+                                when (cursor.getType(columnIndex)) {
 
-                                Cursor.FIELD_TYPE_NULL -> {
-                                    row.put(
-                                        columnName,
-                                        JSONObject.NULL
-                                    )
-                                }
-
-                                Cursor.FIELD_TYPE_INTEGER -> {
-                                    row.put(
-                                        columnName,
-                                        cursor.getLong(columnIndex)
-                                    )
-                                }
-
-                                Cursor.FIELD_TYPE_FLOAT -> {
-                                    row.put(
-                                        columnName,
-                                        cursor.getDouble(columnIndex)
-                                    )
-                                }
-
-                                Cursor.FIELD_TYPE_STRING -> {
-                                    row.put(
-                                        columnName,
-                                        cursor.getString(columnIndex)
-                                    )
-                                }
-
-                                Cursor.FIELD_TYPE_BLOB -> {
-
-                                    val blob =
-                                        cursor.getBlob(columnIndex)
-
-                                    val blobObject =
-                                        JSONObject()
-
-                                    blobObject.put(
-                                        "__type",
-                                        "blob"
-                                    )
-
-                                    blobObject.put(
-                                        "value",
-                                        Base64.encodeToString(
-                                            blob,
-                                            Base64.NO_WRAP
+                                    Cursor.FIELD_TYPE_NULL -> {
+                                        row.put(
+                                            columnName,
+                                            JSONObject.NULL
                                         )
-                                    )
+                                    }
 
-                                    row.put(
-                                        columnName,
-                                        blobObject
-                                    )
+                                    Cursor.FIELD_TYPE_INTEGER -> {
+                                        row.put(
+                                            columnName,
+                                            cursor.getLong(columnIndex)
+                                        )
+                                    }
+
+                                    Cursor.FIELD_TYPE_FLOAT -> {
+                                        row.put(
+                                            columnName,
+                                            cursor.getDouble(columnIndex)
+                                        )
+                                    }
+
+                                    Cursor.FIELD_TYPE_STRING -> {
+                                        row.put(
+                                            columnName,
+                                            cursor.getString(columnIndex)
+                                        )
+                                    }
+
+                                    Cursor.FIELD_TYPE_BLOB -> {
+
+                                        val blob =
+                                            cursor.getBlob(columnIndex)
+
+                                        val blobObject =
+                                            JSONObject()
+
+                                        blobObject.put(
+                                            "__type",
+                                            "blob"
+                                        )
+
+                                        blobObject.put(
+                                            "value",
+                                            Base64.encodeToString(
+                                                blob,
+                                                Base64.NO_WRAP
+                                            )
+                                        )
+
+                                        row.put(
+                                            columnName,
+                                            blobObject
+                                        )
+                                    }
                                 }
                             }
-                        }
 
-                        rows.put(row)
+                            rows.put(row)
+                        }
                     }
+
+                    tablesJson.put(
+                        tableName,
+                        rows
+                    )
                 }
 
-                tablesJson.put(
-                    tableName,
-                    rows
-                )
+                database.setTransactionSuccessful()
+            } finally {
+                database.endTransaction()
             }
 
             root.put(
@@ -152,9 +162,13 @@ object DatabaseBackupManager {
         }
     }
 
-    suspend fun importBackup(
+    suspend fun importBackup(context: Context, uri: Uri): Result<Unit> =
+        importBackup(context, uri, DatabaseProvider.getDatabase(context))
+
+    internal suspend fun importBackup(
         context: Context,
-        uri: Uri
+        uri: Uri,
+        roomDatabase: AppDatabase
     ): Result<Unit> = withContext(Dispatchers.IO) {
 
         runCatching {
@@ -190,9 +204,6 @@ object DatabaseBackupManager {
                             backupFormatVersion
                 )
             }
-
-            val roomDatabase =
-                DatabaseProvider.getDatabase(context)
 
             val database =
                 roomDatabase.openHelper.writableDatabase
@@ -235,7 +246,7 @@ object DatabaseBackupManager {
              * восстановления.
              */
             if (
-                currentTables != backupTables && !(database.version==22 && backupDatabaseVersion<22 &&
+                currentTables != backupTables && !(database.version>=22 && backupDatabaseVersion<22 &&
                     backupTables==currentTables-setOf("harvest_fuel_days","harvest_refuelings"))
             ) {
                 error(
@@ -250,6 +261,8 @@ object DatabaseBackupManager {
     tableNames = backupTables,
     backupDatabaseVersion = backupDatabaseVersion
 )
+
+            HarvestBackupIntegrity.validate(tablesJson)
 
             database.execSQL(
                 "PRAGMA foreign_keys = OFF"
@@ -395,7 +408,7 @@ object DatabaseBackupManager {
                         val result =
                             database.insert(
                                 tableName,
-                                SQLiteDatabase.CONFLICT_REPLACE,
+                                SQLiteDatabase.CONFLICT_ABORT,
                                 values
                             )
 
@@ -486,7 +499,7 @@ object DatabaseBackupManager {
             )
         }
     }
-	private fun validateBackupRows(
+    internal fun validateBackupRows(
     database: SupportSQLiteDatabase,
     tablesJson: JSONObject,
     tableNames: Set<String>,
@@ -533,7 +546,7 @@ object DatabaseBackupManager {
                     .asSequence()
                     .toSet()
 
-            for (harvestNumericColumn in if (tableName == "harvest_days") listOf("harvestedAreaHa", "bulkDensityKgM3") else emptyList()) {
+            for (harvestNumericColumn in if (tableName == "harvest_days") listOf("harvestedAreaHa", "bulkDensityKgM3") else if (tableName == "harvest_processes") listOf("fieldAreaSnapshotHa", "actualPlantedAreaHa") else emptyList()) {
             if (row.has(harvestNumericColumn) && !row.isNull(harvestNumericColumn)) {
                 require(HarvestCalculator.positive(row.getDouble(harvestNumericColumn)) != null) {
                     "Некорректное значение $harvestNumericColumn в резервной копии"

@@ -49,7 +49,7 @@ class HarvestMigrationTest {
         checkTest()
         val room = DatabaseProvider.getDatabase(context)
         val db = room.openHelper.writableDatabase // Room validates the entire migrated schema here.
-        assertEquals(22, db.version)
+        assertEquals(23, db.version)
         fun verify() {
             db.query("SELECT * FROM harvest_days WHERE id=4301").use { cursor ->
                 assertTrue(cursor.moveToFirst())

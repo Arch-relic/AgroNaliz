@@ -1,3 +1,32 @@
+# MAIN1.0.8 / Room23: защищённый штатный выпуск
+
+После отдельного разрешения и применения этого патча сохраняются main/owner/attempt1,
+оригинальный ANDROID_* signer, pin, package/code/cleanup. Для первого Room23 выпуска
+разрешена только установленная Room22, floor>=3000003 и успешный owner/main manual
+audit main-room23-checks.yml (workflow_id387641531) точно публикуемого SHA, включая
+успешные шаги миграции, целостности, отдельного restore и restart. TEST пакет
+ru.fo6osik.workjournal.debugtest отвергается до декодирования ключа даже при общем cert.
+
+Одно лишь слияние PR с файлом-предложением не разрешает Room23. После применения
+политики и отдельного merge: дождаться CI, owner запускает audit на точном main SHA,
+затем Publish original main APK / main с minimum_installed_version_code=фактический
+(3000003 для проверенного baseline), minimum_room_version=22 и migration_audit_run_id.
+Если main продвинулся между audit и signer, новый audit обязателен. Run number
+вычисляет новый code3000000+N; не фиксировать/сбрасывать его вручную. При re-run нужен
+новый dispatch. verification.json содержит auditRunId/auditSourceSha/versionName,
+оригинальный сертификат и SHA APK. Только временный Actions artifact, не Release.
+
+Создать штатный MAIN JSON-backup до обновления, сохранить вне песочницы приложения
+через SAF, проверить доступность файла и databaseVersion22; не использовать TEST
+backup и не публиковать рабочий JSON. JSON не является полной копией preferences/files.
+Не восстанавливать его поверх рабочей базы ради теста. Обновлять существующую MAIN
+без удаления/очистки; при mismatch package/cert/code остановиться. Физическое устройство
+и текущее состояние production Secrets подтверждаются отдельно, не синтетическим CI.
+
+---
+
+История прежнего MAIN-процесса:
+
 # Безопасное обновление основного приложения
 
 Пакет: ru.fo6osik.workjournal. Подтверждённые владельцем исходные данные:

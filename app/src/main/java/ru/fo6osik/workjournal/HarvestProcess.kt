@@ -63,5 +63,8 @@ data class HarvestProcess(
     // Пока может быть null; позже будет заполняться из ТТХ комбайна.
     val bunkerVolumeM3: Double? = null,
 
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+
+    val fieldAreaSnapshotHa: Double? = null,
+    val actualPlantedAreaHa: Double? = null
 )

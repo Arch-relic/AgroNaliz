@@ -1693,6 +1693,13 @@ private val MIGRATION_16_17 =
         }
     }
 
+    val MIGRATION_22_23 = object : Migration(22, 23) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            database.execSQL("ALTER TABLE harvest_processes ADD COLUMN fieldAreaSnapshotHa REAL")
+            database.execSQL("ALTER TABLE harvest_processes ADD COLUMN actualPlantedAreaHa REAL")
+        }
+    }
+
     val MIGRATION_21_22 = object : Migration(21,22) {
         override fun migrate(database:SupportSQLiteDatabase) {
             database.execSQL("ALTER TABLE harvest_days ADD COLUMN moisturePercent REAL")
@@ -1738,7 +1745,8 @@ private val MIGRATION_16_17 =
     MIGRATION_18_19,
     MIGRATION_19_20,
     MIGRATION_20_21,
-    MIGRATION_21_22
+    MIGRATION_21_22,
+    MIGRATION_22_23
 )
                     .build()
 

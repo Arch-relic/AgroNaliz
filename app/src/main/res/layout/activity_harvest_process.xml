@@ -63,6 +63,12 @@
             android:layout_height="wrap_content"
             android:text="Редактировать карточку" />
 
+        <Button
+            android:id="@+id/buttonEditHarvestActualArea"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Изменить фактическую площадь посева" />
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
