@@ -24,9 +24,6 @@ class OptionsActivity : AppCompatActivity() {
         findViewById<Button>(R.id.buttonDeveloperCatalog).setOnClickListener {
             startActivity(Intent(this, DeveloperCatalogActivity::class.java))
         }
-        findViewById<Button>(R.id.buttonBackupRestore).setOnClickListener {
-            startActivity(Intent(this, BackupRestoreActivity::class.java))
-        }
 
         findViewById<Button>(
             R.id.buttonDataBackup
@@ -35,7 +32,7 @@ class OptionsActivity : AppCompatActivity() {
             startActivity(
                 Intent(
                     this,
-                    DataBackupActivity::class.java
+                    BackupRestoreActivity::class.java
                 )
             )
         }

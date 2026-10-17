@@ -6,6 +6,8 @@ import kotlin.math.roundToInt
 import android.widget.TextView
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.Espresso.pressBack
+import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.scrollTo
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.*
@@ -40,9 +42,12 @@ class AppVersionUiTest {
                 ).roundToInt().toFloat()
                 assertEquals(expectedSize, version.textSize, 0.1f)
             }
-            // The whole developer block is now at the bottom of the scrolling Options screen.
+            // Developer footer keeps the catalog; one backup entry opens the full backup screen.
             onView(withId(R.id.buttonDeveloperCatalog)).perform(scrollTo()).check(matches(isDisplayed()))
-            onView(withId(R.id.buttonBackupRestore)).perform(scrollTo()).check(matches(isDisplayed()))
+            onView(withId(R.id.buttonDataBackup)).perform(scrollTo(), click())
+            for (id in listOf(R.id.buttonCreateBackup, R.id.buttonRestoreBackup, R.id.buttonImportData))
+                onView(withId(id)).perform(scrollTo()).check(matches(isDisplayed())).check(matches(isEnabled()))
+            pressBack()
         }
     }
 }

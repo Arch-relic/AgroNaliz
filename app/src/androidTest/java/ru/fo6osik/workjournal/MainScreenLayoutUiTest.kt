@@ -85,20 +85,20 @@ class MainScreenLayoutUiTest {
     @Test fun navigationAndDeveloperBlock() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             awaitMain(scenario, false)
-            for (id in listOf(R.id.textAppVersion, R.id.buttonDeveloperCatalog, R.id.buttonBackupRestore))
+            for (id in listOf(R.id.textAppVersion, R.id.buttonDeveloperCatalog))
                 onView(withId(id)).check(doesNotExist())
             tap(R.id.buttonOptions)
             awaitScreen(OptionsActivity::class.java)
-            for (id in listOf(R.id.textDeveloperHeading, R.id.textAppVersion, R.id.buttonDeveloperCatalog, R.id.buttonBackupRestore))
+            for (id in listOf(R.id.textDeveloperHeading, R.id.textAppVersion, R.id.buttonDeveloperCatalog))
                 onView(withId(id)).perform(scrollTo()).check(matches(isDisplayed()))
+            onView(withText("Резервное копирование")).check(doesNotExist())
             tap(R.id.buttonDataBackup)
-            awaitScreen(DataBackupActivity::class.java)
+            awaitScreen(BackupRestoreActivity::class.java)
+            for (id in listOf(R.id.buttonCreateBackup, R.id.buttonRestoreBackup, R.id.buttonImportData))
+                onView(withId(id)).perform(scrollTo()).check(matches(isDisplayed())).check(matches(isEnabled()))
             pressBack(); awaitScreen(OptionsActivity::class.java)
             tap(R.id.buttonDeveloperCatalog)
             awaitScreen(DeveloperCatalogActivity::class.java)
-            pressBack(); awaitScreen(OptionsActivity::class.java)
-            tap(R.id.buttonBackupRestore)
-            awaitScreen(BackupRestoreActivity::class.java)
             pressBack(); awaitScreen(OptionsActivity::class.java)
             pressBack(); awaitMain(scenario, false)
         }
@@ -181,7 +181,7 @@ class MainScreenLayoutUiTest {
             }
             tap(R.id.buttonOptions); awaitScreen(OptionsActivity::class.java)
             for (id in listOf(R.id.buttonDataBackup, R.id.textDeveloperHeading, R.id.textAppVersion,
-                R.id.buttonDeveloperCatalog, R.id.buttonBackupRestore)) assertReadable(id)
+                R.id.buttonDeveloperCatalog)) assertReadable(id)
             pressBack(); awaitMain(scenario, true)
         }
     }

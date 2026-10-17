@@ -64,11 +64,7 @@
         android:layout_height="wrap_content"
         android:text="Справочник техники" />
 
-    <Button
-        android:id="@+id/buttonBackupRestore"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Резервное копирование" />
+
 
 </LinearLayout>
 </ScrollView>
