@@ -1,37 +1,93 @@
 # Этап: единый пункт резервного копирования в Options
 
-17 октября 2026. Ветка feature/harvest-1-0-8, Draft PR33:
-https://github.com/Arch-relic/AgroNaliz/pull/33 .
-Head до изменения791fa7e418e11e88c7c1f43ba6c41eb0ce0eedc8;
-main4d9ecfe7b7fb83a12f191d40855fdcd1c13cbaee.
+17 октября 2026. Завершено, остановиться для дальнейших указаний.
+Ветка `feature/harvest-1-0-8`, [Draft PR33](https://github.com/Arch-relic/AgroNaliz/pull/33)
+открыт, не merged. Head до задачи `791fa7e418e11e88c7c1f43ba6c41eb0ce0eedc8`;
+опорный main `4d9ecfe7b7fb83a12f191d40855fdcd1c13cbaee`.
+Проверенный GitHub SHA **78b8b754f3c8aa01c81f97b51cfe298f1e2aed57**;
+локальный `5cd1d5d`, общий tree `beee4afd3e72bdaff2e1980cf17b2726066d1823`.
+API-публикация объясняет разные SHA. Следующий коммит меняет только этот отчёт;
+не называть SHA самого документирующего коммита проверенным Android-результатом.
 
-buttonDataBackup теперь открывает BackupRestoreActivity. Дублирующая нижняя
-buttonBackupRestore и обработчик удалены. Developer footer сохраняет заголовок,
-версию и каталог. DataBackupActivity/layout/manifest остаются; пользовательских
-переходов к ней больше нет (rg нашёл только класс и manifest).
-BackupRestoreActivity, export/restore/import, TEST isolation/paths/safety,
-Room23/миграции/расчёты/подпись/id/workflows не менялись.
+## Результат и границы
 
-Изменены пять файлов, удалённых файлов нет:
+`buttonDataBackup` («Данные и резервные копии») теперь открывает существующую
+BackupRestoreActivity вместо DataBackupActivity. Нижняя `buttonBackupRestore`
+и её обработчик удалены. Developer footer сохраняет заголовок, динамическую
+версию с MAIN/TEST-разделением и «Справочник техники».
+DataBackupActivity, её layout и manifest сохранены. `rg` по app/src после изменения
+находит DataBackupActivity только в определении класса и manifest; пользовательских
+переходов к ней нет. Настоящий экран создания/восстановления/импорта, его layout и
+реализация backup не менялись. Предыдущий UI-отчёт ниже отражает прошлый этап:
+описание двух backup-входов в нём заменено текущим единым пунктом меню.
+
+Изоляция TEST backup, пути/правила безопасности, Room23, миграции, расчёты,
+подписи, applicationId, версии и защищённые workflows не менялись. Нет действий
+с пользовательской базой, очистки/восстановления/установки на смартфон.
+
+Изменены ровно пять файлов относительно начала задачи (пути от корня):
 - app/src/main/java/ru/fo6osik/workjournal/OptionsActivity.kt
 - app/src/main/res/layout/activity_options.xml
 - app/src/androidTest/java/ru/fo6osik/workjournal/AppVersionUiTest.kt
 - app/src/androidTest/java/ru/fo6osik/workjournal/MainScreenLayoutUiTest.kt
 - docs/codex-handoff.md
+Удалённых файлов нет. Незакоммиченных изменений после отчётного коммита нет.
 
-AppVersionUiTest (MAIN/TEST/после update) проверяет новый переход и доступность
-Create/Restore/Import; MainScreenLayoutUiTest проверяет отсутствие дубликата,
-переход из Options и compact/font160% с оставшимися пунктами. Реальные операции
-backup не нажимаются в навигационных тестах; прежние backup/import/update тесты
-сохраняются в полном CI.
+## Проверки
 
-Локально python3 -m unittest discover -s docs -p 'test_*py' -q:72 всего,
-70 успешно,2 пропущены без APK. git diff --check успешен.
-source /workspace/agronaliz-env.sh; agrogradle :app:assembleDebug :app:test
-остановился до компиляции: Could not determine a usable wildcard IP for this machine.
-Новый CI ещё не завершён, проверенного SHA на момент записи нет.
-После CI записать точные SHA/ссылки/результаты и остановиться для review.
-Никаких merge/релиза/установки/изменения пользовательской базы.
+**[Android PR checks #102 — SUCCESS](https://github.com/Arch-relic/AgroNaliz/actions/runs/39029306687)**
+для указанного проверенного SHA:
+- debug/TEST и обе instrumentation APK собраны. `testDebugUnitTest` и
+  `testDebugTestUnitTest` выполнены заново, не UP-TO-DATE. Число JVM-тестов
+  стандартный лог не печатает; результаты находятся в diagnostics.
+- 46 Python:13 catalog + 6 version + 27 TEST safety/signing tools, все успешны.
+- 84 успешных инструментальных выполнения в 45 вызовах, ошибок нет.
+- AppVersionUiTest:3 успешных вызова (MAIN, TEST, TEST после update). Сохранены
+  проверки версии/TEST-маркера/Room/12sp; добавлены переход по верхней backup-кнопке
+  и видимость/доступность Create/Restore/Import. Сами операции не нажимаются.
+- MainScreenLayoutUiTest:3/3, отсутствие дубликата в Options, переход именно в
+  BackupRestoreActivity, рабочий каталог, прежняя геометрия/GONE уборки,
+  compact720×960/font160% без обрезанного текста.
+- HarvestQuickAccessUiTest2/2, Harvest108Test5/5, HarvestFullBackup108Test4/4;
+  Room22→23 seed/verify/restart3 вызова успешны. Прежние full JSON roundtrip/merge,
+  повторный импорт, legacy backup и rollback сохранились и прошли.
+- Безопасное TEST update прошло: тот же синтетический ключ/больший code сохраняет
+  Room/preferences/files, другой ключ отвергнут без потери данных; read-only JSON
+  export и синтетическое восстановление успешны, MAIN не изменён.
+
+**[Main APK safe update checks #29 — SUCCESS](https://github.com/Arch-relic/AgroNaliz/actions/runs/39029306676)**:
+сборка/JVM выполнены заново,26 Python и3 инструментальные проверки успешны.
+Синтетическая MAIN — только в ранее разрешённом одноразовом CI-эмуляторе.
+
+Итого два CI:72 успешных Python и87 инструментальных выполнений, ошибок нет.
+Тесты и workflow не отключались/не ослаблялись. Команды сборки в CI:
+`:app:assembleDebug :app:assembleDebugTest :app:testDebugUnitTest
+:app:testDebugTestUnitTest :app:assembleDebugAndroidTest`, затем
+`-PtestBuildType=debugTest :app:assembleDebugTestAndroidTest`; существующие runners
+изоляции/уборки/топлива/1.0.8/signing выполнены полностью.
+
+Локально `python3 -m unittest discover -s docs -p 'test_*py' -q`:72 всего,
+70 успешно,2 пропущены без APK. `git diff --check` успешен.
+`source /workspace/agronaliz-env.sh; agrogradle :app:assembleDebug :app:test`
+остановился до компиляции: `Could not determine a usable wildcard IP for this machine`.
+Не считать локальную Android-сборку успешной; реальная сборка/проверка — Actions.
+
+## Риски, ручная проверка и продолжение
+
+Риска изменения данных от этой корректировки не выявлено: изменены только меню и
+навигация, целевой backup-экран сохранён. Реальная пользовательская база, физический
+телефон и OEM-поведение не проверялись. DataBackupActivity пока остаётся неиспользуемым
+кодом по явному ТЗ; удалять отдельно только по следующему заданию.
+
+Для ручной проверки после подготовки обновлённой TEST: Options → «Данные и резервные
+копии» должно открывать три действия (создание, восстановление, импорт); внизу только
+заголовок/версия/каталог. Возврат назад ведёт в Options. Не выполнять восстановление
+рабочей базы ради проверки навигации. Не удалять и не очищать приложение.
+Прежняя APK2000008 не содержит эту последнюю корректировку. Новая устанавливаемая
+APK этой задачей не публиковалась, подпись/id не менялись.
+
+Незавершённых задач кода нет. После отчёта остановиться; не merge, не релиз,
+не устанавливать APK на пользовательские устройства.
 
 ---
 
