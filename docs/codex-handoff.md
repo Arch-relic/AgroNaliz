@@ -1,14 +1,22 @@
-# Этап: окончательная компоновка главного экрана1.0.8
+# Этап: окончательная компоновка главного экрана 1.0.8
 
-17 октября2026. Только существующая feature/harvest-1-0-8, Draft PR33:
-https://github.com/Arch-relic/AgroNaliz/pull/33 . Head до изменения
-5c1c74b9299f13537369da6180747140063f7ab5, main4d9ecfe7b7fb83a12f191d40855fdcd1c13cbaee.
-Developer-блок перенесён целиком в низ Options, старая навигация/MAIN/TEST-маркер
-сохранены. Main: прежний gap перед Options, продолжение уборки min96dp у нижнего
-края после гибкого свободного пространства, GONE без fixed-height wrapper.
-Оба экрана scroll/fillViewport/fitsSystemWindows. Бизнес-логика и данные неизменны.
+17 октября 2026. Задача завершена. Только существующая `feature/harvest-1-0-8`.
+[PR #33](https://github.com/Arch-relic/AgroNaliz/pull/33) открыт, Draft, не merged.
+Main: `4d9ecfe7b7fb83a12f191d40855fdcd1c13cbaee`; head до задачи:
+`5c1c74b9299f13537369da6180747140063f7ab5`.
 
-Изменённые/новые файлы:
+Проверенный GitHub SHA `51570722d4b909ae3fa203eccb2678f89e1c6392`;
+локальный `20811d4`, одинаковый tree `3013b840f499c7cdecc3bae76ae516bd19d51ad7`.
+Публикация через API объясняет разницу SHA. Последующий коммит меняет только два
+отчёта, не исходники/тесты; не считать SHA самого документирующего коммита проверенным.
+
+Developer-блок целиком внизу Options с прежними переходами и MAIN/TEST-маркером.
+Main: прежний gap 56dp + 16dp перед Options; уборка min96dp, прежняя ширина,
+центрирование, гибкое место сверху, 24dp снизу, GONE без фиксированной обёртки.
+Оба экрана scroll/fillViewport; fitsSystemWindows на внешнем FrameLayout.
+Бизнес-логика/Room23/миграции/backup/подписи/id/workflows не менялись.
+
+Изменены/добавлены (пути от корня, удалений нет):
 - app/src/main/java/ru/fo6osik/workjournal/MainActivity.kt
 - app/src/main/java/ru/fo6osik/workjournal/OptionsActivity.kt
 - app/src/main/res/layout/activity_main.xml
@@ -19,16 +27,39 @@ Developer-блок перенесён целиком в низ Options, стар
 - docs/run-harvest-108-checks.py
 - docs/main-screen-1.0.8-review.md (новый)
 - docs/codex-handoff.md
-Удалений нет. Room/DAO/migrations/backup/подпись/id/workflows не менялись.
 
-Локальные проверки:72 Python,70 успешно,2 без APK пропущены, XML parse и diff --check.
-Проектная сборка до компиляции: FileLockContentionHandler / usable wildcard IP.
-Новый Android CI ещё не пройден; проверенного SHA нового кода пока нет, изменения
-на момент записи не закоммичены. Новые UI-тесты охватывают навигацию, геометрию,
-видимость, compact viewport720x960 и font1.6 с восстановлением CI-настроек в finally.
-Далее сохранить в эту ветку, выполнить полный CI, записать точные результаты/SHA
-и остановиться для review. [Полный отчёт](main-screen-1.0.8-review.md).
-Не merge, не релиз, не публиковать/устанавливать APK на смартфон.
+Проверки проверенного SHA:
+- [Android #100 SUCCESS](https://github.com/Arch-relic/AgroNaliz/actions/runs/39016802399):
+  обе APK и instrumentation APK, обе JVM-задачи заново, 46 Python без пропусков,
+  84 успешных инструментальных выполнения / 45 вызовов.
+  Новые UI 3/3 (навигация, геометрия/GONE, compact720×960/font1.6), QuickAccess2/2,
+  Harvest108 5/5, FullBackup4/4, Room22→23 seed/verify/restart 3 вызова — всё успешно.
+  Безопасное обновление TEST и отказ другого ключа без потери данных прошли.
+- [Main #27 SUCCESS](https://github.com/Arch-relic/AgroNaliz/actions/runs/39016802395):
+  сборка/JVM, 26 Python и 3 инструментальных выполнения успешны.
+- Итого CI: 72 Python и 87 инструментальных выполнений, ошибок нет.
+  Число JVM-тестов не печатается в стандартном логе, отчёты в diagnostics;
+  задачи выполнялись заново, не UP-TO-DATE.
+- Локально `python3 -m unittest discover -s docs -p 'test_*py' -q`:72/70pass/2skip
+  без APK. XML parse и diff --check успешны. Проектная команда
+  `source /workspace/agronaliz-env.sh`, `agrogradle :app:assembleDebug :app:test`
+  не стартует: FileLockContentionHandler / usable wildcard IP. Android реально
+  собран и проверен в Actions, локальный результат не считать успешной сборкой.
+
+Первый #98 и диагностический #99 падали в compact scrollTo(WorkNotes); остальные
+две новые UI-проверки прошли. Координаты println не попали в Actions console.
+В ScrollView расчёт scroll-to не вычитает padding; системные inset вынесены за
+ScrollView, после чего тот же строгий тест прошёл. Утверждения не ослаблены.
+
+[Полный отчёт, ограничения и ручная проверка](main-screen-1.0.8-review.md).
+Физический телефон/OEM/экстремальный font scale не проверены. Старый опубликованный
+TEST APK не содержит эту новую UI-корректировку; новая устанавливаемая APK не
+публиковалась. Данные не затронуты, риска потери данных от UI-изменения не выявлено.
+MAIN устанавливалась только синтетическая в ранее разрешённом одноразовом CI.
+
+Далее: остановиться и ожидать независимый review. Не merge, не релиз и не установка
+на пользовательское устройство. Незавершённых задач кода нет; ручная проверка
+на смартфоне — после отдельной согласованной подготовки TEST APK, без очистки данных.
 
 ---
 
