@@ -1,3 +1,52 @@
+# Этап: финальный аудит MAIN1.0.8 — выпуск BLOCKED
+
+17 октября2026. feature/harvest-1-0-8, Draft PR33 открыт, не merged.
+Проверенный head8702bf6cfcd7a783236bd2bb325795b3cee154d7 / app ec39c15f708120ddba4397f06264d95120bae2a7;
+main4d9ecfe7b7fb83a12f191d40855fdcd1c13cbaee. Следующий коммит только отчётный,
+не называть его SHA проверенным Android-кодом. Product/tests/workflows не менялись.
+
+[Полный аудит и блокирующие причины](main-1.0.8-release-audit.md).
+[verification BLOCKED](main-1.0.8-verification.json): signedApkPrepared=false,
+versionCode/apkSha256/artifactUrl=null. MAIN1.0.8 не подготовлена/не опубликована.
+
+Последний MAIN1.0.7 run38923727875#3 успешен: ru.fo6osik.workjournal,
+code3000003/Room22, оригинальный сертификат
+3FE57967C15F81EE39EA2B9B88DD96A7506C1B5B9032606ECBEA04BBDB15EE3C.
+Логи подтверждают работу оригинальных ANDROID_* Secrets тогда, не их свежее
+наличие. TEST_* не используются. Исторический MAIN сертификат совпадает с TEST:
+не менять его, не обещать разные сертификаты при сохранении прежней подписи.
+Публичные metadata установленной сейчас MAIN неизвестны, данные телефона не читались.
+
+Блокеры: защищённый MAIN workflow толькоmain/ref owner/attempt1, собирает main1.0.7;
+Room23 preflight намеренно закрыт (room!=22). Точный MAIN22→23 сценарий не выполнялся:
+MAIN#30 проверяет фактически20→23→23 с синтетическим ключом, хотя имена/лог говорят21.
+TEST22→23 отдельно прошёл, это не равно требуемой MAIN22 проверке. Merge запрещён,
+безопасного pre-merge MAIN artifact в существующем workflow нет. Защита не обходилась.
+
+CI текущего8702bf6: Android#103 run39030341329 SUCCESS (46Python+84instrumental),
+MAIN#30 run39030341188 SUCCESS (26Python+3instrumental); обе JVM-задачи выполнены
+заново, число JVM-тестов стандартный лог не печатает. FullBackup4/4, Harvest1085/5,
+QuickAccess2/2, TEST22→23 seed/verify/restart3успеха, UI/Options и TEST update прошли.
+Новые локальные python3 -m unittest discover -s docs -p 'test_*py' -q:72/70pass/2skip;
+docs/run-harvest-jvm-checks.py --gradle-lib <Gradle8.13/lib>:28/28реальных Kotlin/JUnit
+успешны. Это не Android-сборка. Новая локальная Android-сборка не запускалась:
+известный wildcard IP ограничитель сохраняется. diff --check выполнен.
+
+Изменены только docs/main-1.0.8-release-audit.md (новый),
+docs/main-1.0.8-verification.json (новый), docs/codex-handoff.md. Удалений нет.
+После отчётного коммита незакоммиченной работы нет. Отчёт содержит сопоставление
+48 файлов PR, функций, миграции/backup, проверок и рисков без обещания полной верификации.
+
+Далее остановиться по условию пользователя о неподтверждённом безопасном обновлении.
+Нужны точный disposable MAIN22→23 прогон, отдельный безопасный pre-merge MAIN signing
+путь, актуальные публичные metadata MAIN и уточнение требования разных сертификатов.
+Не открывать signing всем PR/не убирать room gate без аудита, не merge/релиз/установка.
+Реальные данные не затрагивались, секреты не раскрывались, production signer не запускался.
+
+---
+
+История предыдущего этапа:
+
 # Этап: единый пункт резервного копирования в Options
 
 17 октября 2026. Завершено, остановиться для дальнейших указаний.
