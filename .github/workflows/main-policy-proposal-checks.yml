@@ -1,0 +1,25 @@
+name: Detached MAIN release policy proposal checks
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/patches/main-room23-release-policy.*'
+      - 'docs/test_main_room23_policy_patch.py'
+      - '.github/workflows/main-policy-proposal-checks.yml'
+      - '.github/workflows/main-apk-publish.yml'
+      - 'docs/test_main_apk_release.py'
+      - 'docs/test_app_version.py'
+      - 'docs/main-original-update.md'
+permissions:
+  contents: read
+jobs:
+  detached-policy-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate detached patch in temporary copies with synthetic API and key fixtures
+        run: python3 -m unittest discover -s docs -p 'test_main_room23_policy_patch.py' -v

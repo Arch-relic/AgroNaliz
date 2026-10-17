@@ -1,3 +1,56 @@
+# Этап: отделённый патч MAIN Room23 для согласования, НЕ ПРИМЕНЁН
+
+17 октября2026. feature/harvest-1-0-8, Draft PR33, без merge/main push/релиза.
+До задачи head dfc3baa6a0569fad6fcbc11fe04ca3ce2ad90a11 отличается от проверенного
+9fe8fa2f922c8e62dc124307663993387a56b2cf только5 отчётами (полный список в новом report).
+main4d9ecfe7b7fb83a12f191d40855fdcd1c13cbaee. Production-код/миграции/signers неизменны.
+
+[Патч .patch](patches/main-room23-release-policy.patch), [manifest](patches/main-room23-release-policy.json),
+[полный отчёт, условия и порядок backup/merge/audit/sign/update](main-room23-policy-patch-review.md).
+Четыре будущих target: .github/workflows/main-apk-publish.yml,
+docs/test_main_apk_release.py, docs/test_app_version.py, docs/main-original-update.md.
+Их live SHA сейчас beforeSha256; git apply выполняется только в TemporaryDirectory.
+В рабочей инфраструктуре patch не применяется. Room23 production остаётся закрыт.
+
+Добавляются только предложение/документы/tests и отдельный readonly CI, без Secrets/APK.
+10 методов exact-patch tests проверяют narrow22→23, audit metadata/job/steps/sourceSHA,
+owner/main/dispatch/attempt, API failures, wrong version/floor/sequence/cert и TEST id,
+post-sign package mismatch. Preserved: main owner1st dispatch, ANDROID_* pin/identity,
+секрет-изоляция, code3000000+run_number, cleanup/transport, legacyRoom22 branch.
+Во временной копии проходят прежние MAIN18 tests (17pass/1skip) иversion6.
+Локально общий unittest discover:82/80pass/2skip; 10 новых включены в82.
+Вложенный24tests не прибавлять к82. Реальные APK/ключи/SDK/сеть для patch tests
+не используются; подпись не запускалась. git apply --check/manifest/diff checks успешны.
+
+Новый readonly CI main-policy-proposal-checks.yml ещё выполняется/будет записан
+после проверки; текущая Android source остаётся проверенным9fe8fa2 (90instrumental).
+Отдельный запуск Android для неизменённого product кода не нужен; известное локальное
+wildcard IP ограничение Gradle сохраняется. Непроверено: реальный production signer
+после разрешения patch, доступность Secrets сейчас, реальная база/устройство/OEM.
+
+Шесть изменённых/новых файлов, удалений нет:
+- docs/patches/main-room23-release-policy.patch
+- docs/patches/main-room23-release-policy.json
+- docs/test_main_room23_policy_patch.py
+- .github/workflows/main-policy-proposal-checks.yml
+- docs/main-room23-policy-patch-review.md
+- docs/codex-handoff.md
+
+Для будущего выпуска нужно ОТДЕЛЬНОЕ разрешение применить патч и отдельное merge.
+После merge новый main SHA M, owner/manual audit M, затем main publisher с floor
+реальной MAIN (baseline3000003), installedRoom22 и auditRunID. Merge нынешнегоPR33
+с не применённым patch-файлом сам по себе Room23 не разрешит. MAIN/TEST certificate
+исторически одинаковый, package различает их; смена cert не требуется. TEST всегда
+отвергается точным MAIN id, даже с тем же сертификатом. Сначала штатный MAIN JSON22
+backup вне песочницы, без restore рабочей базы; это не полный backup preferences/files.
+Обновление на смартфоне только владельцем после отдельного решения, без uninstall/clear.
+Никаких публикаций, установок или действий с реальными данными в этом этапе.
+После отчёта остановиться и ждать разрешения.
+
+---
+
+История предыдущего этапа:
+
 # Этап: точный MAIN22→23 CI успешно выполнен, политика не применяется
 
 17 октября2026, feature/harvest-1-0-8, [Draft PR33](https://github.com/Arch-relic/AgroNaliz/pull/33).

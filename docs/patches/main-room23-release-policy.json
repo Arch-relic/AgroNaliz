@@ -1,0 +1,22 @@
+{
+  "status": "PROPOSAL_NOT_APPLIED",
+  "baseHead": "dfc3baa6a0569fad6fcbc11fe04ca3ce2ad90a11",
+  "files": {
+    ".github/workflows/main-apk-publish.yml": {
+      "beforeSha256": "5fc13d694aa3574d3cdcf25f905a9cea74c33a8803a3c4562ac9bb7e30377f26",
+      "afterSha256": "27a24a645fd97a6b7ec6d99c8a18e466196823f0023d57eba444c368599c7d91"
+    },
+    "docs/test_main_apk_release.py": {
+      "beforeSha256": "66365569d8244fb0de1c53f84069a16a4487c45520f87d3f6c6aeee546effef7",
+      "afterSha256": "3cd3352f1d2169cd815f6f85ca69c221a32daa594ebf2d8c4d81a9de26f34994"
+    },
+    "docs/test_app_version.py": {
+      "beforeSha256": "b6be9d51be3244ea744f7b4d19e9a6c47f1567d92c910a77b4facac412d2f230",
+      "afterSha256": "1958e51bfa603ab2feac37ac85d455e4d252a533cd6e457fc37f675e9c6b0472"
+    },
+    "docs/main-original-update.md": {
+      "beforeSha256": "f4730a04b06c117d7624c8bfd6a0f3007b117c3753ed1b88e0836ca55dc051f0",
+      "afterSha256": "e7f893192b2d48207c45efacaf609e0669985da851fb169a40fae3ad9213250a"
+    }
+  }
+}
