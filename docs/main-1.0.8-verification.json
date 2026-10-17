@@ -1,7 +1,6 @@
 {
-  "status": "BLOCKED",
-  "sourceSha": "8702bf6cfcd7a783236bd2bb325795b3cee154d7",
-  "appTreeSha": "ec39c15f708120ddba4397f06264d95120bae2a7",
+  "status": "MIGRATION_VERIFIED_RELEASE_POLICY_APPROVAL_REQUIRED",
+  "sourceSha": "9fe8fa2f922c8e62dc124307663993387a56b2cf",
   "applicationId": "ru.fo6osik.workjournal",
   "requestedVersionName": "1.0.8",
   "targetRoomVersion": 23,
@@ -15,7 +14,7 @@
   "originalMainSecretsPreviouslyWorked": true,
   "originalMainSecretsCurrentlyRevalidated": false,
   "historicalTestCertificateEqualsMainCertificate": true,
-  "exactMain22To23ScenarioVerified": false,
+  "exactMain22To23ScenarioVerified": true,
   "test22To23ScenarioVerified": true,
   "main20To23ScenarioVerified": true,
   "signedApkPrepared": false,
@@ -23,22 +22,36 @@
   "apkSha256": null,
   "artifactUrl": null,
   "ciRuns": [
-    39030341329,
-    39030341188
+    39035077568,
+    39035077518,
+    39035077524
   ],
   "freshLocalPython": {
     "total": 72,
     "passed": 70,
     "skipped": 2
   },
-  "freshLocalKotlinJUnit": {
-    "passed": 28
-  },
   "blockers": [
-    "main_signing_workflow_main_only",
-    "production_room23_gate_closed",
-    "exact_main_room22_upgrade_not_exercised",
-    "installed_main_metadata_unconfirmed",
-    "historical_main_and_test_certificates_identical"
-  ]
+    "separate_release_policy_approval_required",
+    "main_only_signer_and_room23_gate_unchanged",
+    "future_main_source_sha_audit_required_before_signing"
+  ],
+  "exactMain22AuditRunId": 39035077568,
+  "productionReleaseAuthorized": false,
+  "releasePolicyChanged": false,
+  "certificateSeparationRequired": false,
+  "unsignedAnalysisVerified": true,
+  "unsignedApkPublished": false,
+  "analysisMetadataArtifactUrl": "https://github.com/Arch-relic/AgroNaliz/actions/runs/39035077568/artifacts/12101538033",
+  "ciResults": {
+    "pythonPassed": 72,
+    "instrumentalExecutionsPassed": 90,
+    "exactMain22InstrumentCallsPassed": 3
+  },
+  "changedSince8702BeforeThisTask": [
+    "docs/codex-handoff.md",
+    "docs/main-1.0.8-release-audit.md",
+    "docs/main-1.0.8-verification.json"
+  ],
+  "migrationVerified": true
 }

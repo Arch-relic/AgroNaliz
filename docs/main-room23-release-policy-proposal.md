@@ -25,7 +25,10 @@ run_attempt==1. Нет автоматического push/PR signing. room!=22 
    прочие новые пары схем отклонять. Не заменять проверку на room>=22.
 2. В Room23 ветке до выдачи ключа потребовать успешный MAIN Room22 to23 migration
    audit именно для публикуемого source SHA, проверить status/conclusion и matching
-   head_sha через GitHub API. При отсутствии/ошибке/неоднозначности — fail closed.
+   head_sha через GitHub API. Проверять также стабильный workflow_id/путь (сейчас387641531/main-room23-checks.yml),
+   head_repository==свой репозиторий, head_branch==main, event==workflow_dispatch
+   и actor==repository_owner. Чужой/fork run или совпавшее название недостаточны.
+   При отсутствии/ошибке/неоднозначности — fail closed.
    Это новый положительный guard, не отключение прежних проверок.
 3. Проверять expected versionName1.0.8/package ru.fo6osik.workjournal/room23 и
    versionCode>фактического floor (последний опубликованныйMAIN3000003). Не менять

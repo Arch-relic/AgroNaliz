@@ -1,37 +1,81 @@
-# Этап: отдельный MAIN1.0.7 Room22→1.0.8 Room23 CI, политика не меняется
+# Этап: точный MAIN22→23 CI успешно выполнен, политика не применяется
 
-17 октября2026, feature/harvest-1-0-8 / Draft PR33.
-HEAD до задачи888a9a6d4fab86c45c3f580bd699da5ec5051f02 против проверенного8702bf6:
-только docs/codex-handoff.md, docs/main-1.0.8-release-audit.md,
-docs/main-1.0.8-verification.json. Product/tests/signers совпадали.
-main4d9ecfe7b7fb83a12f191d40855fdcd1c13cbaee.
+17 октября2026, feature/harvest-1-0-8, [Draft PR33](https://github.com/Arch-relic/AgroNaliz/pull/33).
+Работа завершена. Остановиться для отдельного решения о release policy, не merge/релиз.
+HEAD до задачи888a9a6d4fab86c45c3f580bd699da5ec5051f02 отличался от проверенного
+8702bf6cfcd7a783236bd2bb325795b3cee154d7 только тремя отчётами:
+docs/codex-handoff.md, docs/main-1.0.8-release-audit.md, docs/main-1.0.8-verification.json.
+Продуктовый код/tests/workflows совпадали. main4d9ecfe7b7fb83a12f191d40855fdcd1c13cbaee
+не изменялся. Проверенный новый SHA9fe8fa2f922c8e62dc124307663993387a56b2cf,
+локальный6e09bcf, tree4aa516e17219b47ec98ab41c7a9709a01402ef75. API объясняет разницу.
+Последующий коммит только документы/JSON, не выдавать его SHA за проверенный Android-код.
 
-Добавлен отдельный readonly CI workflow без Secrets/публикации APK. Старый MAIN
-workflow/подпись/guard не меняются. Пин MAIN исторически совпадает с TEST, но пакеты
-разные; прежний MAIN сертификат сохранять, смена исключительно ради разделения
-не требуется. Предложение политики отдельно, не применено.
+[Полный новый отчёт](main-room23-ci-review.md).
+[Предложение release policy — НЕ ПРИМЕНЕНО](main-room23-release-policy-proposal.md).
+[Машиночитаемый статус](main-1.0.8-verification.json): migrationVerified=true,
+productionReleaseAuthorized=false, signedApkPrepared=false.
 
-Новые файлы:
-- .github/workflows/main-room23-checks.yml
-- app/src/androidTest/java/ru/fo6osik/workjournal/MainRoom23MigrationTest.kt
-- docs/run-main-room23-checks.py
-- docs/verify-main-room23-inputs.py
-- docs/main-room23-release-policy-proposal.md
-Изменён docs/codex-handoff.md. Удалений нет.
+Новый [MAIN Room22 to23 audit#1 SUCCESS](https://github.com/Arch-relic/AgroNaliz/actions/runs/39035077568):
+3 инструментальных вызова. Pinned baseline4d9ecfe7 MAIN1.0.7/code3000003/Room22 →
+MAIN1.0.8/code3000004/Room23 через install-r, verify, force-stop/restart/verify.
+Пакет MAIN, общий одноразовый CI debug certificate (не production), readonly workflow
+без Secrets; runner отказывает существующим MAIN/TEST и требует disposable emulator.
 
-CI строит baselineMAIN1.0.7/code3000003/Room22 из pinned4d9ecfe7, currentMAIN
-1.0.8/code3000004/Room23, обе с общим одноразовым CI debug certificate.
-Тест seed в22 и verify23 до/после force-stop сравнивает все старые колонки всех
-таблиц JSON, активные/завершённые кампании/дни, технику/поля, бункеры/события,
-влажность/топливо/обе заправки, prefs/timers/files/certificate, NULL новых площадей,
-foreign_key_check, массу/расход. JSON23 восстанавливается в отдельную in-memory базу
-и сравнивается со всем экспортом. Никаких uninstall/clear/downgrade flags;
-runner отказывает, если MAIN/TEST уже установлена, и требует disposable emulator.
+Сравниваются все старые колонки всех таблиц/количество строк, поля/техника,
+активная/завершённая уборка и дни, бункеры/события, гектары/влажность/плотность,
+start/end fuel и DAY/BEFORE_DAY refill, prefs/реальные reminder prefs/file/certificate,
+NULL обеих новых площадей, foreign_key_check, масса12–18т и расход85.
+Export23 восстановлен в отдельную in-memory Room-базу, экспорт target совпал со всем
+source JSON; повторено после restart. Исходную базу при restore не очищают.
 
-Существующий unsigned release build анализируется aapt2/apksigner, не подписывается
-и не публикуется. В diagnostics только JSON/hash и test reports, никаких APK.
-Новые сборки/CI ещё не завершены. После прогона записать фактические SHA/результаты,
-обновить BLOCKED auditJSON без разрешения production sign, остановиться для решения.
+Также успешно: [MAIN safety#32](https://github.com/Arch-relic/AgroNaliz/actions/runs/39035077518)
+(26Python/3instrumental, старый20→23→23),
+[Android#105](https://github.com/Arch-relic/AgroNaliz/actions/runs/39035077524)
+(46Python/84instrumental/45вызовов, все прежние уборка/backup/TEST migration/UI/update).
+Итого72 Python и90 инструментальных выполнений, ошибок нет. JVM-задачи выполнялись
+заново, не UP-TO-DATE, стандартный лог не печатает число JVM-тестов.
+
+Существующий unsigned :app:assembleRelease успешен без изменения Gradle/signing.
+aapt2/apksigner подтвердили MAIN1.0.8, code1 (аналитический default), отсутствие
+подписи; SHA256 в main-room23-analysis.json. APK не публиковались/не распространялись.
+[Diagnostics artifact, только metadata/test reports](https://github.com/Arch-relic/AgroNaliz/actions/runs/39035077568/artifacts/12101538033).
+Это не установочный кандидат: CI миграция использует отдельные debug fixtures3000003/4,
+production signer по-прежнему закрыт и настоящая MAIN APK не подготовлена.
+
+Локально python3 -m unittest discover -s docs -p 'test_*py' -q:72/70pass/2skip без APK;
+py_compile новых scripts, JSON и diff --check успешны.
+source /workspace/agronaliz-env.sh; agrogradle :app:assembleDebug :app:test
+не стартует до компиляции: usable wildcard IP. Android проверен в CI, не локально.
+
+Изменены/созданы9 файлов, удалений нет:
+- .github/workflows/main-room23-checks.yml (новый readonly CI, не signer)
+- app/src/androidTest/java/ru/fo6osik/workjournal/MainRoom23MigrationTest.kt (новый)
+- docs/run-main-room23-checks.py (новый)
+- docs/verify-main-room23-inputs.py (новый)
+- docs/main-room23-release-policy-proposal.md (новый, только предложение)
+- docs/main-room23-ci-review.md (новый отчёт)
+- docs/main-1.0.8-release-audit.md (пометка обновлённого evidence)
+- docs/main-1.0.8-verification.json (migration verified, signing false)
+- docs/codex-handoff.md
+После документирующего коммита незакоммиченной работы нет. Production src/main,
+модели/миграции, MAIN/TEST signer и старые protected workflows не менялись.
+
+Сертификат исторических MAIN/TEST одинаковый3FE57967C15F81EE39EA2B9B88DD96A7506C1B5B9032606ECBEA04BBDB15EE3C,
+пакеты разные. По прямому уточнению пользователя это не блокер: MAIN сохраняет
+оригинальный pin/ANDROID_* signer; менять сертификат ради разделения не нужно.
+Свежее наличие production Secrets здесь не проверяли, они не используются в audit.
+
+Остаётся отдельное решение о policy: сейчас только main/owner/attempt1 и room==22.
+Предложение сохраняет guards/cleanup/монотонный code, добавляет narrow23+installed22
+и позитивный audit того же SHA из своего owner/main dispatch. Оно НЕ применяется
+этой задачей. Будущий путь после отдельного разрешения: policy+негативные tests,
+CI, отдельно разрешённый merge, audit точного main SHA, прежний защищённый signer.
+Никакого PR signing, обхода защиты или автоматического merge.
+
+Реальная база/телефон/OEM и оригинальная production-подпись новой APK не проверялись;
+CI доказывает конкретный синтетический22→23 сценарий, не отсутствие любых дефектов.
+Нет MAIN/TEST установок на пользовательские устройства, очистки/восстановления
+реальных данных, публичного Release, подписанного артефакта или изменения подписи/id.
 
 ---
 
