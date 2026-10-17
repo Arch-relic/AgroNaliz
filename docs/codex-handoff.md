@@ -1,70 +1,115 @@
-# Этап: свежая устанавливаемая TEST APK 1.0.8 из текущего PR33
+# Этап: заключительная TEST APK после объединения backup-пунктов
 
-17 октября 2026. Задача завершена, остановиться для указаний.
-Ветка `test-artifact/1.0.8-pr33`, [Draft PR34](https://github.com/Arch-relic/AgroNaliz/pull/34)
-в feature-ветку PR33. Оба PR остаются Draft, без merge; PR33 не изменён.
-Main `4d9ecfe7b7fb83a12f191d40855fdcd1c13cbaee`.
-Приложение идентично текущему PR33 head `791fa7e418e11e88c7c1f43ba6c41eb0ce0eedc8`,
-app tree `0dbcf734e40f6529ed82870e08a536c8e06db4f4` проверен build job.
-Включены последние Main/Options и compact/font160% исправления.
+17 октября 2026. Подготовка в существующей test-artifact/1.0.8-pr33 / Draft PR34.
+PR33/main не изменяются. Источник app — PR33 head8702bf6cfcd7a783236bd2bb325795b3cee154d7,
+app tree ec39c15f708120ddba4397f06264d95120bae2a7; build проверяет его до сборки.
+Включён единый buttonDataBackup → BackupRestoreActivity без нижнего дубликата.
+Android-код не редактируется, синхронизируется из проверенного PR33.
 
-Проверенный опубликованный SHA `75a4df48a97a5ec1051e00495a610e1ad6298da3`;
-локальный `24f201a`, tree `2bb40b34d437fe368894042e23ff3ccbd3b0cdc0`.
-API-публикация объясняет разные SHA. Следующий коммит только документирует результат;
-не называть SHA самого отчётного коммита проверенным Android-результатом.
-
-**[Publish stable TEST APK #8 SUCCESS](https://github.com/Arch-relic/AgroNaliz/actions/runs/39027611032)**.
-**[Скачать ZIP](https://github.com/Arch-relic/AgroNaliz/actions/runs/39027611032/artifacts/12098553707)**.
-Только app-TEST-stable.apk и verification.json; transport удалён. Срок31 октября2026.
-Проверено SDK: package ru.fo6osik.workjournal.debugtest, versionName1.0.8,
-versionCode2000008, Room23; полный сертификат
+Пользователь указал ранее установленную APK2000008. Это опубликованный TEST run
+39027611032, пакет ru.fo6osik.workjournal.debugtest, версия1.0.8/Room23, сертификат
 3FE57967C15F81EE39EA2B9B88DD96A7506C1B5B9032606ECBEA04BBDB15EE3C.
-Он совпадает с сертификатом TEST со скриншота пользователя; установленный code
-на скриншоте2000005, последний опубликованный2000007. Обе величины меньше2000008.
-Совместимость подтверждена для показанной установки, не неизвестного нового состояния
-телефона. JSON указывает MATCHES_PROVIDED_SCREENSHOTS и исходный SHA PR33.
-
-Существующие TEST Secrets/signing pin, изоляция build/sign, owner/ref/attempt gates,
-последовательность versionCode и cleanup сохранены. Floor увеличен до2000007,
-добавлена проверка точного app tree до сборки; MAIN не строилась/не публиковалась.
-
-Свежий CI: :app:assembleDebugTest :app:testDebugTestUnitTest успешны (заново,
-не UP-TO-DATE, число JVM-тестов стандартный лог не печатает); Python78 всего,
-77 успешно,1 MAIN SDK-тест пропущен без MAIN APK. TEST SDK и mismatch прошли.
-Локально python3 -m unittest discover -s docs -p 'test_*py' -q:78/76pass/2skip;
-diff --check успешен. Android-код не менялся, локальный Gradle не повторялся
-(известное wildcard IP ограничение). Полный инструментальный CI PR33 #100/#27
-успешен ранее; свежая публикация не повторяет его и не выдаёт за новый запуск.
-
-Собственные изменения текущего этапа относительно прошлой публикации:
-- .github/workflows/test-apk-publish.yml
-- docs/test_test_preview_artifact.py
-- docs/test-apk-1.0.8-artifact.md
-- docs/test-apk-signing.md
-- docs/codex-handoff.md
-Из PR33 синхронизированы без изменений:
-- app/src/main/java/ru/fo6osik/workjournal/MainActivity.kt
-- app/src/main/java/ru/fo6osik/workjournal/OptionsActivity.kt
-- app/src/main/res/layout/activity_main.xml
-- app/src/main/res/layout/activity_options.xml
-- app/src/androidTest/java/ru/fo6osik/workjournal/AppVersionUiTest.kt
-- app/src/androidTest/java/ru/fo6osik/workjournal/MainScreenLayoutUiTest.kt
-- docs/test_app_version.py
-- docs/run-harvest-108-checks.py
-- docs/main-screen-1.0.8-review.md
-Удалений нет. Незакоммиченной работы после отчётного коммита нет.
-
-Пользовательские устройства/данные не затрагивались; установки, очистки и
-восстановления нет. Реальное состояние базы и OEM-поведение не проверены.
-Дальше только ручная проверка владельцем: доступная backup-копия, скачать ZIP,
-распаковать APK, выбрать обновление существующей TEST; при ошибке остановиться,
-не удалять и не очищать приложение. Если установка после скриншотов менялась,
-сверить id, полный сертификат и code<2000008 заново.
-[Полный отчёт и инструкция](test-apk-1.0.8-artifact.md).
+Прежний TEST workflow и Secrets сохранены, pin/signing не меняются.
+Floor увеличен до2000008. Публикация требует больший code и тот же полный сертификат.
+Свежие build/sign/SDK-проверки ещё не завершены, их результат будет добавлен.
+Никаких установок/очистки/восстановления пользовательской базы, MAIN и merge нет.
 
 ---
 
-История предыдущего UI-этапа:
+# Этап: единый пункт резервного копирования в Options
+
+17 октября 2026. Завершено, остановиться для дальнейших указаний.
+Ветка `feature/harvest-1-0-8`, [Draft PR33](https://github.com/Arch-relic/AgroNaliz/pull/33)
+открыт, не merged. Head до задачи `791fa7e418e11e88c7c1f43ba6c41eb0ce0eedc8`;
+опорный main `4d9ecfe7b7fb83a12f191d40855fdcd1c13cbaee`.
+Проверенный GitHub SHA **78b8b754f3c8aa01c81f97b51cfe298f1e2aed57**;
+локальный `5cd1d5d`, общий tree `beee4afd3e72bdaff2e1980cf17b2726066d1823`.
+API-публикация объясняет разные SHA. Следующий коммит меняет только этот отчёт;
+не называть SHA самого документирующего коммита проверенным Android-результатом.
+
+## Результат и границы
+
+`buttonDataBackup` («Данные и резервные копии») теперь открывает существующую
+BackupRestoreActivity вместо DataBackupActivity. Нижняя `buttonBackupRestore`
+и её обработчик удалены. Developer footer сохраняет заголовок, динамическую
+версию с MAIN/TEST-разделением и «Справочник техники».
+DataBackupActivity, её layout и manifest сохранены. `rg` по app/src после изменения
+находит DataBackupActivity только в определении класса и manifest; пользовательских
+переходов к ней нет. Настоящий экран создания/восстановления/импорта, его layout и
+реализация backup не менялись. Предыдущий UI-отчёт ниже отражает прошлый этап:
+описание двух backup-входов в нём заменено текущим единым пунктом меню.
+
+Изоляция TEST backup, пути/правила безопасности, Room23, миграции, расчёты,
+подписи, applicationId, версии и защищённые workflows не менялись. Нет действий
+с пользовательской базой, очистки/восстановления/установки на смартфон.
+
+Изменены ровно пять файлов относительно начала задачи (пути от корня):
+- app/src/main/java/ru/fo6osik/workjournal/OptionsActivity.kt
+- app/src/main/res/layout/activity_options.xml
+- app/src/androidTest/java/ru/fo6osik/workjournal/AppVersionUiTest.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/MainScreenLayoutUiTest.kt
+- docs/codex-handoff.md
+Удалённых файлов нет. Незакоммиченных изменений после отчётного коммита нет.
+
+## Проверки
+
+**[Android PR checks #102 — SUCCESS](https://github.com/Arch-relic/AgroNaliz/actions/runs/39029306687)**
+для указанного проверенного SHA:
+- debug/TEST и обе instrumentation APK собраны. `testDebugUnitTest` и
+  `testDebugTestUnitTest` выполнены заново, не UP-TO-DATE. Число JVM-тестов
+  стандартный лог не печатает; результаты находятся в diagnostics.
+- 46 Python:13 catalog + 6 version + 27 TEST safety/signing tools, все успешны.
+- 84 успешных инструментальных выполнения в 45 вызовах, ошибок нет.
+- AppVersionUiTest:3 успешных вызова (MAIN, TEST, TEST после update). Сохранены
+  проверки версии/TEST-маркера/Room/12sp; добавлены переход по верхней backup-кнопке
+  и видимость/доступность Create/Restore/Import. Сами операции не нажимаются.
+- MainScreenLayoutUiTest:3/3, отсутствие дубликата в Options, переход именно в
+  BackupRestoreActivity, рабочий каталог, прежняя геометрия/GONE уборки,
+  compact720×960/font160% без обрезанного текста.
+- HarvestQuickAccessUiTest2/2, Harvest108Test5/5, HarvestFullBackup108Test4/4;
+  Room22→23 seed/verify/restart3 вызова успешны. Прежние full JSON roundtrip/merge,
+  повторный импорт, legacy backup и rollback сохранились и прошли.
+- Безопасное TEST update прошло: тот же синтетический ключ/больший code сохраняет
+  Room/preferences/files, другой ключ отвергнут без потери данных; read-only JSON
+  export и синтетическое восстановление успешны, MAIN не изменён.
+
+**[Main APK safe update checks #29 — SUCCESS](https://github.com/Arch-relic/AgroNaliz/actions/runs/39029306676)**:
+сборка/JVM выполнены заново,26 Python и3 инструментальные проверки успешны.
+Синтетическая MAIN — только в ранее разрешённом одноразовом CI-эмуляторе.
+
+Итого два CI:72 успешных Python и87 инструментальных выполнений, ошибок нет.
+Тесты и workflow не отключались/не ослаблялись. Команды сборки в CI:
+`:app:assembleDebug :app:assembleDebugTest :app:testDebugUnitTest
+:app:testDebugTestUnitTest :app:assembleDebugAndroidTest`, затем
+`-PtestBuildType=debugTest :app:assembleDebugTestAndroidTest`; существующие runners
+изоляции/уборки/топлива/1.0.8/signing выполнены полностью.
+
+Локально `python3 -m unittest discover -s docs -p 'test_*py' -q`:72 всего,
+70 успешно,2 пропущены без APK. `git diff --check` успешен.
+`source /workspace/agronaliz-env.sh; agrogradle :app:assembleDebug :app:test`
+остановился до компиляции: `Could not determine a usable wildcard IP for this machine`.
+Не считать локальную Android-сборку успешной; реальная сборка/проверка — Actions.
+
+## Риски, ручная проверка и продолжение
+
+Риска изменения данных от этой корректировки не выявлено: изменены только меню и
+навигация, целевой backup-экран сохранён. Реальная пользовательская база, физический
+телефон и OEM-поведение не проверялись. DataBackupActivity пока остаётся неиспользуемым
+кодом по явному ТЗ; удалять отдельно только по следующему заданию.
+
+Для ручной проверки после подготовки обновлённой TEST: Options → «Данные и резервные
+копии» должно открывать три действия (создание, восстановление, импорт); внизу только
+заголовок/версия/каталог. Возврат назад ведёт в Options. Не выполнять восстановление
+рабочей базы ради проверки навигации. Не удалять и не очищать приложение.
+Прежняя APK2000008 не содержит эту последнюю корректировку. Новая устанавливаемая
+APK этой задачей не публиковалась, подпись/id не менялись.
+
+Незавершённых задач кода нет. После отчёта остановиться; не merge, не релиз,
+не устанавливать APK на пользовательские устройства.
+
+---
+
+История предыдущего этапа:
 
 # Этап: окончательная компоновка главного экрана 1.0.8
 
