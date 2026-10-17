@@ -26,9 +26,45 @@ attempt1, оригинальный MAIN certificate pin, exact applicationId, р
 не суммируются повторно; 23 passed/1 SDK skip. YAML parse, manifest hashes,
 git diff --check успешны. agrogradle :app:assembleDebug :app:test не стартовал:
 FileLockContentionHandler / Could not determine a usable wildcard IP for this machine.
-Полный GitHub CI запрашивается публикацией этого коммита; результаты и реально
-проверенный remote SHA будут записаны следующим отчётным коммитом. Текущие
-изменения проверены локально до коммита; будущий CI пока не объявляется успешным.
+Полный CI успешно выполнен для c6739fe79fc049ed42a7ad72ae7210b48168b6ea
+(локальный эквивалент 8edd5a5, одинаковое дерево f116477ccce36536bce0ba2b15b44bb2e1aaeaa9).
+Этот отчёт сохранён следующим коммитом, меняющим только docs/codex-handoff.md;
+его собственный SHA не выдаётся за повторно протестированный Android-код.
+
+| CI | Run | Результат нового запуска |
+|---|---|---|
+| Политика выпуска | https://github.com/Arch-relic/AgroNaliz/actions/runs/39040866601 | SUCCESS, 10/10; вложенные24 legacy:23pass/1SDKskip |
+| Android PR MAIN/TEST | https://github.com/Arch-relic/AgroNaliz/actions/runs/39040866562 | SUCCESS,46Python,84instrumental в45вызовах; JVM обеих сборок выполнены |
+| MAIN safety | https://github.com/Arch-relic/AgroNaliz/actions/runs/39040866603 | SUCCESS,26Python,3instrumental; JVM выполнены |
+| MAIN1.0.7/code3000003/Room22→1.0.8/code3000004/Room23 | https://github.com/Arch-relic/AgroNaliz/actions/runs/39040866606 | SUCCESS,3instrumental; JVM и unsigned release analysis build выполнены |
+
+Итого в Android/MAIN safety jobs:72Python; во всех эмуляторах90instrumental.
+Policy10 и вложенные suites указаны отдельно, не суммировать дубли.
+Task :app:testDebugUnitTest и :app:testDebugTestUnitTest в Android job исполнены,
+не UP-TO-DATE; подробное число JVM в console не выводилось, не выдумывать.
+В Android logs Harvest108Test5/5, HarvestFullBackup108Test4/4,
+HarvestRoom23MigrationTest3вызова/3pass, HarvestQuickAccessUiTest2/2.
+Успешны layout/navigation, отдельный JSON roundtrip/merge, TEST in-place update
+с сохранением Room/preferences/files; неверный ключ отвергнут без изменения данных.
+MAIN22 audit сравнил старые колонки всех таблиц, связи, NULL новых площадей,
+топливо/расчёты, отдельную restore database и повторный запуск. Только синтетика.
+MAIN/TEST собраны независимо; package/provider isolation подтверждена логами.
+
+Положительный допуск: exact owner/main/manual1 audit правильного SHA/schema22→23.
+Отрицательные: wrong SHA/repo/branch/actor/attempt/workflow/status/version/schema,
+пропущенные/неуспешные/неоднозначные job/steps, truncated API, API failure,
+нерастущий/устаревший code, TEST/other package до и после sign, неверный certificate.
+Все эти проверки прошли. Production signer не запускался: только offline mocks и
+существующие CI disposable SDK fixtures без production Secrets.
+
+Итоговый diff применения (четыре согласованных файла + handoff):
+https://github.com/Arch-relic/AgroNaliz/commit/c6739fe79fc049ed42a7ad72ae7210b48168b6ea
+Сама политика:119 insertions/11 deletions в четырёх файлах, совпадает с .patch.
+Следующий отчётный коммит не изменяет ни один target hash. YAML/diff проверены.
+Остаются прежние предупреждения Kotlin о reified intersection в migration tests
+и deprecated versionCode; не менялись в рамках минимального патча.
+Реальный production certificate/доступность Secrets и подписание новым workflow
+сейчас не проверялись; это не утверждение о готовой подписанной MAIN APK.
 
 Настоящее MAIN signing, Release, merge, установка на устройства и действия с
 реальными данными не выполняются. MAIN/TEST workflows сборки не изменены.
