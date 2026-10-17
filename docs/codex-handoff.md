@@ -22,8 +22,14 @@ post-sign package mismatch. Preserved: main owner1st dispatch, ANDROID_* pin/ide
 Вложенный24tests не прибавлять к82. Реальные APK/ключи/SDK/сеть для patch tests
 не используются; подпись не запускалась. git apply --check/manifest/diff checks успешны.
 
-Новый readonly CI main-policy-proposal-checks.yml ещё выполняется/будет записан
-после проверки; текущая Android source остаётся проверенным9fe8fa2 (90instrumental).
+[Readonly detached-policy CI SUCCESS](https://github.com/Arch-relic/AgroNaliz/actions/runs/39037182692):
+Python3.12,10/10 outer patch tests + старые MAIN/version suites (1SDKskip).
+Проверенный patch/test SHA56e65f80a83e3caba1badf9988e31f94964c0b3f,
+локальныйaf0afc2, tree2a822777fc276ffac077a4f63a90bc2decd82325.
+API объясняет разные SHA. Следующий коммит меняет только два отчёта, не patch/tests;
+не называть его SHA проверенным Android/patch-кодом. YAML предложенного workflow
+дополнительно разобран PyYAML BaseLoader: manual-only и audit output propagation верны.
+Текущая Android source остаётся проверенным9fe8fa2 (90instrumental).
 Отдельный запуск Android для неизменённого product кода не нужен; известное локальное
 wildcard IP ограничение Gradle сохраняется. Непроверено: реальный production signer
 после разрешения patch, доступность Secrets сейчас, реальная база/устройство/OEM.

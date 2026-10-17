@@ -88,7 +88,14 @@ API error, неверную схему/версию/floor/порядок, TEST/�
 проверка SHA manifest, py_compile и diff --check успешны. Android-код не менялся;
 новая Android-сборка ради патча не выполнялась (известное wildcard IP ограничение).
 
-READONLY_CI_PENDING
+[Detached MAIN release policy proposal checks — SUCCESS](https://github.com/Arch-relic/AgroNaliz/actions/runs/39037182692).
+Проверенный patch/test SHA56e65f80a83e3caba1badf9988e31f94964c0b3f,
+локальныйaf0afc2, tree2a822777fc276ffac077a4f63a90bc2decd82325 (API-публикация объясняет
+разные SHA). Python3.12:10/10 exact-patch tests, вложенные MAIN/version suites успешны
+с1 SDKskip. CI без Secrets/APK/подписи. Последующий коммит меняет только два отчёта,
+не signer/patch/harness; его SHA не выдаётся за проверенный.
+Дополнительно локально PyYAML BaseLoader разобрал предложенный YAML; проверены
+manual-only trigger и передача audit ID из checked build outputs, не user input.
 
 Нельзя обещать успешный production sign сейчас: действующая политика всё ещё
 блокируетRoom23; наличие и pin оригинального ключа проверится только разрешённым
