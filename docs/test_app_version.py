@@ -62,10 +62,12 @@ class AppVersionTest(unittest.TestCase):
     def test_room_23_and_dynamic_label(self):
         self.assertRegex((ROOT / 'app/src/main/java/ru/fo6osik/workjournal/AppDatabase.kt').read_text(), r'version\s*=\s*23\s*,')
         root = ET.parse(ROOT / 'app/src/main/res/layout/activity_main.xml').getroot()
-        self.assertEqual('ScrollView', root.tag)
+        self.assertEqual('FrameLayout', root.tag)
+        self.assertIsNotNone(root.find('ScrollView'))
         android = '{http://schemas.android.com/apk/res/android}'
         options = ET.parse(ROOT / 'app/src/main/res/layout/activity_options.xml').getroot()
-        self.assertEqual('ScrollView', options.tag)
+        self.assertEqual('FrameLayout', options.tag)
+        self.assertIsNotNone(options.find('ScrollView'))
         self.assertFalse(any(x.get(android + 'id') == '@+id/textAppVersion' for x in root.iter()))
         label = next(x for x in options.iter('TextView') if x.get(android + 'id') == '@+id/textAppVersion')
         self.assertIsNone(label.get(android + 'text'))
