@@ -345,7 +345,8 @@ class HarvestProcessActivity : AppCompatActivity() {
         textHarvestResults.text = HarvestCampaignMetrics.text(process.fieldAreaSnapshotHa, process.actualPlantedAreaHa,
             process.status == "IN_PROGRESS", HarvestCampaignMetrics.calculate(
             process.bunkerVolumeM3, process.actualPlantedAreaHa,
-            days.filter { it.status == "COMPLETED" }.map(::input), days.map(::input)))
+            days.filter { it.status == "COMPLETED" }.map(::input), days.map(::input),
+            campaignCompleted = process.status == "COMPLETED", fieldAreaSnapshotHa = process.fieldAreaSnapshotHa))
 
         renderDays(
             days,
