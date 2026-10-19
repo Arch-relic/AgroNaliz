@@ -57,7 +57,7 @@ class Room24UpdateTest {
             for((n,scope) in listOf("DAY","BEFORE_DAY").withIndex()) db.execSQL("INSERT INTO harvest_refuelings(id,refuelUid,dayId,dayUid,vehicleId,vehicleNameSnapshot,scope,beforePercent,afterPercent,time,createdAt) VALUES(?,?,?,?,26001,'synthetic',?,30,90,'12:30',103)",arrayOf<Any?>(26400+p*10+n,"synthetic-room24-r$p-$n",26200+p,"synthetic-room24-d$p",scope))
         }
         context.getSharedPreferences("synthetic-room24",0).edit().putString("cert",cert()).putInt("interval",32).commit()
-        context.getSharedPreferences("harvest_reminder_prefs",0).edit().putBoolean("enabled_26201",false).putInt("interval_26201",32).putInt("unload_26201",9).putLong("next_at_26201",2000000000000L).putBoolean("waiting_26201",true).commit()
+        context.getSharedPreferences("harvest_reminder_prefs",0).edit().putBoolean("enabled_26201",true).putBoolean("enabled_26202",false).putInt("interval_26201",32).putInt("unload_26201",9).putLong("next_at_26201",2000000000000L).putBoolean("waiting_26201",true).commit()
         File(context.filesDir,"synthetic-room24-retained").writeText("keep")
         File(context.filesDir,"synthetic-room24-documents/manual.txt").apply { parentFile!!.mkdirs();writeText("synthetic document retained") }
         File(context.getExternalFilesDir(null),"synthetic-room24-document.txt").writeText("synthetic external document retained")
@@ -69,7 +69,7 @@ class Room24UpdateTest {
         val prefs=context.getSharedPreferences("synthetic-room24",0)
         assertEquals(prefs.getString("cert",null),cert());assertEquals(32,prefs.getInt("interval",0))
         val reminders=context.getSharedPreferences("harvest_reminder_prefs",0)
-        assertFalse(reminders.getBoolean("enabled_26201",true));assertEquals(32,reminders.getInt("interval_26201",0))
+        assertTrue(reminders.getBoolean("enabled_26201",false));assertFalse(reminders.getBoolean("enabled_26202",true));assertEquals(32,reminders.getInt("interval_26201",0))
         assertEquals(9,reminders.getInt("unload_26201",0));assertEquals(2000000000000L,reminders.getLong("next_at_26201",0L));assertTrue(reminders.getBoolean("waiting_26201",false))
         assertEquals("keep",File(context.filesDir,"synthetic-room24-retained").readText())
         assertEquals("synthetic document retained",File(context.filesDir,"synthetic-room24-documents/manual.txt").readText())
