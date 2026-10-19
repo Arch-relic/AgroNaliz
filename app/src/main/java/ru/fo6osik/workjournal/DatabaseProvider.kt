@@ -1693,6 +1693,12 @@ private val MIGRATION_16_17 =
         }
     }
 
+    val MIGRATION_23_24 = object : Migration(23, 24) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            database.execSQL("ALTER TABLE harvest_days ADD COLUMN reminderStepMinutes INTEGER NOT NULL DEFAULT 1")
+        }
+    }
+
     val MIGRATION_22_23 = object : Migration(22, 23) {
         override fun migrate(database: SupportSQLiteDatabase) {
             database.execSQL("ALTER TABLE harvest_processes ADD COLUMN fieldAreaSnapshotHa REAL")
@@ -1746,7 +1752,8 @@ private val MIGRATION_16_17 =
     MIGRATION_19_20,
     MIGRATION_20_21,
     MIGRATION_21_22,
-    MIGRATION_22_23
+    MIGRATION_22_23,
+    MIGRATION_23_24
 )
                     .build()
 

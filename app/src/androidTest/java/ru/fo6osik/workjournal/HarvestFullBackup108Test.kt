@@ -30,7 +30,7 @@ class HarvestFullBackup108Test {
             for (n in 1..2) {
                 val day=source.harvestDao().insertDay(HarvestDay(dayUid="backup-day-$p-$n",processId=process,
                     workDate="2026-10-${14+n}",startTime="08:00",workIntervalMinutes=47,workIntervalCustom=true,
-                    unloadIntervalMinutes=9,lunchIntervalMinutes=22,dinnerIntervalMinutes=23,waitingTransportIntervalMinutes=41,
+                    reminderStepMinutes=5,unloadIntervalMinutes=9,lunchIntervalMinutes=22,dinnerIntervalMinutes=23,waitingTransportIntervalMinutes=41,
                     unloadIntervalCustom=true,lunchIntervalCustom=true,dinnerIntervalCustom=true,waitingTransportIntervalCustom=true)).toInt()
                 source.harvestDao().updateDayDensity(day,"CUSTOM",750.0)
                 for ((index,level) in listOf("FULL","HALF","MORE_THAN_HALF","LESS_THAN_HALF").withIndex()) {
@@ -80,7 +80,7 @@ class HarvestFullBackup108Test {
     }
     @Test fun fullJsonRestoresAllColumnsAndRelationshipsIntoSeparateDatabase()=runBlocking(Dispatchers.IO) {
         val uri=backup();val json=read(uri)
-        assertEquals(23,json.getInt("databaseVersion"))
+        assertEquals(24,json.getInt("databaseVersion"))
         for(table in tables) assertTrue(json.getJSONObject("tables").getJSONArray(table).length()>0)
         val result=DatabaseBackupManager.importBackup(context,uri,target)
         assertTrue(result.exceptionOrNull()?.stackTraceToString(),result.isSuccess)
@@ -107,6 +107,8 @@ class HarvestFullBackup108Test {
     }
     @Test fun room22BackupLeavesHistoricalAreasNullForRestoreAndMerge()=runBlocking(Dispatchers.IO) {
         val uri=backup();val json=read(uri);json.put("databaseVersion",22)
+        val legacyDays=json.getJSONObject("tables").getJSONArray("harvest_days")
+        for(i in 0 until legacyDays.length()) legacyDays.getJSONObject(i).remove("reminderStepMinutes")
         val processes=json.getJSONObject("tables").getJSONArray("harvest_processes")
         for(i in 0 until processes.length()) { processes.getJSONObject(i).remove("fieldAreaSnapshotHa"); processes.getJSONObject(i).remove("actualPlantedAreaHa") }
         write(uri,json)
@@ -137,4 +139,71 @@ class HarvestFullBackup108Test {
         assertTrue(DataImportManager.importData(context,uri,target).isFailure)
         for(table in tables) assertEquals(before[table],rows(target,table))
     }
+    @Test fun room23DefaultStepAndRepeatMergePreserveLocalStep()=runBlocking(Dispatchers.IO) {
+        val uri=backup(); val json=read(uri);json.put("databaseVersion",23)
+        val days=json.getJSONObject("tables").getJSONArray("harvest_days")
+        for(i in 0 until days.length()) days.getJSONObject(i).remove("reminderStepMinutes")
+        write(uri,json)
+        assertTrue(DatabaseBackupManager.importBackup(context,uri,target).isSuccess)
+        for(p in target.harvestDao().getAllProcessSummaries()) for(d in target.harvestDao().getDaysForProcess(p.id)) assertEquals(1,d.reminderStepMinutes)
+        val merged=Room.inMemoryDatabaseBuilder(context,AppDatabase::class.java).build()
+        try {
+            assertTrue(DataImportManager.importData(context,uri,merged).isSuccess)
+            val day=merged.harvestDao().getDaysForProcess(1).first()
+            assertEquals(1,day.reminderStepMinutes)
+            merged.harvestDao().saveSliderSettings(day.id,listOf(day.workIntervalMinutes,day.unloadIntervalMinutes,
+                day.lunchIntervalMinutes,day.dinnerIntervalMinutes,day.waitingTransportIntervalMinutes),5)
+            val before=tables.associateWith { rows(merged,it) }
+            assertTrue(DataImportManager.importData(context,uri,merged).isSuccess)
+            for(table in tables) assertEquals(before[table],rows(merged,table))
+            assertEquals(5,merged.harvestDao().getDayById(day.id)!!.reminderStepMinutes)
+        } finally { merged.close() }
+    }
+    @Test fun invalidStepRollbackLeavesExistingDataIntact()=runBlocking(Dispatchers.IO) {
+        val uri=backup();assertTrue(DatabaseBackupManager.importBackup(context,uri,target).isSuccess)
+        val before=tables.associateWith { rows(target,it) }
+        val json=read(uri);json.getJSONObject("tables").getJSONArray("harvest_days").getJSONObject(0).put("reminderStepMinutes",7)
+        write(uri,json)
+        assertTrue(DatabaseBackupManager.importBackup(context,uri,target).isFailure)
+        for(table in tables) assertEquals(before[table],rows(target,table))
+        // Empty target forces validation on insertion rather than ignoring an existing UID.
+        val merged=Room.inMemoryDatabaseBuilder(context,AppDatabase::class.java).build()
+        try { assertTrue(DataImportManager.importData(context,uri,merged).isFailure)
+            assertTrue(merged.harvestDao().getAllProcessSummaries().isEmpty())
+        } finally { merged.close() }
+    }
+    @Test fun supportedOlderFullBackupsStillRestoreWithStepOne()=runBlocking(Dispatchers.IO) {
+        val uri=backup(); val original=read(uri).toString()
+        val old16=JSONObject(original).put("databaseVersion",16)
+        val oldTables=old16.getJSONObject("tables")
+        for(t in listOf("harvest_processes","harvest_days","harvest_bunkers","harvest_fuel_days","harvest_refuelings","combine_specs")) oldTables.remove(t)
+        write(uri,old16)
+        val merge16=Room.inMemoryDatabaseBuilder(context,AppDatabase::class.java).build()
+        try { assertTrue("merge supported v16",DataImportManager.importData(context,uri,merge16).isSuccess) }
+        finally { merge16.close() }
+        assertTrue("full v16 must remain unsupported",DatabaseBackupManager.importBackup(context,uri,target).isFailure)
+        for(version in 18..22) {
+            val json=JSONObject(original).put("databaseVersion",version);val t=json.getJSONObject("tables")
+            val processes=t.getJSONArray("harvest_processes")
+            for(i in 0 until processes.length()) { processes.getJSONObject(i).remove("fieldAreaSnapshotHa");processes.getJSONObject(i).remove("actualPlantedAreaHa") }
+            val days=t.getJSONArray("harvest_days")
+            for(i in 0 until days.length()) {
+                val d=days.getJSONObject(i);d.remove("reminderStepMinutes")
+                if(version<22) d.remove("moisturePercent")
+                if(version<21) for(k in listOf("harvestedAreaHa","bulkDensityKgM3","densityMode")) d.remove(k)
+                if(version<20) for(k in listOf("workIntervalMinutes","unloadIntervalMinutes","lunchIntervalMinutes","dinnerIntervalMinutes","waitingTransportIntervalMinutes",
+                    "workIntervalCustom","unloadIntervalCustom","lunchIntervalCustom","dinnerIntervalCustom","waitingTransportIntervalCustom","reminderSettingsInitialized")) d.remove(k)
+            }
+            if(version==18) { val b=t.getJSONArray("harvest_bunkers");for(i in 0 until b.length()) b.getJSONObject(i).remove("postEventType") }
+            if(version<22) {t.remove("harvest_fuel_days");t.remove("harvest_refuelings")}
+            write(uri,json)
+            assertTrue("restore old version$version",DatabaseBackupManager.importBackup(context,uri,target).isSuccess)
+            for(p in target.harvestDao().getAllProcessSummaries()) for(d in target.harvestDao().getDaysForProcess(p.id)) assertEquals(1,d.reminderStepMinutes)
+            val merged=Room.inMemoryDatabaseBuilder(context,AppDatabase::class.java).build()
+            try { assertTrue("merge old version$version",DataImportManager.importData(context,uri,merged).isSuccess)
+                for(p in merged.harvestDao().getAllProcessSummaries()) for(d in merged.harvestDao().getDaysForProcess(p.id)) assertEquals(1,d.reminderStepMinutes)
+            } finally { merged.close() }
+        }
+    }
+
 }

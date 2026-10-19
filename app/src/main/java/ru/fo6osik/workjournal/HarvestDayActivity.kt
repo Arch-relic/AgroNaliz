@@ -1214,636 +1214,49 @@ class HarvestDayActivity : AppCompatActivity() {
     }
 
     private fun showDaySettingsDialog() {
-        val day =
-            currentDay
-                ?: return
-
-        val dialogView =
-            LayoutInflater
-                .from(this)
-                .inflate(
-                    R.layout.dialog_harvest_day_settings,
-                    null
-                )
-
-        val textSettingsDate =
-            dialogView.findViewById<TextView>(
-                R.id.textHarvestDaySettingsDate
-            )
-
-        val switchEnabled =
-            dialogView.findViewById<Switch>(
-                R.id.switchHarvestReminderEnabled
-            )
-
-        val textExample =
-            dialogView.findViewById<TextView>(
-                R.id.textReminderSettingsExample
-            )
-
-        val textApplyHint =
-            dialogView.findViewById<TextView>(
-                R.id.textReminderSettingsApplyHint
-            )
-
-        val buttonSave =
-            dialogView.findViewById<Button>(
-                R.id.buttonSaveHarvestDaySettings
-            )
-
-        val buttonCancel =
-            dialogView.findViewById<Button>(
-                R.id.buttonCancelHarvestDaySettings
-            )
-
-        val workCustomInput =
-            dialogView.findViewById<EditText>(
-                R.id.inputWorkCustom
-            )
-
-        val unloadCustomInput =
-            dialogView.findViewById<EditText>(
-                R.id.inputUnloadCustom
-            )
-
-        val lunchCustomInput =
-            dialogView.findViewById<EditText>(
-                R.id.inputLunchCustom
-            )
-
-        val dinnerCustomInput =
-            dialogView.findViewById<EditText>(
-                R.id.inputDinnerCustom
-            )
-
-        val waitingCustomInput =
-            dialogView.findViewById<EditText>(
-                R.id.inputWaitingCustom
-            )
-
-        val workState =
-            IntervalChoiceState(
-                value =
-                    day.workIntervalMinutes,
-                custom =
-                    day.workIntervalCustom
-            )
-
-        val unloadState =
-            IntervalChoiceState(
-                value =
-                    day.unloadIntervalMinutes,
-                custom =
-                    day.unloadIntervalCustom
-            )
-
-        val lunchState =
-            IntervalChoiceState(
-                value =
-                    day.lunchIntervalMinutes,
-                custom =
-                    day.lunchIntervalCustom
-            )
-
-        val dinnerState =
-            IntervalChoiceState(
-                value =
-                    day.dinnerIntervalMinutes,
-                custom =
-                    day.dinnerIntervalCustom
-            )
-
-        val waitingState =
-            IntervalChoiceState(
-                value =
-                    day.waitingTransportIntervalMinutes,
-                custom =
-                    day.waitingTransportIntervalCustom
-            )
-
-        textSettingsDate.text =
-            "Рабочий день: " +
-                formatDateForUi(
-                    day.workDate
-                )
-
-        val activeDay =
-            day.status ==
-                "ACTIVE" &&
-                currentProcess
-                    ?.status ==
-                    "IN_PROGRESS"
-
-        switchEnabled.isChecked =
-            activeDay &&
-                HarvestReminderManager
-                    .isEnabled(
-                        this,
-                        day.id
-                    )
-
-        switchEnabled.isEnabled =
-            activeDay
-
-        fun refreshReminderSwitchText() {
-            switchEnabled.text =
-                if (
-                    !activeDay
-                ) {
-                    "Напоминания выключены — день завершён"
-                } else if (
-                    switchEnabled.isChecked
-                ) {
-                    "Напоминания включены"
-                } else {
-                    "Напоминания выключены"
-                }
-        }
-
-        refreshReminderSwitchText()
-
-        if (
-            !activeDay
-        ) {
-            textApplyHint.text =
-                "Настройки сохранены в истории. Уведомления не запускаются."
-        }
-
-        switchEnabled.setOnCheckedChangeListener {
-                _, _ ->
-
-            refreshReminderSwitchText()
-        }
-
-        fun refreshExample() {
-            val work =
-                workState.value
-                    .coerceAtLeast(
-                        0
-                    )
-
-            val unload =
-                unloadState.value
-                    .coerceAtLeast(
-                        0
-                    )
-
-            val lunch =
-                lunchState.value
-                    .coerceAtLeast(
-                        0
-                    )
-
-            val dinner =
-                dinnerState.value
-                    .coerceAtLeast(
-                        0
-                    )
-
-            val waiting =
-                waitingState.value
-                    .coerceAtLeast(
-                        0
-                    )
-
-            textExample.text =
-                buildString {
-                    append(
-                        "Обычный цикл: $work + $unload = " +
-                            "${work + unload} мин\n"
-                    )
-
-                    append(
-                        "Обед: $work + $unload + $lunch = " +
-                            "${work + unload + lunch} мин\n"
-                    )
-
-                    append(
-                        "Ужин: $work + $unload + $dinner = " +
-                            "${work + unload + dinner} мин\n"
-                    )
-
-                    append(
-                        "Ожидание транспорта: " +
-                            "$work + $unload + $waiting = " +
-                            "${work + unload + waiting} мин"
-                    )
-                }
-        }
-
-        fun setupSelector(
-            presetViews: List<Pair<TextView, Int>>,
-            customView: TextView,
-            customInput: EditText,
-            state: IntervalChoiceState
-        ) {
-            val presetValues =
-                presetViews.map {
-                    it.second
-                }
-
-            if (
-                state.custom ||
-                state.value !in
-                    presetValues
-            ) {
-                state.custom =
-                    true
-
-                customInput.visibility =
-                    View.VISIBLE
-
-                customInput.setText(
-                    state.value
-                        .toString()
-                )
-            } else {
-                customInput.visibility =
-                    View.GONE
-            }
-
-            fun refreshStyles() {
-                presetViews.forEach {
-                        pair ->
-
-                    applyIntervalOptionStyle(
-                        view =
-                            pair.first,
-                        selected =
-                            !state.custom &&
-                                state.value ==
-                                    pair.second
-                    )
-                }
-
-                applyIntervalOptionStyle(
-                    view =
-                        customView,
-                    selected =
-                        state.custom
-                )
-            }
-
-            presetViews.forEach {
-                    pair ->
-
-                pair.first.setOnClickListener {
-                    state.value =
-                        pair.second
-
-                    state.custom =
-                        false
-
-                    customInput.visibility =
-                        View.GONE
-
-                    customInput.clearFocus()
-
-                    refreshStyles()
-                    refreshExample()
-                }
-            }
-
-            customView.setOnClickListener {
-                state.custom =
-                    true
-
-                customInput.visibility =
-                    View.VISIBLE
-
-                if (
-                    customInput.text
-                        .toString()
-                        .isBlank()
-                ) {
-                    customInput.setText(
-                        state.value
-                            .toString()
-                    )
-                }
-
-                refreshStyles()
-                refreshExample()
-            }
-
-            customInput.addTextChangedListener(
-                object : TextWatcher {
-
-                    override fun beforeTextChanged(
-                        s: CharSequence?,
-                        start: Int,
-                        count: Int,
-                        after: Int
-                    ) {
-                    }
-
-                    override fun onTextChanged(
-                        s: CharSequence?,
-                        start: Int,
-                        before: Int,
-                        count: Int
-                    ) {
-                    }
-
-                    override fun afterTextChanged(
-                        s: Editable?
-                    ) {
-                        if (
-                            !state.custom
-                        ) {
-                            return
-                        }
-
-                        s
-                            ?.toString()
-                            ?.toIntOrNull()
-                            ?.let {
-                                state.value =
-                                    it
-
-                                refreshExample()
-                            }
-                    }
-                }
-            )
-
-            refreshStyles()
-        }
-
-        setupSelector(
-            presetViews =
-                listOf(
-                    dialogView.findViewById<TextView>(
-                        R.id.optionWork30
-                    ) to 30,
-                    dialogView.findViewById<TextView>(
-                        R.id.optionWork40
-                    ) to 40,
-                    dialogView.findViewById<TextView>(
-                        R.id.optionWork50
-                    ) to 50,
-                    dialogView.findViewById<TextView>(
-                        R.id.optionWork60
-                    ) to 60
-                ),
-            customView =
-                dialogView.findViewById(
-                    R.id.optionWorkCustom
-                ),
-            customInput =
-                workCustomInput,
-            state =
-                workState
-        )
-
-        setupSelector(
-            presetViews =
-                listOf(
-                    dialogView.findViewById<TextView>(
-                        R.id.optionUnload5
-                    ) to 5
-                ),
-            customView =
-                dialogView.findViewById(
-                    R.id.optionUnloadCustom
-                ),
-            customInput =
-                unloadCustomInput,
-            state =
-                unloadState
-        )
-
-        setupSelector(
-            presetViews =
-                listOf(
-                    dialogView.findViewById<TextView>(
-                        R.id.optionLunch10
-                    ) to 10,
-                    dialogView.findViewById<TextView>(
-                        R.id.optionLunch15
-                    ) to 15,
-                    dialogView.findViewById<TextView>(
-                        R.id.optionLunch20
-                    ) to 20
-                ),
-            customView =
-                dialogView.findViewById(
-                    R.id.optionLunchCustom
-                ),
-            customInput =
-                lunchCustomInput,
-            state =
-                lunchState
-        )
-
-        setupSelector(
-            presetViews =
-                listOf(
-                    dialogView.findViewById<TextView>(
-                        R.id.optionDinner10
-                    ) to 10,
-                    dialogView.findViewById<TextView>(
-                        R.id.optionDinner15
-                    ) to 15,
-                    dialogView.findViewById<TextView>(
-                        R.id.optionDinner20
-                    ) to 20
-                ),
-            customView =
-                dialogView.findViewById(
-                    R.id.optionDinnerCustom
-                ),
-            customInput =
-                dinnerCustomInput,
-            state =
-                dinnerState
-        )
-
-        setupSelector(
-            presetViews =
-                listOf(
-                    dialogView.findViewById<TextView>(
-                        R.id.optionWaiting30
-                    ) to 30,
-                    dialogView.findViewById<TextView>(
-                        R.id.optionWaiting40
-                    ) to 40,
-                    dialogView.findViewById<TextView>(
-                        R.id.optionWaiting60
-                    ) to 60
-                ),
-            customView =
-                dialogView.findViewById(
-                    R.id.optionWaitingCustom
-                ),
-            customInput =
-                waitingCustomInput,
-            state =
-                waitingState
-        )
-
-        refreshExample()
-
-        val dialog =
-            AlertDialog
-                .Builder(this)
-                .setView(
-                    dialogView
-                )
-                .create()
-
-        buttonCancel.setOnClickListener {
-            dialog.dismiss()
-        }
-
-        fun readValue(
-            label: String,
-            state: IntervalChoiceState,
-            input: EditText
-        ): Int? {
-            if (
-                !state.custom
-            ) {
-                return state.value
-            }
-
-            val value =
-                input.text
-                    .toString()
-                    .trim()
-                    .toIntOrNull()
-
-            if (
-                value == null ||
-                value <
-                    1 ||
-                value >
-                    600
-            ) {
-                Toast.makeText(
-                    this,
-                    "Для «$label» укажите значение от 1 до 600 минут",
-                    Toast.LENGTH_LONG
-                ).show()
-
-                return null
-            }
-
-            return value
-        }
-
+        val day = currentDay ?: return
+        val dialogView = layoutInflater.inflate(R.layout.dialog_harvest_day_settings, null)
+        dialogView.findViewById<TextView>(R.id.textHarvestDaySettingsDate).text = "Рабочий день: ${formatDateForUi(day.workDate)}"
+        val switchEnabled = dialogView.findViewById<Switch>(R.id.switchHarvestReminderEnabled)
+        val textExample = dialogView.findViewById<TextView>(R.id.textReminderSettingsExample)
+        val activeDay = day.status == "ACTIVE" && currentProcess?.status == "IN_PROGRESS"
+        switchEnabled.isChecked = activeDay && HarvestReminderManager.isEnabled(this, day.id)
+        switchEnabled.isEnabled = activeDay
+        fun switchText() { switchEnabled.text = if (!activeDay) "Напоминания выключены — день завершён"
+            else if (switchEnabled.isChecked) "Напоминания включены" else "Напоминания выключены" }
+        switchText(); switchEnabled.setOnCheckedChangeListener { _, _ -> switchText() }
+        if (!activeDay) dialogView.findViewById<TextView>(R.id.textReminderSettingsApplyHint).text =
+            "Настройки сохранены в истории. Уведомления не запускаются."
+        var step = day.reminderStepMinutes
+        val group = dialogView.findViewById<android.widget.RadioGroup>(R.id.groupHarvestStep)
+        group.check(if (step == 5) R.id.harvestStep5 else R.id.harvestStep1)
+        val values = listOf(day.workIntervalMinutes, day.unloadIntervalMinutes, day.lunchIntervalMinutes,
+            day.dinnerIntervalMinutes, day.waitingTransportIntervalMinutes)
+        val ids = listOf(R.id.sliderHarvestWork, R.id.sliderHarvestUnload, R.id.sliderHarvestLunch,
+            R.id.sliderHarvestDinner, R.id.sliderHarvestWaiting)
+        val titles = listOf("Интервал работы", "Разгрузка бункера", "Обед", "Ужин", "Ожидание транспорта")
+        val sliders = ids.mapIndexed { index, id -> dialogView.findViewById<HarvestValueSliderView>(id).apply {
+            bind(titles[index], "мин", HarvestSliderValue(1, HarvestSliderRules.maxima[index], step, values[index].toDouble()))
+        } }
+        fun example() { textExample.text = HarvestSliderRules.example(sliders.map { it.state.value!!.toInt() }) }
+        sliders.forEach { it.onValueChanged = ::example }; example()
+        group.setOnCheckedChangeListener { _, id -> step = if (id == R.id.harvestStep5) 5 else 1
+            sliders.forEach { it.state.step = step } }
+        val buttonSave = dialogView.findViewById<Button>(R.id.buttonSaveHarvestDaySettings)
+        val dialog = AlertDialog.Builder(this).setView(dialogView).create()
+        dialogView.findViewById<Button>(R.id.buttonCancelHarvestDaySettings).setOnClickListener { dialog.dismiss() }
         buttonSave.setOnClickListener {
-            val work =
-                readValue(
-                    "Интервал работы",
-                    workState,
-                    workCustomInput
-                ) ?: return@setOnClickListener
-
-            val unload =
-                readValue(
-                    "Разгрузка бункера",
-                    unloadState,
-                    unloadCustomInput
-                ) ?: return@setOnClickListener
-
-            val lunch =
-                readValue(
-                    "Обед",
-                    lunchState,
-                    lunchCustomInput
-                ) ?: return@setOnClickListener
-
-            val dinner =
-                readValue(
-                    "Ужин",
-                    dinnerState,
-                    dinnerCustomInput
-                ) ?: return@setOnClickListener
-
-            val waiting =
-                readValue(
-                    "Ожидание транспорта",
-                    waitingState,
-                    waitingCustomInput
-                ) ?: return@setOnClickListener
-
-            buttonSave.isEnabled =
-                false
-
-            val wasEnabled =
-                HarvestReminderManager
-                    .isEnabled(
-                        this,
-                        day.id
-                    )
-
+            val selected = sliders.map { it.state.value!!.toInt() }
+            val work = selected[0]; val unload = selected[1]
+            val chosenStep = step
+            buttonSave.isEnabled = false
+            val wasEnabled = HarvestReminderManager.isEnabled(this, day.id)
             Thread {
                 try {
-                    val dao =
-                        DatabaseProvider
-                            .getDatabase(
-                                applicationContext
-                            )
-                            .harvestDao()
-
-                    dao.updateDayReminderSettings(
-                        dayId =
-                            day.id,
-                        workIntervalMinutes =
-                            work,
-                        unloadIntervalMinutes =
-                            unload,
-                        lunchIntervalMinutes =
-                            lunch,
-                        dinnerIntervalMinutes =
-                            dinner,
-                        waitingTransportIntervalMinutes =
-                            waiting,
-                        workIntervalCustom =
-                            workState.custom,
-                        unloadIntervalCustom =
-                            unloadState.custom,
-                        lunchIntervalCustom =
-                            lunchState.custom,
-                        dinnerIntervalCustom =
-                            dinnerState.custom,
-                        waitingTransportIntervalCustom =
-                            waitingState.custom,
-                        reminderSettingsInitialized =
-                            true
-                    )
-
+                    val updatedDay = DatabaseProvider.getDatabase(applicationContext).harvestDao()
+                        .saveSliderSettings(day.id, selected, chosenStep)
                     runOnUiThread {
-                        val updatedDay =
-                            day.copy(
-                                workIntervalMinutes =
-                                    work,
-                                unloadIntervalMinutes =
-                                    unload,
-                                lunchIntervalMinutes =
-                                    lunch,
-                                dinnerIntervalMinutes =
-                                    dinner,
-                                waitingTransportIntervalMinutes =
-                                    waiting,
-                                workIntervalCustom =
-                                    workState.custom,
-                                unloadIntervalCustom =
-                                    unloadState.custom,
-                                lunchIntervalCustom =
-                                    lunchState.custom,
-                                dinnerIntervalCustom =
-                                    dinnerState.custom,
-                                waitingTransportIntervalCustom =
-                                    waitingState.custom,
-                                reminderSettingsInitialized =
-                                    true
-                            )
-
-                        currentDay =
-                            updatedDay
-
+                        currentDay = updatedDay
                         if (
                             activeDay
                         ) {
@@ -3128,56 +2541,54 @@ class HarvestDayActivity : AppCompatActivity() {
     private fun showDayDensityDialog() {
         val day = currentDay ?: return
         val process = currentProcess ?: return
-        val layout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(20), dp(12), dp(20), dp(12))
-        }
-        layout.addView(TextView(this).apply {
-            text = "Культура: ${process.crop}\n" + HarvestResultsFormatter.density(day.bulkDensityKgM3, day.densityMode) +
-                "\nОриентировочные значения; влажность и состояние зерна влияют на плотность."
-        })
+        val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(20), dp(12), dp(20), dp(12)) }
+        layout.addView(TextView(this).apply { text = "Культура: ${process.crop}\n" + HarvestResultsFormatter.density(day.bulkDensityKgM3, day.densityMode) +
+            "\nСтарое значение сохраняется точно, пока вы не выберете режим или не передвинете ползунок." })
         val group = RadioGroup(this)
         val modes = listOf("MIN", "AVERAGE", "MAX", "CUSTOM")
         val labels = listOf("Минимальная", "Средняя", "Максимальная", "Своё значение")
         modes.forEachIndexed { index, mode ->
             val value = HarvestDensityCatalog.selected(process.crop, mode)
-            group.addView(RadioButton(this).apply {
-                id = index + 1
-                text = if (mode == "CUSTOM") labels[index] else "${labels[index]}: ${value?.let { HarvestResultsFormatter.number(it) + " кг/м³" } ?: "не указана"}"
-                isEnabled = mode == "CUSTOM" || value != null
-            })
+            group.addView(RadioButton(this).apply { id = index + 1; text = if (mode == "CUSTOM") labels[index]
+                else "${labels[index]}: ${value?.let { HarvestResultsFormatter.number(it) + " кг/м³" } ?: "не указана"}"
+                isEnabled = mode == "CUSTOM" || value != null })
         }
-        val custom = EditText(this).apply {
-            hint = "Своё значение, кг/м³"
-            inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
-            keyListener = android.text.method.DigitsKeyListener.getInstance("0123456789,.")
-            if (day.densityMode == "CUSTOM") setText(day.bulkDensityKgM3?.let { java.math.BigDecimal.valueOf(it).toPlainString() } ?: "")
-        }
-        layout.addView(group); layout.addView(custom)
+        val customState = HarvestSliderValue(320, 900, 5, day.bulkDensityKgM3)
+        val slider = HarvestValueSliderView(this).apply { tag = "harvest-density-slider"
+            bind("Насыпная плотность", "кг/м³", customState) }
         val selected = modes.indexOf(day.densityMode)
         group.check(if (selected >= 0 && (group.getChildAt(selected) as RadioButton).isEnabled) selected + 1 else 4)
-        custom.isEnabled = group.checkedRadioButtonId == 4
-        group.setOnCheckedChangeListener { _, id -> custom.isEnabled = id == 4 }
-        val dialog = AlertDialog.Builder(this).setTitle("Настройка насыпной плотности").setView(layout)
+        var touched = false
+        fun enabled() { slider.seekBar.isEnabled = group.checkedRadioButtonId == 4 }
+        enabled(); slider.onValueChanged = { touched = true }
+        fun updateMode(id: Int) {
+            touched = true
+            val state = if (id == 4) customState else HarvestSliderValue(320, 900, 5,
+                HarvestDensityCatalog.selected(process.crop, modes[id - 1]))
+            slider.bind("Насыпная плотность", "кг/м³", state)
+            enabled()
+        }
+        group.setOnCheckedChangeListener { _, id -> updateMode(id) }
+        for (index in 0 until group.childCount) group.getChildAt(index).setOnClickListener { updateMode(group.checkedRadioButtonId) }
+        layout.addView(group); layout.addView(slider)
+        val scroll = android.widget.ScrollView(this).apply { addView(layout) }
+        val dialog = AlertDialog.Builder(this).setTitle("Настройка насыпной плотности").setView(scroll)
             .setPositiveButton(R.string.harvest_save, null).setNegativeButton(R.string.harvest_cancel, null).create()
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                if (!touched) { dialog.dismiss(); return@setOnClickListener }
                 val mode = modes[group.checkedRadioButtonId - 1]
-                val value = if (mode == "CUSTOM") try {
-                    requireNotNull(HarvestCalculator.parseOptionalPositive(custom.text.toString()))
-                } catch (_: IllegalArgumentException) {
-                    custom.error = getString(R.string.harvest_positive_number); return@setOnClickListener
-                } else null
+                val value = if (mode == "CUSTOM") slider.state.value else null
+                if (mode == "CUSTOM" && HarvestCalculator.positive(value) == null) {
+                    Toast.makeText(this, "Выберите плотность ползунком", Toast.LENGTH_SHORT).show(); return@setOnClickListener }
                 dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false
                 Thread {
                     try {
                         check(DatabaseProvider.getDatabase(applicationContext).harvestDao().updateDayDensity(day.id, mode, value) == 1)
                         runOnUiThread { dialog.dismiss(); loadDay() }
                     } catch (e: Exception) {
-                        runOnUiThread {
-                            dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true
-                            Toast.makeText(this, "Не удалось сохранить плотность: ${e.message}", Toast.LENGTH_LONG).show()
-                        }
+                        runOnUiThread { dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true
+                            Toast.makeText(this, "Не удалось сохранить плотность: ${e.message}", Toast.LENGTH_LONG).show() }
                     }
                 }.start()
             }

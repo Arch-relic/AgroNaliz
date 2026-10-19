@@ -40,7 +40,7 @@ class HarvestRoom23MigrationTest {
     }
     @Test fun verify23AllValuesAndRestart()=runBlocking(Dispatchers.IO) {
         guard();val room=DatabaseProvider.getDatabase(context);val db=room.openHelper.readableDatabase
-        assertEquals(23,db.version)
+        assertEquals(24,db.version)
         val oldUri=android.net.Uri.parse(context.getSharedPreferences("synthetic-room23-migration",0).getString("backup",null)!!)
         val uri=PrivateTestBackups.createDestination(context)
         assertTrue(DatabaseBackupManager.exportBackup(context,uri).isSuccess)

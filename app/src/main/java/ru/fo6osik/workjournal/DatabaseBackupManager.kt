@@ -227,6 +227,17 @@ object DatabaseBackupManager {
                     "tables"
                 )
 
+            if (database.version >= 24) {
+                val days = tablesJson.optJSONArray("harvest_days")
+                if (days != null) for (index in 0 until days.length()) {
+                    val row = days.getJSONObject(index)
+                    if (backupDatabaseVersion >= 24 || row.has("reminderStepMinutes")) {
+                        val step = row.get("reminderStepMinutes")
+                        require(step is Number && step.toDouble() in listOf(1.0, 5.0)) { "Некорректный шаг напоминаний" }
+                    }
+                }
+            }
+
             val currentTables =
                 getTableNames(database).toSet()
 

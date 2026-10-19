@@ -85,6 +85,7 @@ object DataImportManager {
                 sourceDatabaseVersion != 20 &&
                 sourceDatabaseVersion != 21 &&
                 sourceDatabaseVersion != 22 &&
+                sourceDatabaseVersion != 23 &&
                 sourceDatabaseVersion != database.version
             ) {
                 error(
@@ -97,6 +98,14 @@ object DataImportManager {
 
             val tables =
                 root.getJSONObject("tables")
+
+            if (sourceDatabaseVersion >= 24) {
+                val rows = tables.getJSONArray("harvest_days")
+                for (index in 0 until rows.length()) {
+                    val value = rows.getJSONObject(index).get("reminderStepMinutes")
+                    require(value is Number && value.toDouble() in listOf(1.0, 5.0)) { "Некорректный шаг напоминаний" }
+                }
+            }
 
             validateRequiredTables(
                 tables,
@@ -354,7 +363,8 @@ val seasonProcessMap =
                             "harvest_days"
                         ) ?: JSONArray(),
                         harvestProcessMap,
-                        counter
+                        counter,
+                        sourceDatabaseVersion
                     )
 
                 HarvestFuelBackup.importFuel(database,tables,harvestDayMap,vehicleMap)
@@ -4263,7 +4273,8 @@ private fun importHarvestDays(
     database: SupportSQLiteDatabase,
     rows: JSONArray,
     harvestProcessMap: Map<Long, Long>,
-    counter: Counter
+    counter: Counter,
+    sourceDatabaseVersion: Int
 ): Map<Long, Long> {
 
     val idMap =
@@ -4353,6 +4364,10 @@ private fun importHarvestDays(
                         "status"
                     )
                 )
+
+                val step = if (sourceDatabaseVersion >= 24) row.getInt("reminderStepMinutes") else 1
+                require(step == 1 || step == 5) { "Некорректный шаг напоминаний" }
+                put("reminderStepMinutes", step)
 
                 put(
                     "workIntervalMinutes",

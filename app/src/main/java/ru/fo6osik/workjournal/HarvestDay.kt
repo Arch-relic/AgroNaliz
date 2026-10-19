@@ -106,5 +106,8 @@ data class HarvestDay(
     val bulkDensityKgM3: Double? = null,
     val densityMode: String? = null,
 
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+
+    @ColumnInfo(defaultValue = "1")
+    val reminderStepMinutes: Int = 1
 )

@@ -167,19 +167,18 @@ class HarvestAreaUiTest {
     }
     @Test fun completedDayCustomDensitySurvivesDialogReopen() {
         val day = fixture(completed = true)
+        dao.updateDayDensity(day, "CUSTOM", 555.125)
         open(day).use {
             fun densityDialog() {
                 onView(withContentDescription("Настройки рабочего дня")).perform(click())
                 onView(withText("Настройка насыпной плотности")).perform(click())
             }
             densityDialog()
-            onView(withText("Своё значение")).perform(click())
-            onView(withHint("Своё значение, кг/м³")).inRoot(isDialog()).perform(replaceText("555,125"), androidx.test.espresso.action.ViewActions.closeSoftKeyboard())
             onView(withText("Сохранить")).inRoot(isDialog()).perform(click())
             await { dao.getDayById(day)!!.bulkDensityKgM3 == 555.125 }
             await { dao.getDayById(day)!!.bulkDensityKgM3 == 555.125 }
             densityDialog()
-            onView(withHint("Своё значение, кг/м³")).check(matches(withText("555.125")))
+            onView(withText(org.hamcrest.Matchers.containsString("555,125 кг/м³"))).check(matches(isDisplayed()))
             onView(withText("Своё значение")).check(matches(isChecked()))
             onView(withText("Отмена")).inRoot(isDialog()).perform(click())
             assertEquals("COMPLETED", dao.getDayById(day)!!.status)
