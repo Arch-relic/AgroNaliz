@@ -32,6 +32,15 @@ class VerifyMainUpdate(unittest.TestCase):
             with self.assertRaises(ValueError):self.check(room=room)
         r=self.report();r['roomVersion']=20
         with self.assertRaises(ValueError):self.check(r)
+    def test_room23_to24_requires_exact_audit_and_original_identity(self):
+        r=dict(self.report(),versionCode=3000006,installedVersionCode=3000005,installedRoomVersion=23,
+               roomVersion=24,versionName='1.0.9',auditRunId=123,auditWorkflowId=389125371,auditSourceSha='a'*40)
+        self.check(r,old=(3000005,v.CERT),new=(3000006,v.CERT),room=23)
+        for key,value in [('auditRunId',None),('auditRunId',True),('auditSourceSha','b'*40),('auditWorkflowId',1),
+                          ('versionName','1.0.8'),('roomVersion',25)]:
+            with self.subTest(key=key),self.assertRaises(ValueError):
+                self.check(dict(r,**{key:value}),old=(3000005,v.CERT),new=(3000006,v.CERT),room=23)
+
     def test_tool_error_suppresses_private_details(self):
         with patch('subprocess.run',return_value=subprocess.CompletedProcess([],1,'private','private')):
             with self.assertRaises(ValueError) as e:v.tool(['adb'])

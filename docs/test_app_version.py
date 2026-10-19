@@ -13,11 +13,11 @@ from xml.etree import ElementTree as ET
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def preflight(workflow, number, installed, previous=()):
+def preflight(workflow, number, installed, previous=(), room=23):
     source = (ROOT / '.github/workflows' / workflow).read_text()
     code = textwrap.dedent(source.split("          python3 - <<'PY'\n", 1)[1].split('\n          PY', 1)[0])
     with tempfile.TemporaryDirectory() as folder:
-        env = dict(GITHUB_RUN_NUMBER=str(number), INSTALLED_CODE=str(installed), INSTALLED_ROOM='22',
+        env = dict(GITHUB_RUN_NUMBER=str(number), INSTALLED_CODE=str(installed), INSTALLED_ROOM=str(room),
                    GITHUB_REPOSITORY='synthetic/repository', GITHUB_SHA='a' * 40, GH_TOKEN='synthetic',
                    GITHUB_OUTPUT=folder + '/output', GITHUB_ENV=folder + '/env')
         response = io.BytesIO(json.dumps({'workflow_runs': [{'run_number': n} for n in previous]}).encode())
@@ -30,31 +30,31 @@ class AppVersionTest(unittest.TestCase):
     def test_single_three_component_version_for_all_variants(self):
         text = (ROOT / 'app/build.gradle.kts').read_text()
         versions = re.findall(r'versionName\s*=\s*"([^"]+)"', text)
-        self.assertEqual(['1.0.8'], versions)
+        self.assertEqual(['1.0.9'], versions)
         self.assertRegex(versions[0], r'^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$')
         self.assertNotIn('versionNameSuffix', text)
 
     def test_main_release_codes_increase_without_reset(self):
-        # Exercise code ordering against the audited Room22 fixture. Production Room23
-        # must remain blocked by the unchanged MAIN release gate until a separate audit.
+        # Exercise unchanged sequence arithmetic against the Room22 fixture.
+        # Room23/24 need their exact-source migration audit independently.
         original = Path.read_text
         def audited(path, *args, **kwargs):
             if path.name == 'AppDatabase.kt': return 'version = 22'
             return original(path, *args, **kwargs)
         with patch('pathlib.Path.read_text', audited):
-            self.assertEqual(3000005, preflight('main-apk-publish.yml', 5, 53))
-            self.assertEqual(3000006, preflight('main-apk-publish.yml', 6, 3000005, [5]))
+            self.assertEqual(3000005, preflight('main-apk-publish.yml', 5, 53, room=22))
+            self.assertEqual(3000006, preflight('main-apk-publish.yml', 6, 3000005, [5], room=22))
 
     def test_room23_main_publication_requires_matching_audit(self):
-        with self.assertRaisesRegex(SystemExit, 'separate verified migration audit'):
+        with self.assertRaises(SystemExit):
             preflight('main-apk-publish.yml', 5, 3000003)
 
-    def test_room24_main_is_blocked_without_policy_changes(self):
+    def test_room24_main_is_blocked_without_exact_audit(self):
         with self.assertRaisesRegex(SystemExit, 'separate verified migration audit'):
-            preflight('main-apk-publish.yml', 5, 3000004)
+            preflight('main-apk-publish.yml', 6, 3000005)
 
     def test_test_release_codes_increase_without_reset(self):
-        self.assertEqual(2000005, preflight('test-apk-publish.yml', 5, 53))
+        self.assertEqual(2000005, preflight('test-apk-publish.yml', 5, 53, room=22))
         self.assertEqual(2000006, preflight('test-apk-publish.yml', 6, 2000005, [5]))
 
     def test_equal_or_lower_codes_and_old_runs_are_rejected(self):

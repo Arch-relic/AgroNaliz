@@ -34,8 +34,16 @@ def validate(report,raw,installed,new,room):
     old_code,old_cert=installed;code,cert=new
     if old_cert!=CERT or cert!=CERT:raise ValueError('Installed and new certificates must match the approved original SHA-256')
     if code<=old_code or code>2100000000:raise ValueError('New versionCode must be strictly greater than installed')
-    if room not in (20,21,22) or report.get('roomVersion')!=22 or room>report['roomVersion']:
-        raise ValueError('Room update requires explicit compatible version; no downgrade')
+    target=report.get('roomVersion')
+    allowed={22:(20,21,22),23:(22,),24:(23,)}
+    if target not in allowed or room not in allowed[target] or room>target:
+        raise ValueError('Room update requires an explicitly audited pair; no downgrade')
+    if target in (23,24):
+        product,workflow,floor=('1.0.8',387641531,3000003) if target==23 else ('1.0.9',389125371,3000005)
+        audit=report.get('auditRunId')
+        if (old_code<floor or report.get('versionName')!=product or type(audit) is not int or audit<=0 or
+                report.get('auditWorkflowId')!=workflow or report.get('auditSourceSha')!=report.get('sourceSha')):
+            raise ValueError('Missing exact source migration evidence or wrong product version')
     expected={'applicationId':APP,'versionCode':code,'certificateSha256':CERT,
               'apkSha256':hashlib.sha256(raw).hexdigest(),'installedVersionCode':old_code,'installedRoomVersion':room}
     if any(report.get(k)!=v for k,v in expected.items()):raise ValueError('APK report or installed baseline differs; rebuild with actual inputs')
@@ -47,7 +55,7 @@ def main():
     parser.add_argument('--apk',required=True,type=Path)
     parser.add_argument('--report',required=True,type=Path)
     parser.add_argument('--serial',required=True)
-    parser.add_argument('--installed-room-version',required=True,type=int,choices=[20,21,22])
+    parser.add_argument('--installed-room-version',required=True,type=int,choices=[20,21,22,23])
     parser.add_argument('--adb',default='adb')
     sdk=Path(os.environ.get('ANDROID_HOME',''))/'build-tools/35.0.0'
     parser.add_argument('--aapt2',default=str(sdk/'aapt2'))
@@ -64,7 +72,7 @@ def main():
         old=metadata(installed,args.aapt2,args.apksigner)
         new=metadata(args.apk,args.aapt2,args.apksigner)
         validate(json.loads(args.report.read_text()),args.apk.read_bytes(),old,new,args.installed_room_version)
-    print('READ-ONLY UPDATE CHECK PASS: original certificate, main package, strictly higher versionCode and Room20/21/22 to22; no phone data changed')
+    print('READ-ONLY UPDATE CHECK PASS: original certificate, main package, strictly higher versionCode and audited Room pair; no phone data changed')
 
 if __name__=='__main__':
     try:main()

@@ -22,8 +22,8 @@ jobs:
           chmod +x gradlew
       - name: Build disposable future MAIN TEST fixtures and instrumentation
         run: |
-          ./gradlew -PmainVersionCode=3000005 -PtestVersionCode=1000202 :app:assembleDebug :app:assembleDebugTest :app:assembleDebugAndroidTest :app:testDebugUnitTest :app:testDebugTestUnitTest --no-daemon --console=plain
-          ./gradlew -PmainVersionCode=3000005 -PtestVersionCode=1000202 -PtestBuildType=debugTest :app:assembleDebugTestAndroidTest --no-daemon --console=plain
+          ./gradlew -PmainVersionCode=3000006 -PtestVersionCode=1000202 :app:assembleDebug :app:assembleDebugTest :app:assembleDebugAndroidTest :app:testDebugUnitTest :app:testDebugTestUnitTest --no-daemon --console=plain
+          ./gradlew -PmainVersionCode=3000006 -PtestVersionCode=1000202 -PtestBuildType=debugTest :app:assembleDebugTestAndroidTest --no-daemon --console=plain
       - uses: actions/checkout@v4
         with:
           ref: 861024e7852c16adbd733eca84e4ef11f53a32be
@@ -32,7 +32,7 @@ jobs:
         run: |
           sed -i '/^android\.aapt2FromMavenOverride=/d' .room23/gradle.properties
           chmod +x .room23/gradlew
-          .room23/gradlew -p .room23 -PmainVersionCode=3000004 -PtestVersionCode=1000201 :app:assembleDebug :app:assembleDebugTest --no-daemon --console=plain
+          .room23/gradlew -p .room23 -PmainVersionCode=3000005 -PtestVersionCode=1000201 :app:assembleDebug :app:assembleDebugTest --no-daemon --console=plain
       - name: Enable KVM
         run: sudo chmod 666 /dev/kvm
       - name: Verify Room23 to24 both packages retain data and restart

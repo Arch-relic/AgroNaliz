@@ -64,10 +64,10 @@ class ChangelogUiTest {
             pressBack()
         }
         ActivityScenario.launch(ChangelogActivity::class.java).use { scenario ->
-            visibility(scenario,"1.0.9",View.GONE)
-            visibility(scenario,"1.0.8",View.VISIBLE)
-            tap(scenario,"1.0.9")
-            visibility(scenario,"1.0.8",View.VISIBLE)
+            visibility(scenario,"1.0.9",View.VISIBLE)
+            visibility(scenario,"1.0.8",View.GONE)
+            tap(scenario,"1.0.8")
+            visibility(scenario,"1.0.9",View.VISIBLE)
             tap(scenario,"1.0.7")
             scenario.recreate()
             visibility(scenario,"1.0.9",View.VISIBLE)
@@ -108,7 +108,7 @@ class ChangelogUiTest {
             val before = databaseSnapshot()
             assertTrue(before.getValue("harvest_processes").isNotEmpty())
             ActivityScenario.launch(ChangelogActivity::class.java).use { scenario ->
-                for (id in listOf("1.0.9","1.0.7","early")) tap(scenario,id)
+                for (id in listOf("1.0.7","early")) tap(scenario,id)
                 scenario.recreate()
                 visibility(scenario,"early",View.VISIBLE)
             }
@@ -120,7 +120,6 @@ class ChangelogUiTest {
 
     @Test fun compactLargeFontScreenshot() {
         ActivityScenario.launch(ChangelogActivity::class.java).use { scenario ->
-            tap(scenario,"1.0.9")
             tap(scenario,"early")
             onView(withText("• Раздел уборки урожая.")).perform(scrollTo()).check(matches(isDisplayed()))
             scenario.onActivity { activity ->

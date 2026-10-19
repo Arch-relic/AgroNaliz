@@ -378,3 +378,96 @@ Production-выпуск MAIN с Room24 по-прежнему требует от
 
 Полный CI завершён. После этого отчётного коммита остановиться для review. Не выполнять merge,
 публикацию APK/Release, настоящее production signing или действия с реальными данными.
+
+---
+
+# Подготовка безопасного MAIN 1.0.9 — 19.10.2026
+
+Ветка feature/harvest-1-0-9-release-preparation. База main
+8b8e6dfac0d2f42946006461e6cbb094b938996d, tree87d2bd41bf3b9033e4c50e0657a03b3b24dbae1f.
+Проверены фактические main/AGENTS/handoff; PR35–40 уже объединены владельцем.
+Локальный4d2aaa7 — то же дерево; из-за недоступного proxy8080 git fetch не работает,
+публикация через GitHub API с родителем актуальной main. Прежняя история сохранена.
+Статус: код подготовлен, Draft PR и реальные результаты CI будут добавлены после запуска.
+
+## Аудит и изменения
+
+Подтверждённый опубликованный MAIN1.0.8 — run39044119058 (успех), code3000005,
+Room23, sourcead66e4b452ec3c93866f4f6b8163087274166d45. Run4 неуспешен.
+Прежняя документация о baseline3000004 была неполной: фактический код5 проверен
+в существующем verification.json, SHA APK, aapt2 и apksigner без установки/ключа.
+applicationId ru.fo6osik.workjournal; сертификат
+3FE57967C15F81EE39EA2B9B88DD96A7506C1B5B9032606ECBEA04BBDB15EE3C;
+SHA старой APK a44cc8b0e1ba2029c7110b16548723c94d452ff7f5f37108d4da7eff34e0b47c.
+Текущее состояние смартфона/Secrets не проверено и не подменяется историей Actions.
+
+versionName1.0.9, без изменения versionCode/default1/формулы3000000+run_number,
+applicationId/сертификата/MAIN-TEST изоляции. Changelog автоматически раскрывает1.0.9,
+оставляет «В разработке», без даты выпуска; соответствующие UI expectations обновлены.
+
+MAIN publisher расширен только в Draft ветке: target24 требует source23,
+installed code>=3000005, product1.0.9, точный SHA, owner/main/manual/attempt1,
+успех audit workflow389125371 room24-update-checks.yml/job room24-update с успешными
+build current/baseline/update-integrity-restore-restart шагами. PR-run, неверный SHA,
+actor/status/attempt/fork/неполные jobs/steps отвергаются. Прежние22/23 ветви сохранены.
+Signer проверяет оригинальный pin, MAIN id до декодирования ключа (TEST запрещён),
+версию/code/Room/source SHA, временные ключи0700/0600/cleanup, secret-isolated sign job.
+Исходные секреты и pin не менялись, настоящий workflow не запускался.
+
+Исторический approved Room23 patch/manifest не изменяется: frozen copies его4целевых
+файлов проверяются в /tmp, с sandbox versionName1.0.8/Room23. Текущая live политика
+проверяется отдельными10тестами, включая регрессии22/23. Это не ослабление admission.
+
+Существующий audit23→24 использован повторно, синтетический MAIN1.0.8/code3000005→
+1.0.9/code3000006, TEST отдельно. Новые ТО/сезонные записи/связи дополняют прежние
+кампании/дни/бункеры/топливо/события; сравнение всех старых колонок/ID после update
+и restart, step1, timer prefs, внутренние/внешние документы, отдельный restore,
+открытие текущего Changelog/карточки результатов/календаря после миграции.
+Оригинальный keystore не используется, только disposable CI cert, APK не загружаются.
+Старые UI/полный backup7тестов/merge23/repeat/corrupt rollback сохранены без переписывания.
+Room24, migrations, backup format/production data logic не менялись.
+
+Расширена read-only проверка будущей APK: только явные22/23/24 пары, original cert,
+code/hash/package и exact audit metadata23/24. Ничего не устанавливает и не читает БД.
+План дальнейшего выпуска и backup — docs/main-original-update.md (только после согласования).
+
+## Проверки и ограничения
+
+Локально Python96:94pass/2SDKskip; вложенные исторические sandbox tests не суммировать.
+Gradle source /workspace/agronaliz-env.sh; agrogradle :app:assembleDebug :app:test
+не доходит до компиляции: FileLockContentionHandler / Could not determine a usable wildcard IP.
+Конфигурация проекта ради окружения не меняется. Реальные сборки/JVM/UI/migration
+результаты должны быть получены из CI, пока не объявлены успешными.
+История release1.0.8 подтверждена, наличие/содержимое Secrets сейчас не проверялось;
+не обещать выпуск без owner/main audit точного будущего SHA и оригинального signer.
+Физический смартфон, реальные данные, production signing/Release/публикация MAIN и merge
+не выполнялись. Следующий шаг после CI: review Draft PR, не выпуск.
+
+## Файлы этого этапа (относительно корня)
+
+- `.github/workflows/main-apk-checks.yml`
+- `.github/workflows/main-apk-publish.yml`
+- `.github/workflows/main-policy-proposal-checks.yml`
+- `.github/workflows/room24-update-checks.yml`
+- `app/build.gradle.kts`
+- `app/src/androidTest/java/ru/fo6osik/workjournal/AppVersionUiTest.kt`
+- `app/src/androidTest/java/ru/fo6osik/workjournal/ChangelogUiTest.kt`
+- `app/src/androidTest/java/ru/fo6osik/workjournal/MainRoom23MigrationTest.kt`
+- `app/src/androidTest/java/ru/fo6osik/workjournal/Room24UpdateTest.kt`
+- `docs/codex-handoff.md`
+- `docs/fixtures/room23-main-apk-publish.yml.txt`
+- `docs/fixtures/room23-main-original-update.md.txt`
+- `docs/fixtures/room23-test-main-apk-release.py.txt`
+- `docs/main-original-update.md`
+- `docs/run-main-room23-checks.py`
+- `docs/run-room24-update-checks.py`
+- `docs/test_app_version.py`
+- `docs/test_main_apk_release.py`
+- `docs/test_main_room23_policy_patch.py`
+- `docs/test_main_room24_release.py`
+- `docs/test_verify_main_update.py`
+- `docs/verify-main-apk-update.py`
+- `docs/verify-main-room23-inputs.py`
+- `docs/version-history.md`
+
+Удалённых файлов нет.
