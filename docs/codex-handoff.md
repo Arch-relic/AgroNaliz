@@ -1,3 +1,6 @@
+Актуальное дополнение: этап 5, Draft PR #39. Предыдущая история сохранена ниже;
+последние результаты находятся в разделе «АгроНализ 1.0.9 — этап 5».
+
 # АгроНализ1.0.9 — этап4: ползунки и Room24
 
 Согласованное расширение Room23→24 после preflight, ветка feature/harvest-1-0-9-sliders.
@@ -190,98 +193,188 @@ Draft PR #40: https://github.com/Arch-relic/AgroNaliz/pull/40
 
 ---
 
-# АгроНализ 1.0.9 — этап5: история изменений
+# АгроНализ 1.0.9 — этап 5: история изменений и предрелизная проверка PR #39
 
-Дата:19.10.2026. Ветка feature/harvest-1-0-9-changelog.
-Начальная база main113d5c0e01b7d436ac119ebc752d9039ad03a35a, содержит PR35–38.
-Предрелизная синхронизация с main874aebf7c17f88541fd8cd604d612d43fb3ebd15:
-из main перенесены актуальные AGENTS.md и полная история отчёта PR38/40.
-Удалённая история сохраняется merge-коммитом с двумя родителями, без rebase/force.
-Локальный304be2b имеет то же дерево52a117b6bf6665b8f96a196a502e84134520c0b5.
-Git fetch невозможен: proxy port8080 unavailable; API compare подтвердил отсутствие
-файловых различий с main, публикация через GitHub API с parent актуальной main.
-Draft PR #39: https://github.com/Arch-relic/AgroNaliz/pull/39 — Draft, не объединён.
-Проверяемый код8aa4f18a67e57e54760f5093c89bd4d4abb342db,
-treef9313f7143f9f3def0f108129ea1235f79740e2a (локальныйd28ee84 — то же дерево).
-Отчёт сохраняется следующим коммитом отдельно, не выдавать его SHA за проверенный
-Android-код. CI выполняется, окончательные результаты ниже будут дополнены.
+Дата: 19.10.2026. Ветка: `feature/harvest-1-0-9-changelog`.
+PR: https://github.com/Arch-relic/AgroNaliz/pull/39 — Draft, не объединён.
+Статус: реализация и предрелизная проверка завершены, все пять заданий CI успешны.
+Остановлено для review; PR остаётся Draft.
 
-## Реализация
+## База, история и проверяемый результат
 
-Кнопка «История изменений» в существующем блоке «Для разработчика» OptionsActivity.
-Отдельный неэкспортируемый ChangelogActivity, стандартные ScrollView/LinearLayout/
-Button/TextView, без новых зависимостей. Сам экран не использует сеть, Room,
-файлы или preferences. У приложения нет INTERNET permission; UI-тест проверяет
-это и сравнивает содержимое всех таблиц до/после просмотра и пересоздания Activity.
+Прочитаны актуальные `AGENTS.md` и полный `docs/codex-handoff.md` из main.
+Вложенных AGENTS.md не найдено (`rg --files --hidden -g AGENTS.md -g '!.git'`).
+Начальная база этапа: `113d5c0e01b7d436ac119ebc752d9039ad03a35a`.
+Актуальная база после PR #40: `874aebf7c17f88541fd8cd604d612d43fb3ebd15`.
+После начальной базы main изменила только инструкции и отчёт; PR #35–38 уже включены.
 
-AppChangelog — локальная Kotlin-модель, все записи встроены. Новые сверху:
-1.0.9 «В разработке»,1.0.8,1.0.7, «Ранние этапы разработки». Даты неизвестны,
-поэтому null и не выводятся. Источники и инструкция расширения:
-docs/changelog-history-sources.md. Даты merge не выдаются за даты выпуска.
-Текущая версия только BuildConfig.VERSION_NAME (по-прежнему1.0.8), не Room24.
-Автоматически раскрывается совпадающая текущая версия; будущая1.0.9 свёрнута.
-Блоки независимы, состояние включая полностью свёрнутый экран сохраняется в
-Bundle; неизвестные восстановленные id отбрасываются. Только непустые категории.
-ScrollView, многострочные кнопки без фиксированной высоты, sp поддерживают шрифт.
+Синхронизация выполнена настоящим merge-коммитом
+`9408b568ac6c84353853e97a891465234efb20f1` с родителями
+`8aa4f18a67e57e54760f5093c89bd4d4abb342db` и
+`874aebf7c17f88541fd8cd604d612d43fb3ebd15`.
+История не переписана, force/rebase не применялись. Main не изменялась.
+AGENTS.md соответствует main и не входит в итоговый diff PR.
+Полная прежняя история handoff сохранена выше дословно; её статусы исторические:
+PR #38 и #40 впоследствии объединены владельцем, PR #39 остаётся Draft.
 
-## Файлы (относительно корня репозитория)
+Проверенный код: `2dd2c335e06b25285977ae29814eb99e0cfab305`.
+CI проверил PR merge `048e65d8ceea5c8912984384d14ae5b60f333f87`;
+дерево обоих коммитов идентично: `da3f195bab4161565661b318db0ca1c4115ca264`.
+Локальный служебный коммит `5dcaad4` имеет то же дерево; публикация через GitHub API,
+поскольку git fetch в этой среде не работает (proxy port 8080 unavailable).
+Отчёт сохраняется следующим коммитом только документации: его SHA не следует
+выдавать за новый проверенный Android-код. Незакоммиченных функциональных правок нет.
 
-- .github/workflows/android-pr-checks.yml — добавить только каталог PNG в diagnostics.
-- app/src/main/AndroidManifest.xml
-- app/src/main/java/ru/fo6osik/workjournal/OptionsActivity.kt
-- app/src/main/java/ru/fo6osik/workjournal/AppChangelog.kt (новый)
-- app/src/main/java/ru/fo6osik/workjournal/ChangelogActivity.kt (новый)
-- app/src/main/res/layout/activity_options.xml
-- app/src/main/res/values/ids.xml (новый)
-- app/src/test/java/ru/fo6osik/workjournal/AppChangelogTest.kt (новый)
-- app/src/androidTest/java/ru/fo6osik/workjournal/ChangelogUiTest.kt (новый)
-- docs/run-harvest-108-checks.py
-- docs/changelog-history-sources.md (новый)
-- docs/codex-handoff.md
+## Что реализовано
 
-Удалённых файлов нет. Room24/миграции/backup/расчёты/таймеры/ползунки/версии/
-applicationId/подписи и защищённый main-apk-publish.yml не менялись.
-APK upload PR workflow уже запрещён при pull_request, это правило не менялось.
+Кнопка «История изменений» добавлена в существующий блок «Для разработчика»
+экрана «Опции». Отдельный неэкспортируемый ChangelogActivity использует стандартные
+ScrollView, FrameLayout, LinearLayout, Button и TextView, без новых зависимостей.
+
+Данные находятся в локальной Kotlin-модели AppChangelog. Экран не обращается
+к Room, сети, файлам или preferences. Интернет не требуется; у приложения нет
+INTERNET permission, это проверяет инструментальный тест. Записи не обновляются
+при запуске. Правила добавления версий и источники: [changelog-history-sources.md](changelog-history-sources.md).
+
+Версии идут от новых к старым. Блоки раскрываются независимо, состояние включая
+полностью свёрнутый экран хранится в Bundle и восстанавливается при пересоздании.
+По умолчанию раскрывается только запись, совпадающая с BuildConfig.VERSION_NAME.
+Он остаётся 1.0.8; будущая 1.0.9 свёрнута и явно помечена «В разработке».
+Версия Room не участвует в определении версии приложения.
+Пустые категории и отсутствующие даты не выводятся. Текст переносится,
+контент прокручивается на компактном экране с увеличенным шрифтом.
+
+Добавленные записи:
+- **1.0.9, «В разработке»**: расчёты кампании, календарь, карточка результатов,
+  ползунки времени/плотности, история изменений. Подтверждены PR #35–38 и этим PR.
+- **1.0.8**: единое завершение дня, продолжение уборки, независимые площади,
+  общий бэкап, изменения «Опций»; PR #33 и документация проверки 1.0.8.
+- **1.0.7**: учёт топлива/заправок и исправление TimePicker; docs/version-history.md.
+- **«Ранние этапы разработки»**: подтверждённые основные разделы из того же
+  документа, без придуманных номеров и дат; запись явно неполная.
+
+Достоверных дат выпуска нет: все releaseDate=null. Время merge/CI не используется
+как дата релиза. Технические коммиты не выдаются за пользовательские изменения.
+
+## Диагностика и исправление
+
+Android #130 (39226210319) и #131 (39228168537) падали при scrollTo к 1.0.7
+после раскрытия 1.0.9. Гипотеза ожидания кадра не подтвердилась: PreDraw не помог.
+
+Focused UI #1 (39238865915) вывел геометрию в instrumentation stream:
+layoutRequested=false, content=3262 px, viewport=1773 px, scrollY=1321.
+Кнопка 1.0.7 высотой 126 px была видна только на 63 px (Rect 1794..1857).
+Причина в новом экране: fitsSystemWindows на ScrollView оставлял системные
+отступы внутри viewport; прокрутка считала кнопку видимой, хотя половина обрезалась.
+
+Исправление `627f3a9`: fitsSystemWindows перенесён во внешний FrameLayout,
+как в существующем экране «Опции». ScrollView теперь измеряется в реально
+доступном пространстве. Ненужное ожидание PreDraw/latch удалено.
+Обычные Espresso scrollTo/click/visibility сохранены, retry/пропусков нет.
+Диагностический dump остаётся только при ошибке и содержит статический UI.
+Focused UI #2 и весь Android #137 на этом исправлении успешно прошли.
+
+Последующий `2dd2c33` меняет только тест: перед просмотром создаётся собственная
+синтетическая кампания, затем сравниваются все таблицы до/после просмотра и
+пересоздания Activity. В finally удаляется только запись этого теста.
+Сценарий прошёл в focused UI #3 и в полном Android #138 на том же коммите.
+
+## Изменённые файлы относительно актуальной main
+
+- `.github/workflows/android-pr-checks.yml`
+- `.github/workflows/changelog-checks.yml`
+- `app/src/androidTest/java/ru/fo6osik/workjournal/ChangelogUiTest.kt`
+- `app/src/main/AndroidManifest.xml`
+- `app/src/main/java/ru/fo6osik/workjournal/AppChangelog.kt`
+- `app/src/main/java/ru/fo6osik/workjournal/ChangelogActivity.kt`
+- `app/src/main/java/ru/fo6osik/workjournal/OptionsActivity.kt`
+- `app/src/main/res/layout/activity_options.xml`
+- `app/src/main/res/values/ids.xml`
+- `app/src/test/java/ru/fo6osik/workjournal/AppChangelogTest.kt`
+- `docs/changelog-history-sources.md`
+- `docs/codex-handoff.md`
+- `docs/run-changelog-checks.py`
+- `docs/run-harvest-108-checks.py`
+
+Всего 14 файлов: 8 новых и 6 изменённых. Удалённых файлов нет.
+Изменение android-pr-checks.yml добавляет только каталог PNG в диагностический
+артефакт. Новый focused workflow ускоряет проверку именно этого экрана;
+все прежние общие проверки продолжают выполняться.
 
 ## Проверки
 
-Локально python3 -m unittest discover -s docs -p 'test_*.py':85,83pass,2SDKskip.
-Вложенные24 sandbox tests не считать дополнительными уникальными (23pass/1skip).
-Diff whitespace clean. Требуемая source /workspace/agronaliz-env.sh;
-agrogradle :app:assembleDebug :app:test не дошла до компиляции:
-FileLockContentionHandler / Could not determine a usable wildcard IP for this machine.
-Конфигурация не изменялась ради среды.
+Локально:
+- `python3 -m unittest discover -s docs -p 'test_*.py'`: 85 тестов,
+  83 успешных, 2 пропуска из-за отсутствующих SDK-инструментов.
+  Вложенные sandbox-тесты не считаются дополнительными уникальными сценариями.
+- Реальный Kotlin 2.0.21 / JUnit 4.13.2 из установленного Gradle distribution:
+  K2JVMCompiler компилирует AppChangelog.kt и AppChangelogTest.kt в новый
+  TemporaryDirectory, затем JUnitCore запускает AppChangelogTest: **4/4 успешно**.
+  Это новый запуск, не UP-TO-DATE; не заменяет сборку Android.
+- `python3 -m py_compile docs/run-changelog-checks.py docs/run-harvest-108-checks.py`
+  и `git diff --check`: успешно.
+- `source /workspace/agronaliz-env.sh; agrogradle :app:assembleDebug :app:test`
+  повторно завершается до компиляции с exit 1:
+  FileLockContentionHandler / Could not determine a usable wildcard IP for this machine.
+  Конфигурация проекта ради локальной среды не менялась.
 
-Отдельный локальный запуск реального Kotlin2.0.21 compiler/JUnit4.13.2 из
-установленного Gradle distribution: AppChangelogTest4/4 pass, не UP-TO-DATE.
-Это не заменяет сборку Android.
+CI на `2dd2c33`:
+- [Android PR checks #138](https://github.com/Arch-relic/AgroNaliz/actions/runs/39240658911):
+  success, **107 инструментальных / 53 запуска**, **49 Python**.
+  Все 3 ChangelogUiTest, прежние HarvestSlidersUiTest (5 + повтор при большом
+  шрифте), HarvestFullBackup108Test (7) и TEST signing/update проверки прошли.
+- [Offline changelog UI #3](https://github.com/Arch-relic/AgroNaliz/actions/runs/39240658929):
+  success, **3/3** — навигация/независимость раскрытия/восстановление,
+  offline и неизменность непустой БД, компактный экран и font_scale=1.6.
+- [MAIN safe update #59](https://github.com/Arch-relic/AgroNaliz/actions/runs/39240658888):
+  success, **3 инструментальных**, **26 Python**.
+- [MAIN Room22→current #29](https://github.com/Arch-relic/AgroNaliz/actions/runs/39240658880):
+  success, **3 инструментальных**.
+- [Room23→24 MAIN/TEST #15](https://github.com/Arch-relic/AgroNaliz/actions/runs/39240658909):
+  success, **6 инструментальных**, сохранность данных/связей/файлов/preferences,
+  отдельное восстановление и restart для обоих синтетических пакетов.
 
-Добавлено4 JVM-теста: порядок/ключи, null даты/независимость версии от Room,
-status/categories, независимое раскрытие/восстановление/пустое состояние.
-Добавлено3 инструментальных сценария: навигация/состояние, offline+неизменность
-всех таблиц, компактный экран/font1.6+скриншот. Они включены в существующий CI
-runner, прежние проверки не отключены. Screenshot создаётся только на временном
-TEST эмуляторе, извлекается в diagnostics до удаления синтетической установки.
-Фактические сборки/JVM/UI/скриншот: ожидание CI.
+XML последнего аудита (артефакт 12180904016): **172/172 JVM** в каждом варианте
+testDebugUnitTest и testDebugTestUnitTest, 0 ошибок/падений/пропусков.
+Новые 4 JVM-сценария проверяют порядок/ключи, неизвестные даты/отделение Room,
+статус разработки/категории и независимое раскрытие/восстановление.
+Повторные прогоны одного набора не считаются уникальными тестами.
+Всего 122 инструментальных выполнения: 107 + 3 + 3 + 6 + 3; последние 3 —
+повтор сценариев changelog в отдельном focused workflow, не новые уникальные тесты.
+Android и MAIN jobs также выполнили 75 Python-проверок (49 + 26).
+Артефакт Android 12182550297 содержит отчёты и PNG; APK не публиковались.
 
-## Ограничения и следующий этап
+verification.json: sourceSha=048e65d8..., dataRetained/separateRestore/restart=true
+для обоих пакетов, productionReleaseAuthorized=false. CI-only versionCode flags
+не меняют исходники. Ключи одноразовые, production certificate запрещён аудитором.
+Исторические названия некоторых migration workflows содержат Room21/23;
+фактические current assertions проверяют Room24.
 
-История1.0.7/ранних этапов неполная, даты не установлены. Записи редактируются
-в исходниках и не обновляются автоматически. Ручные устройства не проверялись.
-Никаких APK publish/Release/production signing/merge/изменений реальных данных.
-После CI и отчёта остановиться для review. MAIN Room24 production policy не
-расширена и требует отдельного решения, как и до этого этапа.
+## Скриншот
 
-## Промежуточный CI (не итоговый успех)
+[ZIP со скриншотом на коммите 2dd2c33](https://github.com/Arch-relic/AgroNaliz/actions/runs/39240658929/artifacts/12181835893)
+содержит только history.png, без APK; срок хранения до 26.10.2026.
+Снимок 720×960 / font_scale=1.6 извлечён и визуально просмотрен.
+Полное название и текст блоков переносятся; нижние записи доступны прокруткой.
+Стандартная верхняя ActionBar сокращает длинный заголовок при таком шрифте,
+поэтому полное название также размещено в прокручиваемом содержимом.
 
-Код5240cd5: MAIN safe update39226210345 success(3 инструментальных,26Python),
-MAIN22→current39226210297 success(3), Room23→24 MAIN/TEST39226210372 success(6).
-XML172/172 JVM в каждом варианте MAIN/TEST,0fail/skip. Synthetic data/files/prefs
-и restart/restore сохранены;0APK в audit artifact12173794923.
-Android39226210319 failed на ChangelogUiTest.kt49: scrollTo1.0.7 сразу после
-раскрытия1.0.9 не сделал заголовок видимым. Activity уже закрыта use/cleanup до
-dumpsys, поэтому dump launcher не доказывает падение самого приложения.
-Не выдавать гипотезу за установленную причину:8aa4f18 добавляет ожидание PreDraw
-с проверкой timeout и диагностикой размеров до/после кадра перед scrollTo/click.
-Обычные требования Espresso visibility/click сохранены, retry/отключений нет.
-Повторный полный CI выполняется, окончательный результат пока неизвестен.
+## Границы, риски и следующий шаг
+
+Room24, миграции, импорт/экспорт/восстановление, backup-пути и TEST-защита,
+таймеры/напоминания, расчёты, календарь/карточка результатов, ползунки,
+versionName/versionCode, applicationId и подписи в итоговом diff отсутствуют.
+`main-apk-publish.yml` неизменён, SHA-256:
+`27a24a645fd97a6b7ec6d99c8a18e466196823f0023d57eba444c368599c7d91`.
+Другие production/signing workflows тоже не изменены. Публикация APK при PR
+остаётся запрещена; артефакты содержат только отчёты/метаданные/PNG.
+
+Исторические записи неполные, даты неизвестны — владелец может дополнить их позднее.
+На физическом смартфоне не проверялось; все установки и данные только в
+одноразовых CI-эмуляторах. Локальная Gradle-сборка заблокирована средой;
+реальные Android-сборки/JVM выполнялись через CI.
+Production-выпуск MAIN с Room24 по-прежнему требует отдельного согласования
+политики; PR #39 её не расширяет и не является разрешением на выпуск.
+
+Полный CI завершён. После этого отчётного коммита остановиться для review. Не выполнять merge,
+публикацию APK/Release, настоящее production signing или действия с реальными данными.
