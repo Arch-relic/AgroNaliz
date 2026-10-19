@@ -27,6 +27,29 @@ class TestBackupExport(unittest.TestCase):
             if version==23:
                 with self.assertRaises(ValueError):export.validate_backup(json.dumps(data).encode(),22)
 
+    def room24_fixture(self):
+        data=json.loads(self.fixture(24))
+        data['tables'].update(harvest_fuel_days=[],harvest_refuelings=[])
+        data['tables']['harvest_processes'][0].update(fieldAreaSnapshotHa=None,actualPlantedAreaHa=95.0)
+        return data
+
+    def test_room24_step_and_downgrade(self):
+        for step in (1,5):
+            data=self.room24_fixture()
+            data['tables']['harvest_days'][0]['reminderStepMinutes']=step
+            raw=json.dumps(data).encode()
+            self.assertEqual(24,export.validate_backup(raw,24)[0])
+            with self.assertRaises(ValueError):export.validate_backup(raw,23)
+        for version in (20,21):
+            self.assertEqual(version,export.validate_backup(self.fixture(version),24)[0])
+
+    def test_room24_bad_step_rejected(self):
+        for step in (None,0,2,True,'5',5.0):
+            data=self.room24_fixture()
+            data['tables']['harvest_days'][0]['reminderStepMinutes']=step
+            with self.assertRaises(ValueError):export.validate_backup(json.dumps(data).encode(),24)
+        with self.assertRaises(ValueError):export.validate_backup(json.dumps(self.room24_fixture()).encode(),24)
+
     def test_room23_missing_or_invalid_campaign_area_is_rejected(self):
         for value in ('missing',-1,0,'95',True):
             data=json.loads(self.fixture(23))
