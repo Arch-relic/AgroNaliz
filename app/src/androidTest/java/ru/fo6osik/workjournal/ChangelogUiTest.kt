@@ -2,6 +2,9 @@ package ru.fo6osik.workjournal
 
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.view.ViewGroup
+import android.graphics.Rect
+import android.os.Bundle
 import android.view.View
 import android.widget.ScrollView
 import androidx.test.core.app.ActivityScenario
@@ -38,15 +41,25 @@ class ChangelogUiTest {
                 .findViewWithTag<View>("changelog-details-$id").visibility)
         }
     }
+    private fun stream(value: String) = instrumentation.sendStatus(0, Bundle().apply {
+        putString("stream", value + "\n")
+    })
+    private fun dump(view: View, depth: Int = 0) {
+        val r = Rect()
+        val visible = view.getGlobalVisibleRect(r)
+        stream("CHANGELOG ${" ".repeat(depth)}${view.javaClass.simpleName} tag=${view.tag} bounds=${view.left},${view.top},${view.right},${view.bottom} measured=${view.measuredHeight} scroll=${view.scrollY} visible=$visible/$r layout=${view.isLayoutRequested}")
+        if (view is android.widget.TextView) stream("CHANGELOG text=${view.text} lines=${view.lineCount}")
+        if (view is ViewGroup) for (n in 0 until view.childCount) dump(view.getChildAt(n), depth + 1)
+    }
     private fun frame(scenario: ActivityScenario<ChangelogActivity>) {
         val drawn = CountDownLatch(1)
         scenario.onActivity { activity ->
             val scroll = activity.findViewById<ScrollView>(R.id.changelogScroll)
-            println("CHANGELOG before frame: requested=${scroll.isLayoutRequested}/${scroll.getChildAt(0).isLayoutRequested} content=${scroll.getChildAt(0).height} viewport=${scroll.height}")
+            stream("CHANGELOG before frame: requested=${scroll.isLayoutRequested}/${scroll.getChildAt(0).isLayoutRequested} content=${scroll.getChildAt(0).height} viewport=${scroll.height}")
             scroll.viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
                 override fun onPreDraw(): Boolean {
                     scroll.viewTreeObserver.removeOnPreDrawListener(this)
-                    println("CHANGELOG frame: content=${scroll.getChildAt(0).height} viewport=${scroll.height}")
+                    stream("CHANGELOG frame: content=${scroll.getChildAt(0).height} viewport=${scroll.height}")
                     drawn.countDown()
                     return true
                 }
@@ -57,7 +70,12 @@ class ChangelogUiTest {
     }
     private fun tap(scenario: ActivityScenario<ChangelogActivity>, id: String) {
         frame(scenario)
-        header(id).perform(scrollTo(), click())
+        try {
+            header(id).perform(scrollTo(), click())
+        } catch (failure: Throwable) {
+            scenario.onActivity { dump(it.window.decorView) }
+            throw failure
+        }
         frame(scenario)
     }
     @Test fun navigationIndependentExpansionAndRecreation() {

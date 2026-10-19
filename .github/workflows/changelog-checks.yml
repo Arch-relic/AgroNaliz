@@ -1,0 +1,49 @@
+name: Offline changelog UI checks
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'app/src/main/java/ru/fo6osik/workjournal/*Changelog*'
+      - 'app/src/main/java/ru/fo6osik/workjournal/OptionsActivity.kt'
+      - 'app/src/main/res/layout/activity_options.xml'
+      - 'app/src/androidTest/java/ru/fo6osik/workjournal/ChangelogUiTest.kt'
+      - 'docs/run-changelog-checks.py'
+      - '.github/workflows/changelog-checks.yml'
+permissions:
+  contents: read
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Prepare SDK without signing secrets
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;35.0.0"
+          sed -i '/^android\.aapt2FromMavenOverride=/d' gradle.properties
+          chmod +x gradlew
+      - name: Build ephemeral TEST and changelog tests
+        run: ./gradlew -PtestBuildType=debugTest :app:assembleDebugTest :app:assembleDebugTestAndroidTest --no-daemon --console=plain
+      - name: Enable KVM
+        run: sudo chmod 666 /dev/kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: python3 docs/run-changelog-checks.py
+      - name: Upload screenshots only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog-screenshots
+          path: changelog-screenshots/
+          if-no-files-found: warn
+          retention-days: 7
