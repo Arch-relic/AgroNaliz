@@ -62,7 +62,7 @@ class HarvestCalendarUiTest {
                 assertNull(v.calendar.selectedDate)
                 assertEquals(View.GONE, v.findViewWithTag<TextView>("harvest-calendar-previous")?.visibility ?: View.GONE)
                 val green = v.findViewWithTag<TextView>("harvest-date-2026-10-19")
-                assertTrue(green.isEnabled); assertTrue(green.contentDescription.contains("площадь указана"))
+                assertTrue(green.isEnabled); assertTrue(green.contentDescription.toString().contains("площадь указана"))
                 assertFalse(v.findViewWithTag<TextView>("harvest-date-2026-10-18").isEnabled)
                 green.performClick()
                 val selected = v.findViewWithTag<TextView>("harvest-date-2026-10-19")
