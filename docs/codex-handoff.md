@@ -1,3 +1,6 @@
+Актуальный этап: подготовка безопасного MAIN 1.0.9, Draft PR #41.
+Итоговый отчёт и ограничения находятся в конце документа; прежняя история сохранена.
+
 Актуальное дополнение: этап 5, Draft PR #39. Предыдущая история сохранена ниже;
 последние результаты находятся в разделе «АгроНализ 1.0.9 — этап 5».
 
@@ -388,7 +391,7 @@ Production-выпуск MAIN с Room24 по-прежнему требует от
 Проверены фактические main/AGENTS/handoff; PR35–40 уже объединены владельцем.
 Локальный4d2aaa7 — то же дерево; из-за недоступного proxy8080 git fetch не работает,
 публикация через GitHub API с родителем актуальной main. Прежняя история сохранена.
-Статус: код подготовлен, Draft PR и реальные результаты CI будут добавлены после запуска.
+Статус первоначальной записи: подготовлен код; окончательные результаты и Draft PR #41 — в итоговом дополнении ниже.
 
 ## Аудит и изменения
 
@@ -452,6 +455,7 @@ Gradle source /workspace/agronaliz-env.sh; agrogradle :app:assembleDebug :app:te
 - `app/build.gradle.kts`
 - `app/src/androidTest/java/ru/fo6osik/workjournal/AppVersionUiTest.kt`
 - `app/src/androidTest/java/ru/fo6osik/workjournal/ChangelogUiTest.kt`
+- `app/src/androidTest/java/ru/fo6osik/workjournal/Main109UpdateUiTest.kt`
 - `app/src/androidTest/java/ru/fo6osik/workjournal/MainRoom23MigrationTest.kt`
 - `app/src/androidTest/java/ru/fo6osik/workjournal/Room24UpdateTest.kt`
 - `docs/codex-handoff.md`
@@ -466,8 +470,168 @@ Gradle source /workspace/agronaliz-env.sh; agrogradle :app:assembleDebug :app:te
 - `docs/test_main_room23_policy_patch.py`
 - `docs/test_main_room24_release.py`
 - `docs/test_verify_main_update.py`
+- `docs/verify-build-variants.py`
 - `docs/verify-main-apk-update.py`
 - `docs/verify-main-room23-inputs.py`
 - `docs/version-history.md`
 
 Удалённых файлов нет.
+
+## Итог подготовки MAIN 1.0.9 — 19.10.2026
+
+Draft PR #41: https://github.com/Arch-relic/AgroNaliz/pull/41,
+ветка `feature/harvest-1-0-9-release-preparation`, base main
+`8b8e6dfac0d2f42946006461e6cbb094b938996d`. PR35–40 включены в main.
+Проверенный код: `393c9cf5cea501c2e943c7fcc083d5ce5d0dbfc2`,
+дерево `013491663c776342f752a6b21bd162fff218d80b`.
+CI использует PR merge SHA `fe4f655613a800638536be39afea52154721e031`:
+его дерево проверено и совпадает с деревом указанного head. Это технический
+merge-ref GitHub, а не объединение PR в main. Локальный коммит `1d8c84f`
+имеет то же дерево. Следующий коммит меняет только данный отчёт, не проверенный код.
+
+### Фактическая проверка обновления и резервных копий
+
+Room24 audit #23, run39296012508:
+https://github.com/Arch-relic/AgroNaliz/actions/runs/39296012508 — success.
+Артефакт `room24-update-diagnostics`, id12207428538, проверен после скачивания:
+APK нет; `room24-update-verification.json` содержит точный CI SHA выше,
+для обоих пакетов `dataRetained=true`, `separateRestore=true`, `restart=true`,
+`productionReleaseAuthorized=false`.
+
+Проверен синтетический MAIN1.0.8/code3000005/Room23 из опубликованного исходного
+SHA `ad66e4b452ec3c93866f4f6b8163087274166d45` → MAIN1.0.9/code3000006/Room24.
+TEST проверен независимо:1000201→1000202, id с `.debugtest`.
+Обе пары используют одноразовый CI-сертификат
+`B598D1B27B0EC26E5A01C91783D903BC02E6B36A9911DE4DA1E232BCFC5B6745`,
+отличный от оригинального; проверено его совпадение до/после обновления.
+Это не production-подпись и не назначение будущего production versionCode.
+
+Всего10 инструментальных вызовов этого audit: seed23, проверка после install-r,
+после force-stop, открытие экранов1.0.9 и повторная проверка данных после UI —
+для каждого пакета. Сравнены все старые таблицы/строки/колонки/ID и внешние ключи:
+техника/ТО, поля/связи, сезонные работы/дни, события, активная и завершённая уборка,
+дни/бункеры/события после бункеров, влажность/плотность, топливо и обе области заправок.
+Сохранены32/9/22/23/41 минут, Custom-флаги, старое значение плотности555.125,
+у прежних дней `reminderStepMinutes=1`. Сохранены настройки напоминаний,
+внутренние/внешние тестовые документы и preferences. Доставка реального уведомления
+ОС на смартфоне не проверялась. В отдельной in-memory БД успешно восстановлен
+JSON Room23, выполнены экспорт/восстановление Room24 и сравнение записей.
+Рабочая БД не очищалась и не использовалась для тестового восстановления.
+
+После обновления открыты главный экран с продолжением уборки, история изменений
+(1.0.9 раскрыта, «В разработке»), карточка результатов и календарь.
+Производственные модели/DAO/миграции/backup-код/расчёты/таймеры/UI не изменены.
+Единственное изменение приложения вне тестов — versionName1.0.8→1.0.9;
+default versionCode1, формула Actions, package и подпись сохранены.
+
+### CI и команды
+
+XML из диагностики audit: `testDebugUnitTest`172/172 и
+`testDebugTestUnitTest`172/172, в каждом0failures/0errors/0skipped;
+13suite в каждом варианте. Это реальные выполненные CI-тесты, не локальный Gradle.
+
+Все шесть CI завершились успешно на указанном коде; дополнительно к Room24 audit:
+
+- Android PR checks #147, run39296012462 — success:
+  https://github.com/Arch-relic/AgroNaliz/actions/runs/39296012462.
+  Сборки MAIN/TEST и instrumentation APK; Python13catalog+7version+29TEST-signer;
+  107инструментальных тестовых выполнений в53вызовах. Включены Harvest108Test5,
+  HarvestFullBackup108Test7 (полный roundtrip, Room23/default1, повторный merge,
+  сохранение локального шага, повреждённый/некорректный JSON и rollback),
+  миграции старых20/21/22→current24, настройки/ползунки, календарь, карточка,
+  история, быстрый доступ и MAIN/TEST isolation. Реальное обновление TEST
+  временным одинаковым ключом сохраняет данные; Android отвергает иной ключ
+  с INSTALL_FAILED_UPDATE_INCOMPATIBLE, данные остаются прежними.
+  Артефакт12208033941 содержит только диагностику, APK-публикация на PR пропущена.
+
+- MAIN safe update #67, run39296012481 — success:
+  https://github.com/Arch-relic/AgroNaliz/actions/runs/39296012481.
+  Python18 signer +9 read-only, 3инструментальных вызова Room20→current→current.
+  Историческое имя шага «Room20 to21 then21 to21» сохранено; текущая схема24.
+- MAIN Room22 regression #37, run39296012454 — success:
+  https://github.com/Arch-relic/AgroNaliz/actions/runs/39296012454.
+  3инструментальных вызова: старый MAIN1.0.7/3000003/Room22 → текущий Room24,
+  сохранность/отдельное восстановление/restart. Историческое имя workflow
+  «Room22 to23» не означает, что текущая схема23. Этот regression-run
+  не разрешает production22→24: publisher разрешает только23→24 для1.0.9.
+- Offline changelog #11, run39296012367 — success:
+  https://github.com/Arch-relic/AgroNaliz/actions/runs/39296012367.
+  3UI-теста, включая offline/состояние/крупный шрифт и маленькое окно;
+  опубликованы только скриншоты.
+- Policy #18, run39296012533 — success:
+  https://github.com/Arch-relic/AgroNaliz/actions/runs/39296012533.
+  10исторических +10live тестов. Вложенный архивный sandbox24теста
+  (23pass/1SDKskip) не суммировать с верхнеуровневыми тестами.
+
+Итого верхнеуровневых Python в CI:96 (49Android+27MAIN-safe+20policy), без ошибок.
+Инструментальных выполнений во всех шести workflow:126 (107+10+3+3+3),
+включая намеренные повторные проверки и focused UI; это не126уникальных методов.
+Дублирующиеся JVM-прогоны разных workflow не складываются:172на каждый вариант.
+
+Команды CI: `./gradlew :app:assembleDebug :app:assembleDebugTest
+:app:assembleDebugAndroidTest :app:testDebugUnitTest :app:testDebugTestUnitTest`,
+затем `-PtestBuildType=debugTest :app:assembleDebugTestAndroidTest`;
+CI-only versionCode передаются workflow. Audit использует
+`python3 docs/run-room24-update-checks.py`, остальные драйверы —
+`docs/run-main-update-checks.py`, `docs/run-main-room23-checks.py`,
+`docs/run-changelog-checks.py`. Политики:
+`python3 -m unittest discover -s docs -p 'test_main_room23_policy_patch.py' -v`
+и аналогично `test_main_room24_release.py`.
+
+Локальный Python96:94passed/2SDKskipped; локальная Android-команда
+`source /workspace/agronaliz-env.sh; agrogradle :app:assembleDebug :app:test`
+завершилась до компиляции: FileLockContentionHandler /
+Could not determine a usable wildcard IP for this machine. Для проверки Android
+использованы приведённые CI, конфигурация приложения ради окружения не менялась.
+
+### Найденные причины прежних падений
+
+Android #143/run39293721768: `docs/verify-build-variants.py` ещё требовал literal1.0.8
+при фактической новой1.0.9. Исправлено ожидание, все package/provider/isolation
+assertions сохранены. Room24 #21/run39294744659: ещё до seed23 JUnit рефлексией
+загружал методы тестового класса, чьи синтетические lambda-сигнатуры ссылались
+на ChangelogActivity, отсутствующую в настоящей старой APK1.0.8. Это ошибка
+совместимости тестового harness, не миграции: seed/запись ещё не начинались.
+UI-тест вынесен в отдельный `Main109UpdateUiTest`, запускаемый только после update;
+все UI assertions и последующее сравнение данных сохранены. Итоговый audit #23 зелёный.
+Проверки не отключались и их строгость не уменьшалась.
+
+### Политика, риски и следующий шаг
+
+Положительные/отрицательные тесты исполняют inline preflight/signer из текущего
+workflow с fake API/tools и временными ключами. Проверены owner/main/manual/attempt1,
+отсутствующий/неуспешный/неверный SHA audit, чужой workflow/fork/actor,
+неполные/пропущенные/упавшие шаги, неподдерживаемая Room/downgrade/низкий или
+устаревший code, неверные сертификат/package/version/source SHA. TEST запрещён
+ещё до декодирования ключа даже при общем историческом сертификате. Проверены
+сохранение ветвей22/23, изоляция sign job, удаление временных ключей и отсутствие
+выходного артефакта при отказе. Никакой настоящий production workflow не запускался.
+
+Патч publisher находится только в Draft ветке; main и её защищённая политика
+не изменены. SHA256 publisher на main:
+`27a24a645fd97a6b7ec6d99c8a18e466196823f0023d57eba444c368599c7d91`,
+в предлагаемом патче:
+`e1ccb376204ea248cdde303b89f243a3592917fd3188c9e7c914560e8a9961fe`.
+Формат backup и миграция23→24 остаются исходными. Прежние snapshots/patch-manifest
+Room23 не изменены; их проверка перенесена в sandbox с frozen copies, live24
+проверяется независимо. Полный список26изменённых файлов — выше; удалений нет.
+
+Готовность: подготовлен кандидат для review, не разрешение production-выпуска.
+После отдельного merge владельцем нужны CI и новый owner/main manual audit
+точного итогового main SHA, затем отдельное разрешение на настоящий выпуск.
+Порядок backup/проверки установленной APK/будущего signer/обновления —
+`docs/main-original-update.md`. Код нового MAIN назначит прежний счётчик workflow,
+он должен быть больше фактически установленного (подтверждённый выпуск8=3000005).
+Не обещать произвольный production3000006: это только синтетический fixture.
+
+Текущее наличие оригинального keystore/Secrets не проверено настоящей подписью;
+метаданные установленного смартфона не считаны. Исторический original pin проверен
+по подписанной1.0.8 и совпадает с прежним; MAIN/TEST имеют разные applicationId,
+поэтому общий исторический cert не требует смены ключа. JSON-backup не является
+копией произвольных файлов/preferences — перед будущим обновлением нужные документы
+сохранять отдельно, backup держать вне приложения. Downgrade24→23 не поддержан.
+Модельные данные и эмулятор не доказывают работу на физическом смартфоне.
+
+Production APK не опубликована; Release не создан; production signing и оригинальный
+keystore не использованы; реальные данные не затронуты; установки на физический
+смартфон не было; PR не объединён. После отчёта остановиться для review.
