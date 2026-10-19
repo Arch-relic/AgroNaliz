@@ -19,6 +19,9 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import android.view.ViewTreeObserver
 
 @RunWith(AndroidJUnit4::class)
 class ChangelogUiTest {
@@ -35,6 +38,28 @@ class ChangelogUiTest {
                 .findViewWithTag<View>("changelog-details-$id").visibility)
         }
     }
+    private fun frame(scenario: ActivityScenario<ChangelogActivity>) {
+        val drawn = CountDownLatch(1)
+        scenario.onActivity { activity ->
+            val scroll = activity.findViewById<ScrollView>(R.id.changelogScroll)
+            println("CHANGELOG before frame: requested=${scroll.isLayoutRequested}/${scroll.getChildAt(0).isLayoutRequested} content=${scroll.getChildAt(0).height} viewport=${scroll.height}")
+            scroll.viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
+                override fun onPreDraw(): Boolean {
+                    scroll.viewTreeObserver.removeOnPreDrawListener(this)
+                    println("CHANGELOG frame: content=${scroll.getChildAt(0).height} viewport=${scroll.height}")
+                    drawn.countDown()
+                    return true
+                }
+            })
+            scroll.postInvalidateOnAnimation()
+        }
+        assertTrue("Changelog must finish layout before scrolling", drawn.await(5, TimeUnit.SECONDS))
+    }
+    private fun tap(scenario: ActivityScenario<ChangelogActivity>, id: String) {
+        frame(scenario)
+        header(id).perform(scrollTo(), click())
+        frame(scenario)
+    }
     @Test fun navigationIndependentExpansionAndRecreation() {
         ActivityScenario.launch(OptionsActivity::class.java).use {
             onView(withId(R.id.buttonChangelog)).perform(scrollTo(), click())
@@ -44,17 +69,17 @@ class ChangelogUiTest {
         ActivityScenario.launch(ChangelogActivity::class.java).use { scenario ->
             visibility(scenario,"1.0.9",View.GONE)
             visibility(scenario,"1.0.8",View.VISIBLE)
-            header("1.0.9").perform(scrollTo(), click())
+            tap(scenario,"1.0.9")
             visibility(scenario,"1.0.8",View.VISIBLE)
-            header("1.0.7").perform(scrollTo(), click())
+            tap(scenario,"1.0.7")
             scenario.recreate()
             visibility(scenario,"1.0.9",View.VISIBLE)
             visibility(scenario,"1.0.7",View.VISIBLE)
-            header("1.0.9").perform(scrollTo(), click())
+            tap(scenario,"1.0.9")
             visibility(scenario,"1.0.9",View.GONE)
             visibility(scenario,"1.0.7",View.VISIBLE)
-            header("1.0.8").perform(scrollTo(), click())
-            header("1.0.7").perform(scrollTo(), click())
+            tap(scenario,"1.0.8")
+            tap(scenario,"1.0.7")
             scenario.recreate()
             visibility(scenario,"1.0.8",View.GONE)
         }
@@ -78,7 +103,7 @@ class ChangelogUiTest {
         assertEquals(PackageManager.PERMISSION_DENIED, context.checkSelfPermission("android.permission.INTERNET"))
         val before = databaseSnapshot()
         ActivityScenario.launch(ChangelogActivity::class.java).use { scenario ->
-            for (id in listOf("1.0.9","1.0.7","early")) header(id).perform(scrollTo(),click())
+            for (id in listOf("1.0.9","1.0.7","early")) tap(scenario,id)
             scenario.recreate()
             visibility(scenario,"early",View.VISIBLE)
         }
@@ -86,8 +111,8 @@ class ChangelogUiTest {
     }
     @Test fun compactLargeFontScreenshot() {
         ActivityScenario.launch(ChangelogActivity::class.java).use { scenario ->
-            header("1.0.9").perform(scrollTo(),click())
-            header("early").perform(scrollTo(),click())
+            tap(scenario,"1.0.9")
+            tap(scenario,"early")
             onView(withText("• Раздел уборки урожая.")).perform(scrollTo()).check(matches(isDisplayed()))
             scenario.onActivity { activity ->
                 val scroll = activity.findViewById<ScrollView>(R.id.changelogScroll)
