@@ -26,7 +26,7 @@ jobs:
           ./gradlew -PmainVersionCode=3000006 -PtestVersionCode=1000202 -PtestBuildType=debugTest :app:assembleDebugTestAndroidTest --no-daemon --console=plain
       - uses: actions/checkout@v4
         with:
-          ref: 861024e7852c16adbd733eca84e4ef11f53a32be
+          ref: ad66e4b452ec3c93866f4f6b8163087274166d45
           path: .room23
       - name: Build pinned Room23 fixtures without keys or publication
         run: |
