@@ -43,7 +43,7 @@ def main():
         h['instrument'](app,'verify24AndSeparateRestore','Room24UpdateTest')
         adb('shell','am','force-stop',app)
         h['instrument'](app,'verify24AndSeparateRestore','Room24UpdateTest')
-        h['instrument'](app,'verify109Screens','Room24UpdateTest')
+        h['instrument'](app,'verify109Screens','Main109UpdateUiTest')
         h['instrument'](app,'verify24AndSeparateRestore','Room24UpdateTest')
         reports.append(dict(applicationId=app,oldRoom=23,newRoom=24,oldVersionName='1.0.8',newVersionName='1.0.9',oldVersionCode=oldcode,fixtureVersionCode=newcode,
             ciCertificateSha256=pin,apkSha256=hashlib.sha256(new.read_bytes()).hexdigest(),dataRetained=True,separateRestore=True,restart=True))
