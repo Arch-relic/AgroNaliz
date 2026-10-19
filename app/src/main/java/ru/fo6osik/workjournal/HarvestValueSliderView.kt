@@ -21,7 +21,12 @@ class HarvestValueSliderView @JvmOverloads constructor(context: Context, attrs: 
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(bar: SeekBar, progress: Int, fromUser: Boolean) { if (fromUser) choose(progress + state.min) }
             override fun onStartTrackingTouch(bar: SeekBar) {}
-            override fun onStopTrackingTouch(bar: SeekBar) {}
+            override fun onStopTrackingTouch(bar: SeekBar) {
+                // A deliberate interaction at an endpoint must also select it when the
+                // old value is unknown/outside the track and Android reports no progress change.
+                if (state.value == null || state.value!! !in state.min.toDouble()..state.max.toDouble())
+                    choose(bar.progress + state.min)
+            }
         })
     }
     fun choose(raw: Int) { state.move(raw); refresh(); onValueChanged?.invoke() }
