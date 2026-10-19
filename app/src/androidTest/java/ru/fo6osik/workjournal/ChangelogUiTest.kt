@@ -22,6 +22,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
+import java.util.UUID
 
 @RunWith(AndroidJUnit4::class)
 class ChangelogUiTest {
@@ -97,14 +98,26 @@ class ChangelogUiTest {
     @Test fun offlineAndNoDatabaseChanges() {
         // The installed app has no INTERNET permission: even an available network cannot be used.
         assertEquals(PackageManager.PERMISSION_DENIED, context.checkSelfPermission("android.permission.INTERNET"))
-        val before = databaseSnapshot()
-        ActivityScenario.launch(ChangelogActivity::class.java).use { scenario ->
-            for (id in listOf("1.0.9","1.0.7","early")) tap(scenario,id)
-            scenario.recreate()
-            visibility(scenario,"early",View.VISIBLE)
+        val db = DatabaseProvider.getDatabase(context)
+        val owned = db.harvestDao().createProcess(HarvestProcess(
+            processUid = UUID.randomUUID().toString(), startDate = "2026-10-19",
+            fieldId = null, fieldNameSnapshot = "synthetic changelog retention",
+            crop = "Другое", combineVehicleId = null, combineNameSnapshot = "synthetic"
+        )).toInt()
+        try {
+            val before = databaseSnapshot()
+            assertTrue(before.getValue("harvest_processes").isNotEmpty())
+            ActivityScenario.launch(ChangelogActivity::class.java).use { scenario ->
+                for (id in listOf("1.0.9","1.0.7","early")) tap(scenario,id)
+                scenario.recreate()
+                visibility(scenario,"early",View.VISIBLE)
+            }
+            assertEquals(before, databaseSnapshot())
+        } finally {
+            db.openHelper.writableDatabase.execSQL("DELETE FROM harvest_processes WHERE id=?", arrayOf(owned))
         }
-        assertEquals(before, databaseSnapshot())
     }
+
     @Test fun compactLargeFontScreenshot() {
         ActivityScenario.launch(ChangelogActivity::class.java).use { scenario ->
             tap(scenario,"1.0.9")
