@@ -1,11 +1,15 @@
 # АгроНализ1.0.9 — этап3: карточка результатов
 
-Ветка feature/harvest-1-0-9-results-card, база актуального main
+19 октября2026. Ветка feature/harvest-1-0-9-results-card, база актуального main
 20b10c8cad0aea6ef501ad4bbe000b61591ec440, treefbe011c88bb00900e1d66c0b643f64e24d955807.
 Main содержит объединённые PR35/36. Локальный72bf822 имеет то же дерево;
 проверено через GitHub API. Git fetch недоступен (proxy8080); remote commit
 создаётся API с parent точного main. Перед началом status clean.
-PR ещё не создан, изменения ещё не опубликованы; финальный SHA/CI будут ниже.
+Создан DraftPR37: https://github.com/Arch-relic/AgroNaliz/pull/37, не объединён.
+Реально проверенный remote SHAa39acb027842ada636ae3c06efa5a97322203353
+(локальныйffc9031, tree1eb3a610df26c5131962888a88c49c9af8b07126).
+Этот итоговый отчёт сохраняется следующим docs-only коммитом; его собственный
+SHA не выдаётся за повторно проверенный Android-код.
 
 ## Решения
 
@@ -59,7 +63,28 @@ Expanded — только View+Bundle, сохраняется при update/recr
 ## Проверки
 
 Добавлены5target JVM tests (metrics теперь26) и10card model tests; ожидаемый
-полный JVM набор162 (147+15), фактический запуск вCI ещё предстоит.
+полный JVM набор162 (147+15), фактически успешно выполнен вCI.
+
+Полный CI проверенного SHA завершён SUCCESS:
+- Android PR#119 https://github.com/Arch-relic/AgroNaliz/actions/runs/39210013484
+  MAIN/TEST builds успешны. JVM testDebugUnitTest162/162 и
+  testDebugTestUnitTest162/162,0failures/errors/skips. Metrics26/26,
+  ResultsCardModel10/10 в обоих вариантах. Подтверждено скачанным
+  artifact12167329936/XML; задачи test*UnitTest выполнены, не UP-TO-DATE.
+  Python46/46; instrumental95/95 в48вызовах: новые5/5UItests карточки + повтор
+  compactLargeFont на720x960/font1.6, старый calendar5/5 и все navigation/harvest/
+  backup/Room23/TEST update/read-only JSON/restore/restart tests успешны.
+- MAIN safety#43 https://github.com/Arch-relic/AgroNaliz/actions/runs/39210013341
+  build/JVM, Python26/26 и instrumental3/3 SUCCESS. Старый synthetic update
+  сохраняет все прежние данные/preferences/files/timers без uninstall/clear.
+- MAIN Room22→23#13 https://github.com/Arch-relic/AgroNaliz/actions/runs/39210013276
+  builds/JVM162/162 (XML artifact12167138695), unsigned release analysis,
+  instrumental3/3 SUCCESS: все old columns/tables/связи/active states/fuel/events/
+  files/preferences/timers сохранены, отдельный restore и restart успешны.
+Итого101instrumental и72Python в Android/MAIN jobs. JVM162 повторяются по
+вариантам/jobs, не суммировать дубли. Локальные82/вложенные24 не суммировать сCI72.
+Выложены только diagnostics artifacts, в Android artifact0APK (проверен ZIP).
+Реальный production signer и TEST artifact publisher не запускались.
 5UItests: grid/collapse/toggle; Room edit area/day/bunker +recreate; range/partial/
 excess; неизменность calendar selection; smallscreen/largefont (также повтор
 в отдельной конфигурации эмулятора). Cleanup только owned synthetic campaign,
@@ -72,8 +97,14 @@ IP for this machine. Конфигурация ради локальной сре
 
 ## Следующий шаг/ограничения
 
-Создать DraftPR, выполнить полный существующий CI MAIN/TEST/JVM/instrumental,
-проверить XML/логи и записать точный проверенный SHA/run URLs. Не объявлять
-непроведённые проверки успешными. Ручная проверка на смартфоне не выполнялась.
+CI/проверка XML/логов завершены, требуется независимый review DraftPR37.
+Выявленные проблемы: только локальная среда (wildcard IP/proxy), настройки
+проекта и защитные workflows ради неё не менялись. При компиляции остаются
+прежние warnings о reified intersection/deprecated versionCode в migration tests;
+к изменённой логике не относятся. Android builds и все новые/старые тесты успешны.
+Ручная проверка на смартфоне не выполнялась. Малый экран/крупный шрифт проверены
+автоматически в CI, визуальная оценка на реальных моделях устройств остаётся
+следующим этапом. Новых DB/data-loss рисков нет: структура и запись данных
+не менялись. Existing partial data остаётся неизвестным/помеченным, не нулём.
 Не публиковать APK, не merge/release/sign production, не устанавливать на реальные
 устройства, не работать с пользовательскими базами. Остановиться для review.
