@@ -2,6 +2,7 @@ package ru.fo6osik.workjournal
 
 import android.os.Bundle
 import android.view.View
+import android.widget.FrameLayout
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -25,11 +26,15 @@ class ChangelogActivity : AppCompatActivity() {
             val padding = (16 * resources.displayMetrics.density).toInt()
             setPadding(padding, padding, padding, padding)
         }
-        setContentView(ScrollView(this).apply {
+        val scroll = ScrollView(this).apply {
             id = R.id.changelogScroll
             isFillViewport = true
-            fitsSystemWindows = true
             addView(content)
+        }
+        // Consume system insets outside ScrollView so its scroll range and visible viewport agree.
+        setContentView(FrameLayout(this).apply {
+            fitsSystemWindows = true
+            addView(scroll, FrameLayout.LayoutParams(-1, -1))
         })
         content.addView(TextView(this).apply {
             text = "История изменений\nТекущая версия: ${BuildConfig.VERSION_NAME}"

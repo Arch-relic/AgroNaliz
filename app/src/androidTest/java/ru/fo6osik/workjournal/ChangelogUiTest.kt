@@ -22,9 +22,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-import android.view.ViewTreeObserver
 
 @RunWith(AndroidJUnit4::class)
 class ChangelogUiTest {
@@ -51,32 +48,13 @@ class ChangelogUiTest {
         if (view is android.widget.TextView) stream("CHANGELOG text=${view.text} lines=${view.lineCount}")
         if (view is ViewGroup) for (n in 0 until view.childCount) dump(view.getChildAt(n), depth + 1)
     }
-    private fun frame(scenario: ActivityScenario<ChangelogActivity>) {
-        val drawn = CountDownLatch(1)
-        scenario.onActivity { activity ->
-            val scroll = activity.findViewById<ScrollView>(R.id.changelogScroll)
-            stream("CHANGELOG before frame: requested=${scroll.isLayoutRequested}/${scroll.getChildAt(0).isLayoutRequested} content=${scroll.getChildAt(0).height} viewport=${scroll.height}")
-            scroll.viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
-                override fun onPreDraw(): Boolean {
-                    scroll.viewTreeObserver.removeOnPreDrawListener(this)
-                    stream("CHANGELOG frame: content=${scroll.getChildAt(0).height} viewport=${scroll.height}")
-                    drawn.countDown()
-                    return true
-                }
-            })
-            scroll.postInvalidateOnAnimation()
-        }
-        assertTrue("Changelog must finish layout before scrolling", drawn.await(5, TimeUnit.SECONDS))
-    }
     private fun tap(scenario: ActivityScenario<ChangelogActivity>, id: String) {
-        frame(scenario)
         try {
             header(id).perform(scrollTo(), click())
         } catch (failure: Throwable) {
             scenario.onActivity { dump(it.window.decorView) }
             throw failure
         }
-        frame(scenario)
     }
     @Test fun navigationIndependentExpansionAndRecreation() {
         ActivityScenario.launch(OptionsActivity::class.java).use {
