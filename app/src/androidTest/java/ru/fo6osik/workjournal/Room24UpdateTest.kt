@@ -98,6 +98,18 @@ class Room24UpdateTest {
     @Test fun verify109Screens() {
         guard()
         assertEquals("1.0.9",context.packageManager.getPackageInfo(context.packageName,0).versionName)
+        androidx.test.core.app.ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            var ready=false
+            val until=System.nanoTime()+10_000_000_000L
+            while(!ready && System.nanoTime()<until) {
+                scenario.onActivity { activity ->
+                    val button=activity.findViewById<android.widget.Button>(R.id.buttonContinueHarvest)
+                    ready=button.isEnabled && button.visibility==android.view.View.VISIBLE
+                }
+                if(!ready) Thread.sleep(50)
+            }
+            assertTrue("Launcher must reopen migrated active campaign",ready)
+        }
         androidx.test.core.app.ActivityScenario.launch(ChangelogActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
                 val scroll=activity.findViewById<android.widget.ScrollView>(R.id.changelogScroll)
