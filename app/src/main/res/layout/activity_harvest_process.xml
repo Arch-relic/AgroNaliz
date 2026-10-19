@@ -127,11 +127,10 @@
             android:textSize="17sp"
             android:padding="16dp" />
 
-        <LinearLayout
-            android:id="@+id/harvestDayList"
+        <ru.fo6osik.workjournal.HarvestDayCalendarView
+            android:id="@+id/harvestDayCalendar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" />
+            android:layout_height="wrap_content" />
 
         <Button
             android:id="@+id/buttonNewHarvestDay"

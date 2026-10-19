@@ -2,8 +2,6 @@ package ru.fo6osik.workjournal
 
 import android.app.DatePickerDialog
 import android.content.Intent
-import android.graphics.Color
-import android.graphics.Typeface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -38,7 +36,11 @@ class HarvestProcessActivity : AppCompatActivity() {
     private lateinit var textAverageBunkerVolume: TextView
     private lateinit var textDaysEmpty: TextView
     private lateinit var textHarvestResults: TextView
-    private lateinit var dayList: LinearLayout
+    private lateinit var dayCalendar: HarvestDayCalendarView
+    private var restoredMonth: String? = null
+    private var restoredDate: String? = null
+    private var loadGeneration = 0
+    private var navigationGeneration = 0
     private lateinit var buttonNewDay: Button
     private lateinit var buttonEditProcess: Button
 
@@ -132,10 +134,10 @@ class HarvestProcessActivity : AppCompatActivity() {
                 R.id.textHarvestDaysEmpty
             )
 
-        dayList =
-            findViewById(
-                R.id.harvestDayList
-            )
+        dayCalendar = findViewById(R.id.harvestDayCalendar)
+        restoredMonth = savedInstanceState?.getString("harvest.calendar.month")
+        restoredDate = savedInstanceState?.getString("harvest.calendar.date")
+        dayCalendar.onOpenDay = ::openCalendarDay
 
         buttonNewDay =
             findViewById(
@@ -197,6 +199,7 @@ class HarvestProcessActivity : AppCompatActivity() {
     }
 
     private fun loadProcess() {
+        val generation = ++loadGeneration
         Thread {
             try {
                 val dao =
@@ -229,6 +232,7 @@ class HarvestProcessActivity : AppCompatActivity() {
                     }
 
                 runOnUiThread {
+                    if (generation != loadGeneration || isFinishing || isDestroyed) return@runOnUiThread
                     currentProcess =
                         process
 
@@ -244,6 +248,7 @@ class HarvestProcessActivity : AppCompatActivity() {
 
             } catch (e: Throwable) {
                 runOnUiThread {
+                    if (generation != loadGeneration || isFinishing || isDestroyed) return@runOnUiThread
                     Toast.makeText(
                         this,
                         "Ошибка загрузки уборочной карточки: ${e.message}",
@@ -348,11 +353,7 @@ class HarvestProcessActivity : AppCompatActivity() {
             days.filter { it.status == "COMPLETED" }.map(::input), days.map(::input),
             campaignCompleted = process.status == "COMPLETED", fieldAreaSnapshotHa = process.fieldAreaSnapshotHa))
 
-        renderDays(
-            days,
-            process.bunkerVolumeM3,
-            bunkersByDay
-        )
+        renderDays(days)
 
         val hasActiveDay =
             days.any {
@@ -372,147 +373,48 @@ class HarvestProcessActivity : AppCompatActivity() {
             }
     }
 
-    private fun renderDays(
-        days: List<HarvestDaySummary>,
-        bunkerVolumeM3: Double?,
-        bunkersByDay: Map<Int, List<HarvestBunker>>
-    ) {
-        dayList.removeAllViews()
+    private fun renderDays(days: List<HarvestDaySummary>) {
+        textDaysEmpty.visibility = if (days.isEmpty()) View.VISIBLE else View.GONE
+        dayCalendar.update(days, restoredMonth ?: dayCalendar.calendar.month,
+            restoredDate ?: dayCalendar.calendar.selectedDate)
+        restoredMonth = null
+        restoredDate = null
+    }
 
-        if (days.isEmpty()) {
-            textDaysEmpty.visibility =
-                View.VISIBLE
-            return
+    override fun onSaveInstanceState(outState: Bundle) {
+        if (::dayCalendar.isInitialized) {
+            outState.putString("harvest.calendar.month", dayCalendar.calendar.month ?: restoredMonth)
+            outState.putString("harvest.calendar.date", dayCalendar.calendar.selectedDate ?: restoredDate)
         }
+        super.onSaveInstanceState(outState)
+    }
 
-        textDaysEmpty.visibility =
-            View.GONE
+    override fun onPause() {
+        ++loadGeneration
+        ++navigationGeneration
+        super.onPause()
+    }
 
-        days.forEach {
-                day ->
-
-            val statusText =
-                if (
-                    day.status ==
-                    "ACTIVE"
-                ) {
-                    "Текущий день"
-                } else {
-                    "Завершён"
+    private fun openCalendarDay(dayId: Int, date: String) {
+        val generation = ++navigationGeneration
+        Thread {
+            val available = try {
+                val dao = DatabaseProvider.getDatabase(applicationContext).harvestDao()
+                val day = dao.getDayById(dayId)
+                day != null && day.processId == processId && day.workDate == date &&
+                    dao.getProcessById(processId) != null
+            } catch (_: Exception) { false }
+            runOnUiThread {
+                if (generation != navigationGeneration || isFinishing || isDestroyed ||
+                    dayCalendar.calendar.selectedDate != date) return@runOnUiThread
+                if (available) startActivity(Intent(this, HarvestDayActivity::class.java)
+                    .putExtra(HarvestDayActivity.EXTRA_DAY_ID, dayId))
+                else {
+                    Toast.makeText(this, "Рабочий день больше недоступен", Toast.LENGTH_SHORT).show()
+                    loadProcess()
                 }
-
-            val timeText =
-                if (
-                    day.endTime == null
-                ) {
-                    "${day.startTime}–—"
-                } else {
-                    "${day.startTime}–${day.endTime}"
-                }
-
-            val card =
-                TextView(this).apply {
-                    val dayBunkers =
-                        bunkersByDay[
-                            day.id
-                        ] ?: emptyList()
-
-                    val dayVolumeText =
-                        shortCalculationText(
-                            bunkerVolumeM3 =
-                                bunkerVolumeM3,
-                            bunkers =
-                                dayBunkers
-                        )
-
-                    text =
-                        "${formatDateForUi(day.workDate)}\n" +
-                            "${bunkerCountText(day.bunkerCount)}" +
-                            dayVolumeText +
-                            "\n" +
-                            "$timeText • $statusText"
-
-                    textSize =
-                        17f
-
-                    setTextColor(
-                        Color.BLACK
-                    )
-
-                    setPadding(
-                        dp(16),
-                        dp(14),
-                        dp(16),
-                        dp(14)
-                    )
-
-                    setBackgroundColor(
-                        if (
-                            day.status ==
-                            "ACTIVE"
-                        ) {
-                            Color.rgb(
-                                232,
-                                245,
-                                233
-                            )
-                        } else {
-                            Color.rgb(
-                                242,
-                                242,
-                                242
-                            )
-                        }
-                    )
-
-                    if (
-                        day.status ==
-                        "ACTIVE"
-                    ) {
-                        setTypeface(
-                            typeface,
-                            Typeface.BOLD
-                        )
-                    }
-
-                    isClickable =
-                        true
-
-                    isFocusable =
-                        true
-
-                    setOnClickListener {
-                        startActivity(
-                            Intent(
-                                this@HarvestProcessActivity,
-                                HarvestDayActivity::class.java
-                            ).putExtra(
-                                HarvestDayActivity.EXTRA_DAY_ID,
-                                day.id
-                            )
-                        )
-                    }
-                }
-
-            val params =
-                LinearLayout
-                    .LayoutParams(
-                        LinearLayout
-                            .LayoutParams
-                            .MATCH_PARENT,
-                        LinearLayout
-                            .LayoutParams
-                            .WRAP_CONTENT
-                    ).apply {
-                        bottomMargin =
-                            dp(10)
-                    }
-
-            dayList.addView(
-                card,
-                params
-            )
-        }
+            }
+        }.start()
     }
 
     private fun showNewDayDialog() {

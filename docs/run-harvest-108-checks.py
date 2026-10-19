@@ -38,6 +38,7 @@ def main():
         else:
             adb('shell', 'settings', 'put', 'system', 'font_scale', original_font)
         adb('shell', 'am', 'force-stop', APP)
+    instrument('HarvestCalendarUiTest', count=5)
     instrument('HarvestQuickAccessUiTest', count=2)
     instrument('Harvest108Test', count=5)
     instrument('HarvestFullBackup108Test', count=4)
