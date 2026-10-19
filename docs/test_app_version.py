@@ -46,8 +46,14 @@ class AppVersionTest(unittest.TestCase):
             self.assertEqual(3000006, preflight('main-apk-publish.yml', 6, 3000005, [5], room=22))
 
     def test_room23_main_publication_requires_matching_audit(self):
-        with self.assertRaises(SystemExit):
-            preflight('main-apk-publish.yml', 5, 3000003)
+        original = Path.read_text
+        def room23(path, *args, **kwargs):
+            if path.name == 'AppDatabase.kt': return 'version = 23'
+            value = original(path, *args, **kwargs)
+            return value.replace('versionName = "1.0.9"', 'versionName = "1.0.8"') if path.name == 'build.gradle.kts' else value
+        with patch('pathlib.Path.read_text', room23):
+            with self.assertRaisesRegex(SystemExit, 'separate verified migration audit'):
+                preflight('main-apk-publish.yml', 5, 3000003, room=22)
 
     def test_room24_main_is_blocked_without_exact_audit(self):
         with self.assertRaisesRegex(SystemExit, 'separate verified migration audit'):

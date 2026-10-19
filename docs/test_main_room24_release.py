@@ -90,6 +90,8 @@ class MainRoom24Release(unittest.TestCase):
         self.jobs['jobs'][0].update(name='main-room23',steps=[dict(name=n,status='completed',conclusion='success') for n in h.STEPS])
         p=self.stage/'app/build.gradle.kts';p.write_text(p.read_text().replace('1.0.9','1.0.8'))
         self.assertIn('room_version=23',self.preflight_run(dict(INSTALLED_ROOM='22',INSTALLED_CODE='3000003'),room=23))
+        for env in [dict(INSTALLED_ROOM='21'),dict(INSTALLED_ROOM='23'),dict(INSTALLED_ROOM='22',INSTALLED_CODE='3000002'),dict(INSTALLED_ROOM='22',AUDIT_RUN_ID='')]:
+            with self.subTest(legacy=env),self.assertRaises(SystemExit):self.preflight_run(env,room=23)
         self.assertEqual('1.0.8',self.signer_run(name='1.0.8',variables=dict(INSTALLED_ROOM='22',INSTALLED_CODE='3000003',MAIN_ROOM_VERSION='23'))['versionName'])
     def test_secret_boundaries_and_required_audit_steps_remain(self):
         h.MainRoom23PolicyPatchTest.test_original_guards_and_secret_isolation_unchanged(self)
