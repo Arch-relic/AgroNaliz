@@ -38,12 +38,14 @@ def main():
         else:
             adb('shell', 'settings', 'put', 'system', 'font_scale', original_font)
         adb('shell', 'am', 'force-stop', APP)
+    instrument('HarvestSlidersUiTest', count=5)
     instrument('HarvestResultsCardUiTest', count=5)
     try:
         adb('shell', 'wm', 'size', '720x960')
         adb('shell', 'settings', 'put', 'system', 'font_scale', '1.6')
         adb('shell', 'am', 'force-stop', APP)
         instrument('HarvestResultsCardUiTest', 'compactLargeFont')
+        instrument('HarvestSlidersUiTest', 'stepSwitchDoesNotRoundAndCancelNeverWrites')
     finally:
         adb('shell', 'wm', 'size', 'reset')
         if original_font == 'null':
@@ -54,7 +56,7 @@ def main():
     instrument('HarvestCalendarUiTest', count=5)
     instrument('HarvestQuickAccessUiTest', count=2)
     instrument('Harvest108Test', count=5)
-    instrument('HarvestFullBackup108Test', count=4)
+    instrument('HarvestFullBackup108Test', count=7)
     adb('uninstall', APP)
     adb('install', '.migration-v22/app/build/outputs/apk/debugTest/app-debugTest.apk')
     # Test APK is kept by Android after the target APK is removed; reinstall explicitly.

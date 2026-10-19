@@ -97,7 +97,7 @@ class MainUpdateTest {
         guard()
         val room = DatabaseProvider.getDatabase(context)
         val db = room.openHelper.writableDatabase // Room validates the entire migrated schema here.
-        assertEquals(23, db.version)
+        assertEquals(24, db.version)
         fun verify() {
             db.query("SELECT * FROM harvest_days WHERE id=4301").use { cursor ->
                 assertTrue(cursor.moveToFirst())
@@ -149,7 +149,7 @@ class MainUpdateTest {
         guard()
         val room=DatabaseProvider.getDatabase(context)
         val db=room.openHelper.readableDatabase
-        assertEquals(23,db.version)
+        assertEquals(24,db.version)
         verifyRetained(db,"main-v21-snapshot.json")
         db.query("PRAGMA foreign_key_check").use { assertFalse(it.moveToFirst()) }
         room.close()

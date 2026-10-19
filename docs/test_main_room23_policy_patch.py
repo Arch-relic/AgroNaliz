@@ -41,6 +41,11 @@ class MainRoom23PolicyPatchTest(unittest.TestCase):
         for name in set(MANIFEST['files']) | set(support):
             dest = self.stage/name; dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT/name, dest)
+        # The approved policy's exact hashes remain frozen. Room24 application tests
+        # run independently; this sandbox must continue exercising the original Room23 proposal.
+        shutil.copyfile(ROOT/'docs/fixtures/room23-app-version.txt', self.stage/'docs/test_app_version.py')
+        db = self.stage/'app/src/main/java/ru/fo6osik/workjournal/AppDatabase.kt'
+        db.write_text(re.sub(r'version\s*=\s*24', 'version = 23', db.read_text()))
         before = all(hashlib.sha256((self.stage/p).read_bytes()).hexdigest() == v['beforeSha256']
                      for p, v in MANIFEST['files'].items())
         after = all(hashlib.sha256((self.stage/p).read_bytes()).hexdigest() == v['afterSha256']

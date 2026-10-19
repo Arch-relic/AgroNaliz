@@ -221,9 +221,9 @@ class HarvestCampaignMetricsTest {
         assertEquals(30.0, after.remainingHa!!, 0.0)
     }
     @Test fun onlyDocumentedVersionsAndColumnsAllowed() {
-        for (version in 18..23) assertTrue(HarvestBackupCompatibility.accepts(23, version))
+        for (version in 18..24) assertTrue(HarvestBackupCompatibility.accepts(24, version))
         assertFalse(HarvestBackupCompatibility.accepts(23, 17))
-        assertFalse(HarvestBackupCompatibility.accepts(23, 24))
+        assertFalse(HarvestBackupCompatibility.accepts(24, 25))
         assertEquals(setOf("fieldAreaSnapshotHa", "actualPlantedAreaHa"),
             HarvestBackupCompatibility.allowedMissingColumns(23, 22, "harvest_processes"))
         assertTrue(HarvestBackupCompatibility.allowedMissingColumns(23, 23, "harvest_processes").isEmpty())

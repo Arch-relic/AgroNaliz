@@ -352,6 +352,28 @@ interface HarvestDao {
         reminderSettingsInitialized: Boolean = true
     )
 
+    @Query("UPDATE harvest_days SET reminderStepMinutes=:step WHERE id=:id")
+    fun updateReminderStepRaw(id: Int, step: Int): Int
+
+    @Transaction
+    fun saveSliderSettings(id: Int, values: List<Int>, step: Int): HarvestDay {
+        require(step == 1 || step == 5)
+        require(values.size == 5)
+        val old = requireNotNull(getDayById(id))
+        val before = listOf(old.workIntervalMinutes, old.unloadIntervalMinutes, old.lunchIntervalMinutes,
+            old.dinnerIntervalMinutes, old.waitingTransportIntervalMinutes)
+        val flags = listOf(old.workIntervalCustom, old.unloadIntervalCustom, old.lunchIntervalCustom,
+            old.dinnerIntervalCustom, old.waitingTransportIntervalCustom)
+        val custom = values.indices.map { n ->
+            require(values[n] == before[n] || values[n] in 1..HarvestSliderRules.maxima[n])
+            if (values[n] == before[n]) flags[n] else values[n] !in HarvestSliderRules.presets[n]
+        }
+        updateDayReminderSettings(id, values[0], values[1], values[2], values[3], values[4],
+            custom[0], custom[1], custom[2], custom[3], custom[4], true)
+        check(updateReminderStepRaw(id, step) == 1)
+        return requireNotNull(getDayById(id))
+    }
+
     @Query(
         """
         UPDATE harvest_days

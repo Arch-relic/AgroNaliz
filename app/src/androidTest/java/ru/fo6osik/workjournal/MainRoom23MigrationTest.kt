@@ -79,7 +79,7 @@ class MainRoom23MigrationTest {
         val timers=context.getSharedPreferences("harvest_reminder_prefs",0)
         assertEquals(47,timers.getInt("interval_12201",0));assertFalse(timers.getBoolean("enabled_12201",true))
         assertEquals("MAIN22 synthetic file",File(context.filesDir,"synthetic-main-retained").readText())
-        val room=DatabaseProvider.getDatabase(context); assertEquals(23,room.openHelper.readableDatabase.version)
+        val room=DatabaseProvider.getDatabase(context); assertEquals(24,room.openHelper.readableDatabase.version)
         assertTrue(DatabaseBackupManager.exportBackup(context,uri("after23")).isSuccess)
         compare(read("before22"), read("after23"))
         for (id in 12101..12102) {

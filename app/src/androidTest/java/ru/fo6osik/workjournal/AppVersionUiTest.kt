@@ -25,7 +25,7 @@ class AppVersionUiTest {
         val installed = context.packageManager.getPackageInfo(context.packageName, 0)
         assertEquals("1.0.8", installed.versionName)
         assertEquals(installed.versionName, BuildConfig.VERSION_NAME)
-        assertEquals(23, DatabaseProvider.getDatabase(context).openHelper.readableDatabase.version)
+        assertEquals(24, DatabaseProvider.getDatabase(context).openHelper.readableDatabase.version)
         val test = context.packageName == "ru.fo6osik.workjournal.debugtest"
         assertTrue(test || context.packageName == "ru.fo6osik.workjournal")
         assertEquals(test, BuildConfig.BUILD_TYPE == "debugTest")

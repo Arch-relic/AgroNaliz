@@ -49,6 +49,10 @@ class AppVersionTest(unittest.TestCase):
         with self.assertRaisesRegex(SystemExit, 'separate verified migration audit'):
             preflight('main-apk-publish.yml', 5, 3000003)
 
+    def test_room24_main_is_blocked_without_policy_changes(self):
+        with self.assertRaisesRegex(SystemExit, 'separate verified migration audit'):
+            preflight('main-apk-publish.yml', 5, 3000004)
+
     def test_test_release_codes_increase_without_reset(self):
         self.assertEqual(2000005, preflight('test-apk-publish.yml', 5, 53))
         self.assertEqual(2000006, preflight('test-apk-publish.yml', 6, 2000005, [5]))
@@ -59,8 +63,8 @@ class AppVersionTest(unittest.TestCase):
                 with self.subTest(workflow=workflow, installed=installed, previous=previous):
                     with self.assertRaises(SystemExit): preflight(workflow, 5, installed, previous)
 
-    def test_room_23_and_dynamic_label(self):
-        self.assertRegex((ROOT / 'app/src/main/java/ru/fo6osik/workjournal/AppDatabase.kt').read_text(), r'version\s*=\s*23\s*,')
+    def test_room_24_and_dynamic_label(self):
+        self.assertRegex((ROOT / 'app/src/main/java/ru/fo6osik/workjournal/AppDatabase.kt').read_text(), r'version\s*=\s*24\s*,')
         root = ET.parse(ROOT / 'app/src/main/res/layout/activity_main.xml').getroot()
         self.assertEqual('FrameLayout', root.tag)
         self.assertIsNotNone(root.find('ScrollView'))
