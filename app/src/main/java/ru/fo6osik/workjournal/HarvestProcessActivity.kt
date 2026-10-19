@@ -30,12 +30,9 @@ class HarvestProcessActivity : AppCompatActivity() {
     private lateinit var textStatus: TextView
     private lateinit var textStartDate: TextView
     private lateinit var textCombine: TextView
-    private lateinit var textTotalBunkers: TextView
     private lateinit var textBunkerVolume: TextView
-    private lateinit var textTotalVolume: TextView
-    private lateinit var textAverageBunkerVolume: TextView
     private lateinit var textDaysEmpty: TextView
-    private lateinit var textHarvestResults: TextView
+    private lateinit var resultsCard: HarvestResultsCardView
     private lateinit var dayCalendar: HarvestDayCalendarView
     private var restoredMonth: String? = null
     private var restoredDate: String? = null
@@ -86,7 +83,8 @@ class HarvestProcessActivity : AppCompatActivity() {
             return
         }
 
-        textHarvestResults = findViewById(R.id.textHarvestCampaignResults)
+        resultsCard = findViewById(R.id.harvestResultsCard)
+        resultsCard.setExpansion(savedInstanceState?.getBoolean("harvest.results.expanded") ?: false)
 
         textTitle =
             findViewById(
@@ -108,10 +106,6 @@ class HarvestProcessActivity : AppCompatActivity() {
                 R.id.textHarvestProcessCombine
             )
 
-        textTotalBunkers =
-            findViewById(
-                R.id.textHarvestTotalBunkers
-            )
 
 
         textBunkerVolume =
@@ -119,15 +113,7 @@ class HarvestProcessActivity : AppCompatActivity() {
                 R.id.textHarvestProcessBunkerVolume
             )
 
-        textTotalVolume =
-            findViewById(
-                R.id.textHarvestTotalVolume
-            )
 
-        textAverageBunkerVolume =
-            findViewById(
-                R.id.textHarvestAverageBunkerVolume
-            )
 
         textDaysEmpty =
             findViewById(
@@ -301,57 +287,13 @@ class HarvestProcessActivity : AppCompatActivity() {
                     " м³"
             }
 
-        val totalBunkers =
-            days.sumOf {
-                it.bunkerCount
-            }
-
-        textTotalBunkers.text =
-            "Всего за все дни: " +
-                bunkerCountText(
-                    totalBunkers
-                )
-
-
-        val allBunkers =
-            bunkersByDay
-                .values
-                .flatten()
-
-        textTotalVolume.text =
-            calculationText(
-                label =
-                    "Расчётный объём за все дни",
-                bunkerVolumeM3 =
-                    process.bunkerVolumeM3,
-                bunkers =
-                    allBunkers
-            )
-
-        textAverageBunkerVolume.text =
-            averageText(
-                bunkerVolumeM3 =
-                    process.bunkerVolumeM3,
-                bunkers =
-                    allBunkers
-            )
-
-        val result = HarvestCalculator.campaign(
-            process.bunkerVolumeM3,
-            days.map { day -> HarvestCalculator.DayInput(
-                bunkersByDay[day.id].orEmpty().map { it.fillLevel }, day.harvestedAreaHa, day.bulkDensityKgM3
-            ) }
-        )
-        textTotalBunkers.text = "Бункеров: ${allBunkers.size}"
-        textTotalVolume.text = "Объём: ${result.volumeM3?.let { HarvestResultsFormatter.range(it,"м³") } ?: "—"}"
-        textAverageBunkerVolume.visibility = View.GONE
         fun input(day: HarvestDaySummary) = HarvestCalculator.DayInput(
             bunkersByDay[day.id].orEmpty().map { it.fillLevel }, day.harvestedAreaHa, day.bulkDensityKgM3)
-        textHarvestResults.text = HarvestCampaignMetrics.text(process.fieldAreaSnapshotHa, process.actualPlantedAreaHa,
-            process.status == "IN_PROGRESS", HarvestCampaignMetrics.calculate(
-            process.bunkerVolumeM3, process.actualPlantedAreaHa,
+        val metrics = HarvestCampaignMetrics.calculate(process.bunkerVolumeM3, process.actualPlantedAreaHa,
             days.filter { it.status == "COMPLETED" }.map(::input), days.map(::input),
-            campaignCompleted = process.status == "COMPLETED", fieldAreaSnapshotHa = process.fieldAreaSnapshotHa))
+            campaignCompleted = process.status == "COMPLETED", fieldAreaSnapshotHa = process.fieldAreaSnapshotHa)
+        resultsCard.update(HarvestResultsCardModel.from(metrics, process.fieldAreaSnapshotHa,
+            process.actualPlantedAreaHa, process.status == "IN_PROGRESS"))
 
         renderDays(days)
 
@@ -382,6 +324,7 @@ class HarvestProcessActivity : AppCompatActivity() {
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
+        if (::resultsCard.isInitialized) outState.putBoolean("harvest.results.expanded", resultsCard.expanded)
         if (::dayCalendar.isInitialized) {
             outState.putString("harvest.calendar.month", dayCalendar.calendar.month ?: restoredMonth)
             outState.putString("harvest.calendar.date", dayCalendar.calendar.selectedDate ?: restoredDate)

@@ -17,6 +17,10 @@ object HarvestCampaignMetrics {
         return SelectedArea(null, AreaSource.UNKNOWN)
     }
 
+    /** Progress has a stable planting target; a completed-day total is never a target. */
+    fun selectTargetArea(actual: Double?, fieldSnapshot: Double?): SelectedArea =
+        selectArea(false, actual, fieldSnapshot, emptyList())
+
     data class Result(
         val harvestedHa: Double, val unknownAreaDays: Int, val completedDays: Int, val activeDays: Int,
         val remainingHa: Double?, val progressPercent: Double?, val exceedsActual: Boolean,
@@ -24,7 +28,8 @@ object HarvestCampaignMetrics {
         val wholeAreaYield: HarvestCalculator.Range?, val harvestedAreaYield: HarvestCalculator.Range?,
         val selectedArea: SelectedArea, val progressComplete: Boolean,
         val yieldCentnersPerHa: HarvestCalculator.Range?,
-        val bunkerCount: Int, val volumeM3: HarvestCalculator.Range?
+        val bunkerCount: Int, val volumeM3: HarvestCalculator.Range?,
+        val targetArea: SelectedArea = SelectedArea(null, AreaSource.UNKNOWN)
     )
 
     fun calculate(capacity: Double?, actual: Double?, completed: List<HarvestCalculator.DayInput>,
@@ -36,6 +41,8 @@ object HarvestCampaignMetrics {
         val unknown = completed.count { HarvestCalculator.positive(it.harvestedAreaHa) == null }
         val selected = selectArea(campaignCompleted, actual, fieldAreaSnapshotHa, allDays)
         val denominator = selected.hectares
+        val target = selectTargetArea(actual, fieldAreaSnapshotHa)
+        val targetHa = target.hectares
         val completeArea = unknown == 0 && area.isFinite()
         val mass = massResult.massTonnes
         fun yieldFor(value: Double?): HarvestCalculator.Range? {
@@ -52,11 +59,11 @@ object HarvestCampaignMetrics {
             if (min.isFinite() && max.isFinite()) HarvestCalculator.Range(min, max) else null
         }
         return Result(area, unknown, completed.size, allDays.size - completed.size,
-            if (denominator != null && area.isFinite()) denominator - area else null,
-            if (denominator != null && area.isFinite()) (area / denominator * 100).takeIf { it.isFinite() } else null,
-            denominator != null && area > denominator, mass, massResult.massesComplete,
+            if (targetHa != null && area.isFinite()) targetHa - area else null,
+            if (targetHa != null && area.isFinite()) (area / targetHa * 100).takeIf { it.isFinite() } else null,
+            targetHa != null && area > targetHa, mass, massResult.massesComplete,
             campaignYield, if (completeArea) yieldFor(area) else null,
-            selected, completeArea, centners, massResult.bunkerCount, massResult.volumeM3)
+            selected, completeArea, centners, massResult.bunkerCount, massResult.volumeM3, target)
     }
 
     fun text(fieldAreaSnapshotHa: Double?, actualPlantedAreaHa: Double?, inProgress: Boolean, result: Result): String {
@@ -82,6 +89,6 @@ object HarvestCampaignMetrics {
             "Урожайность по убранной площади: ${yield(result.harvestedAreaYield)}"
         ).joinToString("\n") +
             (if (result.activeDays > 0) "\nЕсть активный рабочий день: его масса включена, площадь будет учтена после завершения. Показатели предварительные." else "") +
-            (if (result.exceedsActual) "\nВнимание: убранная площадь превышает принятую площадь кампании." else "")
+            (if (result.exceedsActual) "\nВнимание: убранная площадь превышает целевую площадь кампании." else "")
     }
 }

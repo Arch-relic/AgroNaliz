@@ -75,8 +75,8 @@ class HarvestCampaignMetricsTest {
         assertEquals(HarvestCampaignMetrics.AreaSource.COMPLETED_DAYS, result.selectedArea.source)
         assertEquals(90.0, result.selectedArea.hectares!!, 0.0)
         assertEquals(300.0 / 90, result.wholeAreaYield!!.min, 0.0)
-        assertEquals(100.0, result.progressPercent!!, 0.0)
-        assertEquals(0.0, result.remainingHa!!, 0.0)
+        assertEquals(90.0 / 95 * 100, result.progressPercent!!, 0.0)
+        assertEquals(5.0, result.remainingHa!!, 0.0)
     }
     @Test fun missingOrInvalidDayAreaFallsBackWithoutUsingPartialSum() {
         for (invalid in listOf(null, 0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY)) {
@@ -179,6 +179,46 @@ class HarvestCampaignMetricsTest {
         assertEquals(HarvestCampaignMetrics.AreaSource.ACTUAL_PLANTED, result.selectedArea.source)
         assertNull(result.progressPercent); assertNull(result.remainingHa)
         assertFalse(result.progressComplete)
+    }
+    @Test fun yieldAreaAndProgressTargetRemainIndependent() {
+        val result = campaign(listOf(day(90.0)), actual = 100.0)
+        assertEquals(90.0, result.selectedArea.hectares!!, 0.0)
+        assertEquals(100.0, result.targetArea.hectares!!, 0.0)
+        assertEquals(90.0, result.progressPercent!!, 0.0)
+        assertEquals(10.0, result.remainingHa!!, 0.0)
+        assertEquals(150.0 / 90, result.wholeAreaYield!!.min, 0.0)
+    }
+    @Test fun targetFallsBackToSnapshotButNeverCompletedDays() {
+        val result = campaign(listOf(day(90.0)), actual = null, snapshot = 120.0)
+        assertEquals(HarvestCampaignMetrics.AreaSource.FIELD_SNAPSHOT, result.targetArea.source)
+        assertEquals(75.0, result.progressPercent!!, 0.0)
+        assertEquals(30.0, result.remainingHa!!, 0.0)
+        val unknown = campaign(listOf(day(90.0)), actual = null, snapshot = null)
+        assertEquals(90.0, unknown.selectedArea.hectares!!, 0.0)
+        assertNotNull(unknown.wholeAreaYield)
+        assertNull(unknown.targetArea.hectares); assertNull(unknown.progressPercent); assertNull(unknown.remainingHa)
+    }
+    @Test fun invalidTargetsAreRejectedIndependentlyFromYieldArea() {
+        for (invalid in listOf(null, 0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY)) {
+            val result = campaign(listOf(day()), actual = invalid, snapshot = invalid)
+            assertEquals(HarvestCampaignMetrics.AreaSource.UNKNOWN, result.targetArea.source)
+            assertEquals(HarvestCampaignMetrics.AreaSource.COMPLETED_DAYS, result.selectedArea.source)
+            assertNull(result.progressPercent); assertFalse(result.exceedsActual)
+        }
+    }
+    @Test fun finishedCampaignExcessUsesTargetNotFinalDaySum() {
+        val result = campaign(listOf(day(110.0)), actual = 100.0)
+        assertEquals(110.0, result.progressPercent!!, 0.0000001)
+        assertEquals(-10.0, result.remainingHa!!, 0.0); assertTrue(result.exceedsActual)
+        assertEquals(150.0 / 110, result.wholeAreaYield!!.min, 0.0)
+    }
+    @Test fun changingTargetDoesNotChangeFinalYieldOrMass() {
+        val before = campaign(listOf(day(90.0)), actual = 100.0)
+        val after = campaign(listOf(day(90.0)), actual = 120.0)
+        assertEquals(before.selectedArea, after.selectedArea); assertEquals(before.mass, after.mass)
+        assertEquals(before.wholeAreaYield, after.wholeAreaYield)
+        assertEquals(75.0, after.progressPercent!!, 0.0)
+        assertEquals(30.0, after.remainingHa!!, 0.0)
     }
     @Test fun onlyDocumentedVersionsAndColumnsAllowed() {
         for (version in 18..23) assertTrue(HarvestBackupCompatibility.accepts(23, version))

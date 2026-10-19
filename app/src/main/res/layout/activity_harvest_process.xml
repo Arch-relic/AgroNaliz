@@ -69,46 +69,12 @@
             android:layout_height="wrap_content"
             android:text="Изменить фактическую площадь посева" />
 
-        <TextView
+        <ru.fo6osik.workjournal.HarvestResultsCardView
+            android:id="@+id/harvestResultsCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="28dp"
-            android:text="@string/harvest_results_title"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            android:paddingBottom="8dp" />
-
-        <TextView
-            android:id="@+id/textHarvestTotalBunkers"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Всего за все дни: 0 бункеров"
-            android:textSize="19sp"
-            android:textStyle="bold"
-            android:paddingBottom="14dp" />
-
-        <TextView
-            android:id="@+id/textHarvestTotalVolume"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Расчётный объём за все дни: не настроен"
-            android:textSize="18sp"
-            android:paddingBottom="6dp" />
-
-        <TextView
-            android:id="@+id/textHarvestAverageBunkerVolume"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Средний объём бункера: не настроен"
-            android:textSize="18sp"
-            android:paddingBottom="14dp" />
-
-        <TextView
-            android:id="@+id/textHarvestCampaignResults"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="18sp"
-            android:paddingBottom="14dp" />
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="16dp" />
 
         <TextView
             android:layout_width="match_parent"
