@@ -39,6 +39,14 @@ class Room24UpdateTest {
         db.execSQL("INSERT INTO fields(id,name,areaHa,isActive) VALUES(26001,'synthetic',120,1)")
         db.execSQL("INSERT INTO vehicles(id,type,brand,model,number,year,note,engineId,engineName) VALUES(26001,'combine','synthetic','room23','SYNTHETIC',2020,'keep',NULL,'')")
         db.execSQL("INSERT INTO farm_events(id,eventUid,eventType,targetModule,title,description,eventYear,eventMonth,eventDay,datePrecision,payloadJson,targetRecordUid,createdAt) VALUES(26001,'synthetic-room24-event','FIELD_WORK','FIELDS','synthetic','keep',2026,10,19,'DAY',NULL,NULL,100)")
+        db.execSQL("INSERT INTO maintenance_records(id,vehicleId,date,meterValue,meterType,work,note,eventUid,datePrecision) VALUES(26001,26001,100,123,'mh','synthetic service','keep','synthetic-room24-event','DAY')")
+        db.execSQL("INSERT INTO work_types(id,name,isActive) VALUES(26001,'synthetic work',1)")
+        db.execSQL("INSERT INTO season_processes(id,processUid,title,fieldId,startDate,endDate,status,crop,goal,areaHa,note) VALUES(26001,'synthetic-season-process','synthetic',26001,'2026-10-19',NULL,'IN_PROGRESS','Пшеница','keep',95,'keep')")
+        db.execSQL("INSERT INTO season_works(id,workDate,endDate,status,workTypeId,fieldId,processId,areaHa,note,eventUid) VALUES(26001,'2026-10-19',NULL,'COMPLETED',26001,26001,26001,60,'keep','synthetic-room24-event')")
+        db.execSQL("INSERT INTO season_work_days(id,dayUid,seasonWorkId,workDate,endDate,areaHa,cumulativeAreaHa,stage,note) VALUES(26001,'synthetic-season-day',26001,'2026-10-19',NULL,60,60,'WORK','keep')")
+        db.execSQL("INSERT INTO season_work_vehicles(id,seasonWorkId,vehicleId,vehicleNameSnapshot) VALUES(26001,26001,26001,'synthetic')")
+        db.execSQL("INSERT INTO farm_event_fields(id,eventUid,fieldId) VALUES(26001,'synthetic-room24-event',26001)")
+        db.execSQL("INSERT INTO farm_event_vehicles(id,eventUid,vehicleId,relationType,note) VALUES(26001,'synthetic-room24-event',26001,'RELATED','keep')")
         for(p in 1..2) {
             db.execSQL("""INSERT INTO harvest_processes(id,processUid,startDate,endDate,status,fieldId,fieldNameSnapshot,crop,combineVehicleId,combineNameSnapshot,bunkerVolumeM3,createdAt,fieldAreaSnapshotHa,actualPlantedAreaHa)
                 VALUES(?,?,'2026-10-19',?,?,26001,'synthetic','Пшеница',26001,'synthetic',8,100,120,95)""",arrayOf<Any?>(26100+p,"synthetic-room24-p$p",if(p==1)null else "2026-10-19",if(p==1)"IN_PROGRESS" else "COMPLETED"))
@@ -49,8 +57,10 @@ class Room24UpdateTest {
             for((n,scope) in listOf("DAY","BEFORE_DAY").withIndex()) db.execSQL("INSERT INTO harvest_refuelings(id,refuelUid,dayId,dayUid,vehicleId,vehicleNameSnapshot,scope,beforePercent,afterPercent,time,createdAt) VALUES(?,?,?,?,26001,'synthetic',?,30,90,'12:30',103)",arrayOf<Any?>(26400+p*10+n,"synthetic-room24-r$p-$n",26200+p,"synthetic-room24-d$p",scope))
         }
         context.getSharedPreferences("synthetic-room24",0).edit().putString("cert",cert()).putInt("interval",32).commit()
-        context.getSharedPreferences("harvest_reminder_prefs",0).edit().putBoolean("enabled_26201",false).putInt("interval_26201",32).commit()
+        context.getSharedPreferences("harvest_reminder_prefs",0).edit().putBoolean("enabled_26201",true).putBoolean("enabled_26202",false).putInt("interval_26201",32).putInt("unload_26201",9).putLong("next_at_26201",2000000000000L).putBoolean("waiting_26201",true).commit()
         File(context.filesDir,"synthetic-room24-retained").writeText("keep")
+        File(context.filesDir,"synthetic-room24-documents/manual.txt").apply { parentFile!!.mkdirs();writeText("synthetic document retained") }
+        File(context.getExternalFilesDir(null),"synthetic-room24-document.txt").writeText("synthetic external document retained")
         val exported=DatabaseBackupManager.exportBackup(context,uri("before23"))
         assertTrue(exported.exceptionOrNull()?.stackTraceToString(),exported.isSuccess)
     }
@@ -59,8 +69,11 @@ class Room24UpdateTest {
         val prefs=context.getSharedPreferences("synthetic-room24",0)
         assertEquals(prefs.getString("cert",null),cert());assertEquals(32,prefs.getInt("interval",0))
         val reminders=context.getSharedPreferences("harvest_reminder_prefs",0)
-        assertFalse(reminders.getBoolean("enabled_26201",true));assertEquals(32,reminders.getInt("interval_26201",0))
+        assertTrue(reminders.getBoolean("enabled_26201",false));assertFalse(reminders.getBoolean("enabled_26202",true));assertEquals(32,reminders.getInt("interval_26201",0))
+        assertEquals(9,reminders.getInt("unload_26201",0));assertEquals(2000000000000L,reminders.getLong("next_at_26201",0L));assertTrue(reminders.getBoolean("waiting_26201",false))
         assertEquals("keep",File(context.filesDir,"synthetic-room24-retained").readText())
+        assertEquals("synthetic document retained",File(context.filesDir,"synthetic-room24-documents/manual.txt").readText())
+        assertEquals("synthetic external document retained",File(context.getExternalFilesDir(null),"synthetic-room24-document.txt").readText())
         assertTrue(DatabaseBackupManager.exportBackup(context,uri("after24")).isSuccess)
         fun compare(old:JSONObject,fresh:JSONObject) {
             val before=old.getJSONObject("tables");val after=fresh.getJSONObject("tables")

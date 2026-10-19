@@ -25,7 +25,7 @@ def main():
     h['instrument'](APP, 'verifyMain108Room23AndSeparateRestore', 'MainRoom23MigrationTest')
     adb('shell', 'am', 'force-stop', APP)
     h['instrument'](APP, 'verifyMain108Room23AndSeparateRestore', 'MainRoom23MigrationTest')
-    print('MAIN ROOM22->23 SUCCESS: 1.0.7/3000003 -> 1.0.8/3000004; all old columns/tables, active states, fuel, events, files/preferences/timers and certificate retained; separate-database restore and restart verified. Disposable CI debug certificate only.')
+    print('MAIN ROOM22->23 SUCCESS: 1.0.7/3000003 -> 1.0.9/3000004; all old columns/tables, active states, fuel, events, files/preferences/timers and certificate retained; separate-database restore and restart verified. Disposable CI debug certificate only.')
 
 
 if __name__ == '__main__':

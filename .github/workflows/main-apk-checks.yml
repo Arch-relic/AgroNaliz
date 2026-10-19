@@ -21,7 +21,7 @@ jobs:
           sed -i '/^android\.aapt2FromMavenOverride=/d' gradle.properties
           chmod +x gradlew
       - name: Build main update and unchanged TEST metadata without production secrets
-        run: ./gradlew -PmainVersionCode=3000001 :app:assembleDebug :app:assembleDebugTest :app:assembleDebugAndroidTest :app:testDebugUnitTest --no-daemon --stacktrace --console=plain
+        run: ./gradlew -PmainVersionCode=3000011 :app:assembleDebug :app:assembleDebugTest :app:assembleDebugAndroidTest :app:testDebugUnitTest --no-daemon --stacktrace --console=plain
       - name: Test exact main release signer and safety gates with disposable debug fixture
         run: |
           python3 -m unittest discover -s docs -p 'test_main_apk_release.py' -v
@@ -30,7 +30,7 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/main-update-input"
           cp app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/main-update-input/first.apk"
-          ./gradlew -PmainVersionCode=3000002 :app:assembleDebug --no-daemon --stacktrace --console=plain
+          ./gradlew -PmainVersionCode=3000012 :app:assembleDebug --no-daemon --stacktrace --console=plain
           cp app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/main-update-input/second.apk"
       - name: Checkout Room20 baseline
         uses: actions/checkout@v4

@@ -1,3 +1,55 @@
+# MAIN 1.0.9 / Room24 — подготовка, не разрешение на выпуск
+
+В этой ветке подготовлен допуск только MAIN1.0.9/Room24 поверх установленной
+Room23/MAIN1.0.8 с фактическим versionCode >=3000005. Прежние ветви Room22 и
+Room23 сохранены. Production workflow не запускать в рамках этого PR.
+
+Подтверждённый опубликованный MAIN1.0.8: run39044119058, code3000005,
+sourcead66e4b452ec3c93866f4f6b8163087274166d45, Room23. Проверены существующие
+verification.json, SHA APK и apksigner/aapt2 без установки и без ключа:
+applicationId ru.fo6osik.workjournal; сертификат
+3FE57967C15F81EE39EA2B9B88DD96A7506C1B5B9032606ECBEA04BBDB15EE3C;
+APK SHA256 a44cc8b0e1ba2029c7110b16548723c94d452ff7f5f37108d4da7eff34e0b47c.
+Run4 завершился ошибкой, поэтому code3000004 не считать последним выпуском.
+Это не подтверждает, какая именно APK сейчас установлена на смартфоне.
+
+## Дальнейшие действия только после отдельного согласования
+
+1. Владелец проверяет Draft PR и отдельно разрешает merge в main.
+2. На точном итоговом SHA main дождаться обычного CI и вручную запустить
+   Room24 synthetic MAIN TEST update audit (room24-update-checks.yml) из main.
+   Нужны owner, workflow_dispatch, attempt1, completed/success, workflow_id389125371,
+   exact head_sha, успешные build baseline/current и update/integrity/restore/restart.
+   Зелёный PR-run не заменяет этот audit. Если main изменена — нужен новый audit.
+3. До будущего обновления владелец создаёт штатный MAIN JSON-backup вне песочницы
+   приложения, приватно проверяет Room23 и фактические versionCode/сертификат.
+   JSON не содержит произвольные пользовательские документы/preferences: необходимые
+   файлы сохраняются отдельно штатным способом. Не испытывать restore на рабочей БД.
+4. После отдельного разрешения выпуска владелец запускает новый Publish original
+   main APK из main с фактическим minimum_installed_version_code (не ниже3000005),
+   minimum_room_version=23 и migration_audit_run_id из шага2. Только первая попытка.
+   Code =3000000+GITHUB_RUN_NUMBER, строго больше фактического установленного;
+   offset, имя workflow и счётчик не менять. Re-run требует нового dispatch.
+5. Оригинальные ANDROID_* Secrets и публичный pin остаются прежними. Наличие
+   ключа исторически подтверждено успешным run5; текущие secrets здесь не читались
+   и не проверялись настоящим signer. Неправильный/отсутствующий ключ блокирует выпуск.
+6. Проверить будущие APK+verification.json: packageMAIN, versionName1.0.9,
+   Room24, возрастающий code, исходный cert, sourceSHA и auditSourceSHA совпадают,
+   auditWorkflowId389125371, SHAAPK. TEST не допускается даже при том же cert.
+7. Только с отдельным разрешением на работу со смартфоном выполнить read-only
+   verify-main-apk-update.py с installed-room-version23. Затем штатное обновление
+   поверх MAIN, без удаления/clear. При любом несовпадении остановиться.
+
+Синтетический audit использует точный опубликованный sourcead66e4b452ec3c93866f4f6b8163087274166d45 для Room23 APK1.0.8 с code3000005 и текущую
+1.0.9/Room24 с CI-only code3000006, одноразовый debug key, не оригинальный.
+Также проверяются MAIN/TEST раздельно, ТО/сезонные работы/связи/топливо/бункеры,
+таймерные настройки, внутренние/внешние файлы, restore и restart, UI1.0.9.
+APK не загружаются в artifacts; production signing и Release не запускаются.
+
+---
+
+Исторические инструкции и ограничения прежних выпусков (сохранены):
+
 # MAIN1.0.8 / Room23: защищённый штатный выпуск
 
 После отдельного разрешения и применения этого патча сохраняются main/owner/attempt1,
