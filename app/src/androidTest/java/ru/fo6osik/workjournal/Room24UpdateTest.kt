@@ -21,7 +21,15 @@ class Room24UpdateTest {
         check(context.packageName in setOf("ru.fo6osik.workjournal","ru.fo6osik.workjournal.debugtest"))
         check(android.os.Build.HARDWARE in setOf("ranchu","goldfish"))
     }
-    private fun uri(name:String)=Uri.fromFile(File(context.filesDir,"synthetic-room24-$name.json"))
+    private fun uri(name:String): Uri {
+        if (context.packageName != "ru.fo6osik.workjournal.debugtest")
+            return Uri.fromFile(File(context.filesDir,"synthetic-room24-$name.json"))
+        val prefs=context.getSharedPreferences("synthetic-room24-uris",0)
+        prefs.getString(name,null)?.let { return Uri.parse(it) }
+        return PrivateTestBackups.createDestination(context).also {
+            check(prefs.edit().putString(name,it.toString()).commit())
+        }
+    }
     private fun read(name:String)=JSONObject(context.contentResolver.openInputStream(uri(name))!!.bufferedReader().use { it.readText() })
     @Suppress("DEPRECATION") private fun cert()=MessageDigest.getInstance("SHA-256").digest(context.packageManager.getPackageInfo(context.packageName,64).signatures!!.single().toByteArray()).joinToString("") { "%02X".format(it) }
     @Test fun seed23()=runBlocking(Dispatchers.IO) {
@@ -43,7 +51,8 @@ class Room24UpdateTest {
         context.getSharedPreferences("synthetic-room24",0).edit().putString("cert",cert()).putInt("interval",32).commit()
         context.getSharedPreferences("harvest_reminder_prefs",0).edit().putBoolean("enabled_26201",false).putInt("interval_26201",32).commit()
         File(context.filesDir,"synthetic-room24-retained").writeText("keep")
-        assertTrue(DatabaseBackupManager.exportBackup(context,uri("before23")).isSuccess)
+        val exported=DatabaseBackupManager.exportBackup(context,uri("before23"))
+        assertTrue(exported.exceptionOrNull()?.stackTraceToString(),exported.isSuccess)
     }
     @Test fun verify24AndSeparateRestore()=runBlocking(Dispatchers.IO) {
         guard();val room=DatabaseProvider.getDatabase(context);assertEquals(24,room.openHelper.readableDatabase.version)
