@@ -62,7 +62,7 @@ class HarvestSlidersUiTest {
     @Test fun stepSwitchDoesNotRoundAndCancelNeverWrites() {
         val before=dao.getDayById(day)
         open().use { s->ready(s);dialog()
-            onView(withText("5 мин")).inRoot(isDialog()).perform(click())
+            onView(withText("5 мин")).inRoot(isDialog()).perform(scrollTo(),click())
             onView(withText("Интервал работы: 32 мин")).perform(scrollTo()).check(matches(isDisplayed()))
             move(withId(R.id.sliderHarvestWork),33)
             onView(withId(R.id.textReminderSettingsExample)).check(matches(withText(containsString("= 40 мин"))))
@@ -74,7 +74,7 @@ class HarvestSlidersUiTest {
     @Test fun saveStepReopenRecreateAndOtherDayIndependent() {
         val other=dao.insertDay(HarvestDay(dayUid=UUID.randomUUID().toString(),processId=process,workDate="2026-10-20",startTime="08:00")).toInt()
         val beforeOther=dao.getDayById(other)
-        open().use { s->ready(s);dialog();onView(withText("5 мин")).perform(click());saveTime()
+        open().use { s->ready(s);dialog();onView(withText("5 мин")).perform(scrollTo(),click());saveTime()
             await { dao.getDayById(day)!!.reminderStepMinutes==5 }
             assertEquals(32,dao.getDayById(day)!!.workIntervalMinutes)
             s.recreate();ready(s);dialog()
@@ -91,7 +91,7 @@ class HarvestSlidersUiTest {
         open().use { s->ready(s);dialog()
             onView(withId(R.id.switchHarvestReminderEnabled)).check(matches(not(isEnabled())))
             onView(withText("Интервал работы: 600 мин")).check(matches(isDisplayed()))
-            onView(withText("5 мин")).perform(click())
+            onView(withText("5 мин")).perform(scrollTo(),click())
             saveTime();await { dao.getDayById(day)!!.reminderStepMinutes==5 }
             assertEquals(600,dao.getDayById(day)!!.workIntervalMinutes);assertTrue(dao.getDayById(day)!!.workIntervalCustom)
         }
