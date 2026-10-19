@@ -38,12 +38,17 @@ def main():
         else:
             adb('shell', 'settings', 'put', 'system', 'font_scale', original_font)
         adb('shell', 'am', 'force-stop', APP)
+    instrument('ChangelogUiTest', 'navigationIndependentExpansionAndRecreation')
+    instrument('ChangelogUiTest', 'offlineAndNoDatabaseChanges')
     instrument('HarvestSlidersUiTest', count=5)
     instrument('HarvestResultsCardUiTest', count=5)
     try:
         adb('shell', 'wm', 'size', '720x960')
         adb('shell', 'settings', 'put', 'system', 'font_scale', '1.6')
         adb('shell', 'am', 'force-stop', APP)
+        instrument('ChangelogUiTest', 'compactLargeFontScreenshot')
+        Path('changelog-screenshots').mkdir(exist_ok=True)
+        adb('pull', '/sdcard/Android/data/' + APP + '/files/changelog-screenshots/history.png', 'changelog-screenshots/history.png')
         instrument('HarvestResultsCardUiTest', 'compactLargeFont')
         instrument('HarvestSlidersUiTest', 'stepSwitchDoesNotRoundAndCancelNeverWrites')
     finally:

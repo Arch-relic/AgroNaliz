@@ -64,7 +64,11 @@
         android:layout_height="wrap_content"
         android:text="Справочник техники" />
 
-
+    <Button
+        android:id="@+id/buttonChangelog"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="История изменений" />
 
 </LinearLayout>
 </ScrollView>

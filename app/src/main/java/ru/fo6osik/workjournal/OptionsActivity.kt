@@ -21,6 +21,9 @@ class OptionsActivity : AppCompatActivity() {
             if (BuildConfig.BUILD_TYPE == "debugTest") R.string.app_version_test else R.string.app_version,
             BuildConfig.VERSION_NAME
         )
+        findViewById<Button>(R.id.buttonChangelog).setOnClickListener {
+            startActivity(Intent(this, ChangelogActivity::class.java))
+        }
         findViewById<Button>(R.id.buttonDeveloperCatalog).setOnClickListener {
             startActivity(Intent(this, DeveloperCatalogActivity::class.java))
         }

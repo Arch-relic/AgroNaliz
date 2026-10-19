@@ -52,6 +52,7 @@
 	<activity
     android:name=".FieldHistoryActivity"
     android:exported="false" />
+	<activity android:name=".ChangelogActivity" android:exported="false" />
 	<activity
     android:name=".OptionsActivity"
     android:exported="false" />
