@@ -849,3 +849,11 @@ step5/1, all-column JSON и schema_version/sqlite_master; upgrade без уда�
 проверяются в отдельных historical product sandboxes, их assertions не отключены.
 Финальные команды/полные пути/SHA/PR/результаты CI будут добавлены по завершении.
 Ни production signing, ни публикация, ни merge не разрешены и не выполнялись.
+
+
+Регистрация завершена: Draft PR45 https://github.com/Arch-relic/AgroNaliz/pull/45.
+GitHub зарегистрировал main-room24-same-checks.yml как workflow390524624. Этот ID
+закреплён в live gate/signer/read-only verifier/tests, временный fail-closed0 удалён.
+Теперь выполняется финальный CI, production signing по-прежнему не запускается.
+Локальная Gradle-команда до компиляции падает с FileLockContentionHandler/wildcard IP;
+git fetch — proxy8080 unavailable. Проект ради среды не меняется, публикация API.

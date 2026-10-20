@@ -41,7 +41,7 @@ def validate(report,raw,installed,new,room):
     if target in (23,24):
         product,workflow,floor=('1.0.8',387641531,3000003) if target==23 else ('1.0.9',389125371,3000005)
         if target==24 and room==24:
-            product,workflow,floor='1.0.10',0,3000007
+            product,workflow,floor='1.0.10',390524624,3000007
         audit=report.get('auditRunId')
         if (old_code<floor or report.get('versionName')!=product or type(audit) is not int or audit<=0 or
                 report.get('auditWorkflowId')!=workflow or report.get('auditSourceSha')!=report.get('sourceSha')):

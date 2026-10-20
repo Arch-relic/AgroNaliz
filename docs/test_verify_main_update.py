@@ -48,3 +48,12 @@ class VerifyMainUpdate(unittest.TestCase):
     def test_read_only_script_has_no_install_clear_or_live_db(self):
         s=Path(__file__).with_name('verify-main-apk-update.py').read_text()
         for command in ["'install'","'uninstall'","'clear'","'run-as'","'sqlite3'"]:self.assertNotIn(command,s)
+
+    def test_room24_same_schema_requires_1010_and_dedicated_exact_audit(self):
+        r=dict(self.report(),versionCode=3000008,installedVersionCode=3000007,installedRoomVersion=24,
+               roomVersion=24,versionName='1.0.10',auditRunId=123,auditWorkflowId=390524624,auditSourceSha='a'*40)
+        self.check(r,old=(3000007,v.CERT),new=(3000008,v.CERT),room=24)
+        for change in [dict(versionName='1.0.9'),dict(auditWorkflowId=389125371),dict(auditRunId=0),
+                       dict(auditSourceSha='b'*40),dict(installedRoomVersion=23)]:
+            with self.subTest(change=change),self.assertRaises(ValueError):
+                self.check(dict(r,**change),old=(3000007,v.CERT),new=(3000008,v.CERT),room=24)

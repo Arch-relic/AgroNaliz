@@ -16,7 +16,7 @@ on:
 
       migration_audit_run_id:
         default: ''
-        description: 'Successful owner/main Room22 to23 or Room23 to24 audit run for this exact source SHA (required for Room23/24)'
+        description: 'Successful owner/main Room22 to23, Room23 to24 or Room24 to24 audit run for this exact source SHA (required for Room23/24)'
         required: false
         type: string
 
@@ -82,7 +82,7 @@ jobs:
               audit_job = 'main-room23' if room == 23 else 'room24-update'
               if same_room:
                   baseline, code_floor, product = 24, 3000007, '1.0.10'
-                  workflow_id = 0  # Fail closed until the dedicated workflow's registered ID is pinned.
+                  workflow_id = 390524624
                   workflow_path = '.github/workflows/main-room24-same-checks.yml'
                   audit_job = 'room24-same-update'
               if installed_room != baseline or positive(os.environ['INSTALLED_CODE']) < code_floor:
@@ -335,7 +335,7 @@ jobs:
                       room = int(os.environ['MAIN_ROOM_VERSION'])
                       same_room = room == 24 and int(os.environ['INSTALLED_ROOM']) == 24
                       report.update(versionName='1.0.10' if same_room else ('1.0.8' if room == 23 else '1.0.9'), auditRunId=int(os.environ['MAIN_MIGRATION_AUDIT_RUN_ID']),
-                                    auditSourceSha=os.environ['APK_SOURCE_SHA'], auditWorkflowId=0 if same_room else (387641531 if room == 23 else 389125371))
+                                    auditSourceSha=os.environ['APK_SOURCE_SHA'], auditWorkflowId=390524624 if same_room else (387641531 if room == 23 else 389125371))
                   (output / 'verification.json').write_text(json.dumps(report, indent=2) + '\n')
                   print('Verified MAIN certificate SHA-256: ' + actual)
                   with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:

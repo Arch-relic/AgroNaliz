@@ -21,7 +21,7 @@ docs/main109-baseline.json. Оригинальная APK никогда не у�
    в1.0.10. При несовпадении/неизвестных данных остановиться, не удалять/не clear.
 3. На точном итоговом main SHA владелец вручную запускает новый
    main-room24-same-checks.yml. Нужны owner/main/workflow_dispatch/attempt1, success,
-   правильный workflow ID/path, job room24-same-update и все обязательные шаги.
+   workflow ID390524624/path, job room24-same-update и все обязательные шаги.
    PR-CI или аудит иного SHA не заменяет его. После изменения main нужен новый аудит.
 4. Только с отдельным разрешением владелец делает новый dispatch Publish original
    main APK: minimum_room_version=24, minimum_installed_version_code=фактический
