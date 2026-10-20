@@ -21,6 +21,12 @@ android {
         versionCode = 1
         versionName = "1.0.9"
 
+        // Diagnostics describe the compiled Room configuration without opening a user database.
+        val roomVersion = Regex("version\\s*=\\s*(\\d+)")
+            .find(file("src/main/java/ru/fo6osik/workjournal/AppDatabase.kt").readText())
+            ?.groupValues?.get(1) ?: throw GradleException("Cannot determine Room schema version")
+        buildConfigField("int", "ROOM_SCHEMA_VERSION", roomVersion)
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

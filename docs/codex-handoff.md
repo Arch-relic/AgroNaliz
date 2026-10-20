@@ -1,3 +1,5 @@
+Актуальный этап: issue #42, Draft PR #43; итог в конце документа. Предыдущие записи исторические.
+
 Актуальный этап: подготовка безопасного MAIN 1.0.9, Draft PR #41.
 Итоговый отчёт и ограничения находятся в конце документа; прежняя история сохранена.
 
@@ -635,3 +637,185 @@ Room23 не изменены; их проверка перенесена в sand
 Production APK не опубликована; Release не создан; production signing и оригинальный
 keystore не использованы; реальные данные не затронуты; установки на физический
 смартфон не было; PR не объединён. После отчёта остановиться для review.
+
+
+# Issue #42 — интерфейс и диагностика установленной сборки, 20.10.2026
+
+Задача: https://github.com/Arch-relic/AgroNaliz/issues/42. Ветка
+`feature/issue-42-ui-diagnostics`, база main
+`6da84bf09cf0cd3e9d1b5a40887a134bf25d7fe4`, tree
+`de8717d46fc94b279f9a44ff1270f019fb54eb16` (совпадает с локальным efd7cf1).
+Прочитаны актуальные main/AGENTS.md и handoff; прежняя история сохранена.
+Статус этой первоначальной записи: реализация подготовлена, реальные результаты CI
+и номер Draft PR будут добавлены по завершении, пока они не объявлены успешными.
+
+Карточка результатов сохраняет все строки модели/форматирование/арифметику.
+ReplacementSpan делает числа и составные единицы неделимыми при переносе.
+Если две колонки не вмещают отформатированные показатели, используется одна колонка;
+размер шрифта не уменьшается. Диапазон может переноситься между границами, число — нет.
+Раскрытие/модель/расчёты не меняются. Главный заголовок и MAIN app_name — «АгроНализ»;
+TEST сохраняет собственное имя «АгроНализ TEST». Package/имя файла БД не переименованы.
+
+Options читает PackageManager только собственного установленного пакета: имя/код
+версии, SHA256 всех текущих подписантов (не историческую signing lineage), API28+
+GET_SIGNING_CERTIFICATES/apkContentsSigners, до28 GET_SIGNATURES. Полные отпечатки
+сортируются/без дубликатов, доступны выделение и явная кнопка копирования. При ошибке
+подпись/код неизвестны, кнопка выключена; имя может безопасно браться из BuildConfig
+того же APK. Ключей/Secrets/сетевых запросов нет. Room schema берётся из генерируемой
+BuildConfig.ROOM_SCHEMA_VERSION: Gradle читает фактический literal @Database.version
+при сборке, без дублирующей ручной константы и без открытия/создания пользовательской БД.
+
+Новые3 JVM-теста SHA256; отдельный UiPolishTest: реальные installed metadata/clipboard,
+брендинг, пересоздание Options без изменения БД, ошибка metadata; переносы/отсутствие
+обрезки на280/360/600dp и font1/1.6. Отдельный CI API23/35 проверяет MAIN и TEST.
+Существующая проверка compactLargeFont карточки учитывает адаптивную компоновку и
+дополнительно проверяет отсутствие разрыва внутри числа; остальные assertions сохранены.
+
+Локально `python3 -m unittest discover -s docs -p 'test_*.py' -q`:96тестов,
+94passed/2SDKskipped; вложенные архивные проверки не суммировать. Первая проверка
+обнаружила несовместимость с прежним source guard BuildConfig.VERSION_NAME; оставлен
+корректный fallback на compiled versionName при недоступных PackageManager metadata,
+защитные тесты не менялись. Локальная обязательная команда
+`source /workspace/agronaliz-env.sh; agrogradle :app:assembleDebug :app:test`
+не доходит до компиляции: FileLockContentionHandler / Could not determine a usable
+wildcard IP for this machine. Причина — среда, настройки проекта ради неё не менялись.
+Android/JVM/instrumentation результаты должны быть получены из CI.
+
+versionName1.0.9/default versionCode/Actions-механизм без изменений. Для будущего
+выпуска нужен отдельный выбор версии и стандартный возрастающий код, аудит точного SHA
+и разрешение; этот PR ничего не объявляет опубликованным. Подписи/production workflows,
+Room24/миграции, backup, таймеры, расчёты и рабочие данные не изменяются.
+Физический смартфон не проверялся. Production signing/publish/Release/merge запрещены.
+
+Изменённые/созданные файлы (полные пути от корня):
+- `.github/workflows/ui-polish-checks.yml`
+- `app/build.gradle.kts`
+- `app/src/main/java/ru/fo6osik/workjournal/HarvestResultsCardView.kt`
+- `app/src/main/java/ru/fo6osik/workjournal/InstalledAppDiagnostics.kt`
+- `app/src/main/java/ru/fo6osik/workjournal/OptionsActivity.kt`
+- `app/src/main/res/layout/activity_main.xml`
+- `app/src/main/res/layout/activity_options.xml`
+- `app/src/main/res/values/strings.xml`
+- `app/src/test/java/ru/fo6osik/workjournal/InstalledAppDiagnosticsTest.kt`
+- `app/src/androidTest/java/ru/fo6osik/workjournal/UiPolishTest.kt`
+- `app/src/androidTest/java/ru/fo6osik/workjournal/HarvestResultsCardUiTest.kt`
+- `docs/run-ui-polish-checks.py`
+- `docs/codex-handoff.md`
+
+Удалённых файлов нет. Итоговые SHA/CI/PR — следующим дополнением после проверки.
+
+## Итог issue #42 — Draft PR #43, 20.10.2026
+
+PR: https://github.com/Arch-relic/AgroNaliz/pull/43, open/Draft, не объединён.
+Ветка `feature/issue-42-ui-diagnostics`; база main
+`6da84bf09cf0cd3e9d1b5a40887a134bf25d7fe4`. Проверенный код:
+`99f958f023e05140a17494959bd6999bfc903789`, tree
+`afc53eddec5c674961d24649f8028da94e5ddd17`. Локальный c295ee5 имеет то же дерево.
+CI проверяет технический merge-ref `d5fc1aab3535ea08f01ba7a141a7c44c203fde1b`,
+дерево которого проверено и совпадает с head. Это не merge PR в main. Следующий
+отчётный коммит меняет только docs/codex-handoff.md, не проверенный Android-код.
+
+Все13путей этого этапа перечислены выше. Удалений нет; прежний main handoff сохранён
+целиком. Код приложения не поднимает versionName1.0.9/default versionCode1, не меняет
+Actions versionCode policy. В app/build.gradle.kts только6строк генерации диагностической
+константы схемы по фактическому исходнику Room. AppDatabase/DatabaseProvider/миграции,
+сущности/DAO, backup/импорт, арифметика/округление, события/напоминания/таймеры,
+календарь и исходные production workflows не изменены. Сетевых запросов диагностика
+не делает. Package/сертификаты/имя файла agrouchet_database остаются прежними.
+
+### Проверенные UI-сценарии
+
+Новая матрица API23 и35, run39394699765/#1 — success:
+https://github.com/Arch-relic/AgroNaliz/actions/runs/39394699765.
+В каждом API по6инструментальных выполнений (3сценария × MAIN/TEST), всего12:
+- Фактические PackageManager versionName/versionCode/сертификат совпадают с экраном;
+  полный SHA256 сравнивается независимым MessageDigest от установленной подписи.
+  Копирование возвращает полный отпечаток без потерь; Options recreation сохраняет
+  корректные сведения; MAIN label «АгроНализ», TEST label «АгроНализ TEST», главный
+  заголовок совпадает с label. Снимок файлов БД до/после Options одинаков, новая БД
+  не создаётся. Проверены обе ветви Android API23 GET_SIGNATURES и35 SigningInfo.
+- SecurityException на запросе metadata безопасно возвращает unknown, без придуманного
+  сертификата/кода. Отсутствующие сертификаты также покрыты JVM-тестом; UI выключает
+  копирование и показывает локализованный текст ошибки. Имя версии при недоступных
+  PackageManager metadata берётся из compiled BuildConfig, не из релизного literal.
+- Числа22,28–22,43 и длинные12345678,12–12345679,34, отрицательная площадь, единицы,
+  ширины280/360/600dp и font1/1.6: текст модели не изменился, у каждого числового
+  токена и единицы одна строка, нет ellipsis/выхода строк за ширину/обрезки по высоте.
+  Отформатированные диапазоны не усредняются, шрифт не уменьшается.
+
+Матрица публикует только test-results, без APK. XML из артефакта12251397809
+проверен:14suite,175tests/0failures/0errors/0skipped для testDebugUnitTest и
+то же для testDebugTestUnitTest. Новые3 JVM-теста: полный известный SHA256 для abc,
+несколько подписантов/deduplication/устойчивый порядок, отсутствие сертификата.
+
+Зелёные дополнительные проверки:
+- Android PR #150/run39394699877 — success:
+  https://github.com/Arch-relic/AgroNaliz/actions/runs/39394699877.
+  53инструментальных вызова/107тестовых выполнений, включая обновлённую карточку,
+  исходную сетку2×2, адаптивный compact/large font, Room refresh/recreation,
+  сохранение выбора календаря, быстрый доступ, ползунки, полный backup/merge/repeat/
+  corrupt rollback и TEST/MAIN isolation. Python13catalog+7version+29TEST signer=49.
+  Реальное synthetic TEST обновление одинаковым временным ключом прошло;
+  иной ключ отвергнут Android с сохранением данных. Upload debug APK — skipped,
+  опубликован только android-pr6-diagnostics/id12251768789.
+- Offline changelog #13/run39394699689:
+  https://github.com/Arch-relic/AgroNaliz/actions/runs/39394699689. 3UI-выполнения:
+  навигация из Options/независимое раскрытие/recreation, offline/no DB changes,
+  маленький экран/крупный шрифт и скриншот.
+- MAIN safe update #69/run39394699716:
+  https://github.com/Arch-relic/AgroNaliz/actions/runs/39394699716.
+  Python18signer+9read-only и3инструментальных вызова, данные/preferences/таймеры/файлы
+  сохранены после update и restart. Только disposable CI key.
+- MAIN Room22 regression #39/run39394699684:
+  https://github.com/Arch-relic/AgroNaliz/actions/runs/39394699684.
+  3инструментальных вызова старой1.0.7/Room22→current24: все старые таблицы/колонки,
+  связи/статусы/топливо/события/файлы/preferences сохранены, отдельный restore и restart.
+- Room24 synthetic MAIN/TEST #26/run39394699805 — success:
+  https://github.com/Arch-relic/AgroNaliz/actions/runs/39394699805.
+  10вызовов: MAIN1.0.8/Room23→current24 и TEST отдельно; old data/files/preferences/
+  certificate сохранены, step1/JSON separate restore/restart/UI1.0.9 проверены.
+  Старые имена «Room22 to23»/«Room20 to21» — исторические имена проверок, текущая
+  схема24. Они не означают новый production-допуск или использование original key.
+
+Все6workflow успешны на проверенном коде (матрица содержит2jobs). Итого138
+инструментальных выполнений:107Android+12UI-polish+10Room24+3MAIN-safe+
+3Room22-regression+3changelog. Это включает намеренные повторения, а не138уникальных
+методов. Python в CI76верхнеуровневых (49Android+27MAIN-safe), без ошибок;
+архивная/live политика дополнительно проверена локальным набором96с2SDKskip.
+Повторные JVM-прогоны разных workflow не складывать:175на каждый вариант.
+
+Команды: стандартные workflow Gradle assembleDebug/assembleDebugTest/оба
+assembleAndroidTest и testDebugUnitTest/testDebugTestUnitTest;
+`python3 docs/run-ui-polish-checks.py` на свежем эмуляторе проверяет оба пакета,
+отказывается при наличии чужой/старой установки и не использует production Secrets.
+Локально `python3 -m unittest discover -s docs -p 'test_*.py' -q` —96tests,
+94passed/2SDKskipped (вложенные архивные sandbox-проверки не суммировать).
+`git diff --check` и XML parsing3разметок/ресурсов без ошибок.
+Локальный Gradle не смог стартовать из-за FileLockContentionHandler/wildcard IP;
+настройки проекта ради среды не менялись. git fetch также не работает из-за proxy8080,
+поэтому публикация через GitHub API с parent фактического main и сверкой дерева.
+
+### Ограничения и следующий шаг
+
+Issue сообщает об успешной установке MAIN1.0.9 владельцем; это пользовательское
+сведение, а не проведённая здесь проверка физического устройства. Смартфон в этой
+задаче не подключался, реальные данные не читались/не менялись. Доставка уведомлений
+и действия с рабочей БД на смартфоне не выполнялись. Оригинальный keystore не
+использован; production signing/workflow/publish/Release не запускались, APK не
+публиковались. PR43 не объединять без отдельного решения.
+
+Стратегия будущей версии: этот UI PR сохраняет1.0.9 и не выпускает повторный релиз.
+После review владелец отдельно выбирает номер следующей версии/допуск выпуска;
+код назначает существующий MAIN workflow, строго выше фактически установленного.
+Если понадобится адаптация production versionName gate, это отдельная согласованная
+задача, не скрытая часть UI-патча. Перед публикацией нужен аудит точного итогового SHA.
+Дополнительный подтверждённый барьер следующего выпуска: действующий publisher
+при targetRoom24 требует installedRoom23. MAIN1.0.9 уже имеет Room24, поэтому
+будущий выпуск поверх неё требует отдельно согласованного и проверенного допуска
+Room24→24 (и выбранного product versionName). Это не дефект UI и не повод менять
+production-политику в issue42; здесь она остаётся побайтно прежней.
+
+Ручной review: проверить карточку с диапазоном/длинными числами на узком экране и
+крупном шрифте; переключить подробности и календарь; в Options сверить код/Room/
+SHA256 с системными сведениями и скопировать отпечаток; проверить сохранность
+TEST-маркировки. Сейчас разрешения на APK/установку нет, такой тест не заявлен.
