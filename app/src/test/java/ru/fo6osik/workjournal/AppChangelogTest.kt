@@ -5,7 +5,7 @@ import org.junit.Test
 
 class AppChangelogTest {
     @Test fun newestFirstWithStableUniqueKeys() {
-        assertEquals(listOf("1.0.9", "1.0.8", "1.0.7", "early"), AppChangelog.entries.map { it.id })
+        assertEquals(listOf("1.0.10", "1.0.9", "1.0.8", "1.0.7", "early"), AppChangelog.entries.map { it.id })
         assertEquals(AppChangelog.entries.size, AppChangelog.entries.map { it.id }.toSet().size)
     }
     @Test fun noInventedDatesOrDatabaseReleaseNumber() {
