@@ -1,3 +1,5 @@
+Актуальный этап: Agent Core v1.0, этап 1; итог и ограничения в конце документа.
+
 Актуальный этап: issue #42, Draft PR #43; итог в конце документа. Предыдущие записи исторические.
 
 Актуальный этап: подготовка безопасного MAIN 1.0.9, Draft PR #41.
@@ -819,3 +821,106 @@ production-политику в issue42; здесь она остаётся по�
 крупном шрифте; переключить подробности и календарь; в Options сверить код/Room/
 SHA256 с системными сведениями и скопировать отпечаток; проверить сохранность
 TEST-маркировки. Сейчас разрешения на APK/установку нет, такой тест не заявлен.
+
+
+# Agent Core v1.0 — этап 1, 20.10.2026
+
+Цель: управляющая основа задач/согласований/полномочий без автоматического Codex.
+Задание и техническая автономность явно утверждены пользователем в текущей сессии.
+Статус: реализация и локальные проверки завершены, подготовка Draft PR; результаты
+реального GitHub owner/main approval не заявлены. После публикации — остановка для review.
+Прежняя история handoff сохранена, AGENTS.md прочитан и побайтно не изменён.
+
+## Результат и решения
+
+Версионируемые JSON Schema Draft2020-12 для задач/рекомендаций, append-only редакции,
+решения и история переходов; SHA256 канонического spec, строгая матрица состояний.
+Approval привязан к реальному GitHub workflow_dispatch: pinned owner ID240867647,
+main, attempt1, successful run, workflow ID/path, task/spec/operations/executor/sequence.
+История и редакция независимо сверяются с задачей в неизменяемом run.head_sha.
+Комментарии/метки/файл PR не являются полномочиями. Самосогласование запрещено.
+Изменение ТЗ, блокировка/отмена/повторное согласование снимают действующий допуск.
+Сохранены причины и прошлые approvals. Защищённые операции всегда fail-closed;
+протокол отдельного разрешения не имитируется.
+
+PR unit job не имеет secrets/переданного токена/записи. Trusted pull_request_target
+читает код/схемы только из base SHA и JSON PR через API; не выполняет код PR.
+Смена governance/workflow (включая rename), удаление задач, неполная выдача API,
+несовпадение текущего head/base отклоняются. Weekly понедельник06:17UTC и manual
+session_start проверяют контракт рекомендаций; ИИ/уведомления/исполнитель не подключены.
+Варианты и причина выбора owner/main dispatch вместо комментариев или отдельного
+приватного signer описаны в docs/agent-core.md. Новый ключ/backup не требуется.
+
+## Файлы
+
+Созданы:
+- .github/workflows/agent-core.yml
+- agent_core/__init__.py
+- agent_core/core.py
+- agent_core/check.py
+- agent_core/requirements.txt
+- agent_core/schemas/task-v1.json
+- agent_core/schemas/recommendation-v1.json
+- agent_core/tasks/.gitkeep
+- agent_core/recommendations/.gitkeep
+- tests/agent_core/test_core.py
+- tests/agent_core/test_trusted_checks.py
+- docs/agent-core.md
+
+Изменён только docs/codex-handoff.md. Удалённых файлов нет.
+
+## Ветка, SHA, проверки
+
+Ветка feature/agent-core-stage1. GitHub API подтвердил базу main
+`e77e6241885e8ecbe031aed475312b6664b5eb58`, совпадающую с локальным HEAD до изменений;
+origin/main локально устарел, git fetch/gh недоступны из-за proxy8080. Подключённый
+GitHub API доступен, публикация выполняется через него без изменения main.
+Проверенный локальный коммит кода `a4007ba3054d4fc55e164476583a1638adbca76b`,
+дерево `0ad8e86a83ebdd9e99e1ee42b30459b0487b7507`.
+Следующий отчётный коммит добавляет этот handoff; его SHA не подменяет проверенный код.
+
+Новые запуски:
+- `python3 -m unittest discover -s tests/agent_core -q`:51tests,0failures/0errors/0skip.
+  Проверены регистрация, все основные состояния, недопустимый переход, missing approval,
+  конкретный grant, изменение/recomputed hash, outsider/self-approval, forged/replayed run,
+  blocked/cancelled, missing fields, сохранение решений/истории, protected operations,
+  PR/workflow/schema/init injection и rename, incomplete API/offline, unknown operations,
+  owner/main/first-attempt dispatch, параметры, session_start, weekly schedule, JSON/schema.
+- `python3 -m agent_core.check local`:success для пустых рабочих каталогов; это проверка
+  структуры, не доказательство реального approval. Фиктивные задачи не зарегистрированы.
+- `python3 -m unittest discover -s docs -p 'test_*.py' -q`:96tests,94passed/2SDKskipped,
+  0failures/0errors; вложенные временные patch-tests не прибавляются к96.
+- `python3 -m compileall -q agent_core tests/agent_core`:success.
+- YAML parsing нового workflow и проверка набора triggers/jobs:success.
+- `git diff --check` / `git diff --cached --check`:success.
+- Проверено отсутствие diff AGENTS.md, всего app/ и существующих workflows.
+
+Android не собирался: его код не менялся. Эмулятор/физическое устройство/реальные
+данные не использовались. Room24/миграции/backup/подписи MAIN и TEST/production admission
+и версии приложения без изменений. Production secrets не читались и не использовались;
+APK/Release не публиковались, merge/main push отсутствуют.
+
+## Аудит безопасности, ограничения и следующий этап
+
+Gate минимизирует privileges, не сохраняет credentials checkout, не интерполирует
+PR-текст в shell и fail-closed при неполных/противоречивых данных. Реальная выдача
+согласования и schedule требуют наличия workflow на main после отдельного review/merge
+владельцем. Этот bootstrap PR не может доказать доверенный запуск нового gate из main.
+Тесты approval воспроизводимы с синтетическим GitHub API; реальный owner-run не запускался.
+Автоинтеграция Codex не готова и не заявляется готовой.
+
+API ветки сообщил protected:false, rulesets вернул []; отдельный branch-protection API
+недоступен интеграции403. Защита/настройки репозитория не менялись. Требуется отдельное
+решение владельца о required trusted check и защите governance. Пока статус проверки
+не обязателен в GitHub, CI не способен технически запретить обход пользователем с write.
+Проверяется модель зарегистрированных задач, не семантика всех Android PR и не новая
+обязательная привязка legacy PR к task ID. Будущий исполнитель обязан использовать
+доверенные core/API/идентичность и authorize перед каждым действием; это следующий этап.
+Сохранность исторического run зависит от GitHub: удаление/недоступность — отказ.
+
+Следующее: review текущего протокола владельцем; отдельно merge; реальная тестовая
+регистрация/owner approval/отрицательные проверки на main; затем согласованная интеграция
+Codex и уведомлений. Не выполнять merge, signing, выпуск или изменение production gates.
+
+PR пока не создан: публикация ветки/дерева и Draft PR следующим действием через API;
+номер/URL и результаты CI будут добавлены отдельным дополнением в той же ветке.
