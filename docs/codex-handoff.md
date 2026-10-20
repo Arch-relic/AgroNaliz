@@ -1,4 +1,4 @@
-Актуальный этап: Agent Core v1.0, этап 1; итог и ограничения в конце документа.
+Актуальный этап: Agent Core v1.0, этап 1, Draft PR #47; итог и ограничения в конце документа.
 
 Актуальный этап: issue #42, Draft PR #43; итог в конце документа. Предыдущие записи исторические.
 
@@ -924,3 +924,31 @@ Codex и уведомлений. Не выполнять merge, signing, вып�
 
 PR пока не создан: публикация ветки/дерева и Draft PR следующим действием через API;
 номер/URL и результаты CI будут добавлены отдельным дополнением в той же ветке.
+
+
+## Публикация Agent Core — Draft PR #47, 20.10.2026
+
+https://github.com/Arch-relic/AgroNaliz/pull/47 — open/Draft, не объединён.
+Ветка feature/agent-core-stage1; parent main e77e6241885e8ecbe031aed475312b6664b5eb58.
+Опубликованный код с первоначальным отчётом: 2ff804583ef677c2fec6720a7149441b2d4ff179,
+дерево cbd891ea89ea31d5b374e117a2f7dc940cf94f10 совпало с локальным 4fcce11.
+API PR подтвердил ровно13ожидаемых путей (12новых и этот handoff), удалений нет.
+Все9прежних workflow, весь app/ и AGENTS.md побайтно прежние; прежний handoff
+целиком сохранён внутри дополненного документа.
+
+Новый CI Agent Core #1 завершился успешно:
+https://github.com/Arch-relic/AgroNaliz/actions/runs/39474407982.
+Job tests/id118806522463:51tests,0errors/0failures; лог фактически прочитан.
+Unit job имеет Contents:read, persist-credentials:false. Trusted-validation skipped
+для pull_request — ожидаемое разделение, это не проверенный owner/main grant.
+CI checkout технического merge-ref832027bb998a71647f45937cde4d51ac7b0ad3ee;
+это GitHub PR-ref, не merge в main. Новый отчётный коммит меняет только handoff;
+повтор CI может запуститься автоматически и не считается уже проверенным здесь.
+
+Дополнительные существующие Android PR workflows запущены GitHub автоматически,
+на момент этой записи ещё выполнялись; их успех не заявляется. Production publish
+не запускались. Android-код этой задачей не менялся; целевой Agent Core CI зелёный.
+Состояние main/rulesets и ограничения bootstrap остаются описанными выше.
+
+Далее только review владельцем. Merge/production signing/APK/Release запрещены.
+Фактическую интеграцию Codex и live owner approval не объявлять готовыми.
