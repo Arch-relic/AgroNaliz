@@ -58,6 +58,41 @@
         android:gravity="center"
         android:textSize="12sp" />
 
+    <TextView
+        android:id="@+id/textAppVersionCode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/textRoomSchemaVersion"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textSize="14sp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:labelFor="@id/textSigningCertificate"
+        android:text="@string/app_signing_certificate"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/textSigningCertificate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textIsSelectable="true"
+        android:textSize="14sp" />
+
+    <Button
+        android:id="@+id/buttonCopySigningCertificate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/app_copy_certificate" />
+
     <Button
         android:id="@+id/buttonDeveloperCatalog"
         android:layout_width="match_parent"

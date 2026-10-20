@@ -3,7 +3,12 @@ package ru.fo6osik.workjournal
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.Canvas
+import android.graphics.Paint
 import android.graphics.drawable.GradientDrawable
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ReplacementSpan
 import android.util.AttributeSet
 import android.view.View
 import android.widget.Button
@@ -22,13 +27,46 @@ class HarvestResultsCardView @JvmOverloads constructor(context: Context, attrs: 
         }
     }
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
+    // Keep the original glyphs and formatting, but make each number/unit indivisible.
+    private fun readable(value: String) = SpannableString(value).apply {
+        Regex("-?\\d+(?:[.,]\\d+)?|[тц]/га|м³").findAll(value).forEach {
+            setSpan(UnbrokenHarvestValue(), it.range.first, it.range.last + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+    }
     fun setExpansion(value: Boolean) { expanded = value; render() }
     fun update(model: HarvestResultsCardModel) { currentModel = model; render() }
     private fun text(value: String, size: Float = 17f) = TextView(context).apply {
-        text = value; textSize = size; setTextColor(Color.BLACK)
+        text = readable(value); textSize = size; setTextColor(Color.BLACK)
         setPadding(dp(4), dp(4), dp(4), dp(4))
         // Wrap text and grow vertically, including on small screens with a large system font.
         setSingleLine(false)
+        breakStrategy = android.text.Layout.BREAK_STRATEGY_SIMPLE
+        hyphenationFrequency = android.text.Layout.HYPHENATION_FREQUENCY_NONE
+    }
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        val grid = findViewWithTag<LinearLayout>("harvest-results-grid")
+        if (grid != null && MeasureSpec.getMode(widthMeasureSpec) != MeasureSpec.UNSPECIFIED) {
+            val columnWidth = (MeasureSpec.getSize(widthMeasureSpec) - paddingLeft - paddingRight) / 2
+            val cells = (0 until grid.childCount).flatMap { r ->
+                val row = grid.getChildAt(r) as LinearLayout
+                (0 until row.childCount).map { row.getChildAt(it) as LinearLayout }
+            }
+            val stacked = cells.any { cell ->
+                val value = cell.getChildAt(1) as TextView
+                value.text.split('\n').any { value.paint.measureText(it) + cell.paddingLeft + cell.paddingRight +
+                    value.compoundPaddingLeft + value.compoundPaddingRight > columnWidth }
+            }
+            for (r in 0 until grid.childCount) {
+                val row = grid.getChildAt(r) as LinearLayout
+                val orientation = if (stacked) VERTICAL else HORIZONTAL
+                if (row.orientation != orientation) {
+                    row.orientation = orientation
+                    for (c in 0 until row.childCount) row.getChildAt(c).layoutParams =
+                        LayoutParams(if (stacked) LayoutParams.MATCH_PARENT else 0, LayoutParams.WRAP_CONTENT, if (stacked) 0f else 1f)
+                }
+            }
+        }
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
     }
     private fun render() {
         val model = currentModel ?: return
@@ -66,5 +104,13 @@ class HarvestResultsCardView @JvmOverloads constructor(context: Context, attrs: 
         }, LayoutParams(LayoutParams.MATCH_PARENT, dp(12)))
         model.warnings.forEach { details.addView(text(it, 16f).apply { setTextColor(Color.rgb(125, 60, 0)) }) }
         addView(details)
+    }
+}
+
+private class UnbrokenHarvestValue : ReplacementSpan() {
+    override fun getSize(paint: Paint, text: CharSequence, start: Int, end: Int, fm: Paint.FontMetricsInt?): Int =
+        kotlin.math.ceil(paint.measureText(text, start, end).toDouble()).toInt()
+    override fun draw(canvas: Canvas, text: CharSequence, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint) {
+        canvas.drawText(text, start, end, x, y.toFloat(), paint)
     }
 }

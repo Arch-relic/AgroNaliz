@@ -1,6 +1,12 @@
 <resources>
-<string name="app_name">АгроУчёт — КФХ Губановы</string>
+<string name="app_name">АгроНализ</string>
 <string name="app_version">Версия %1$s</string>
 <string name="app_version_test">Версия %1$s · TEST</string>
+<string name="app_version_code">Код версии: %1$s</string>
+<string name="app_room_schema">Версия схемы Room: %1$d</string>
+<string name="app_signing_certificate">SHA-256 сертификата подписи установленного приложения</string>
+<string name="app_diagnostic_unknown">Не удалось получить</string>
+<string name="app_copy_certificate">Копировать SHA-256</string>
+<string name="app_certificate_copied">Отпечаток сертификата скопирован</string>
 </resources>
 

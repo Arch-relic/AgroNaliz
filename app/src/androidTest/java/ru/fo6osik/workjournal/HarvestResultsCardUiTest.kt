@@ -134,13 +134,19 @@ class HarvestResultsCardUiTest {
                 val grid = v.findViewWithTag<LinearLayout>("harvest-results-grid")
                 for (row in 0..1) {
                     val r = grid.getChildAt(row) as LinearLayout
-                    assertTrue(r.getChildAt(0).right <= r.getChildAt(1).left)
+                    if (r.orientation == LinearLayout.HORIZONTAL)
+                        assertTrue(r.getChildAt(0).right <= r.getChildAt(1).left)
+                    else assertTrue(r.getChildAt(0).bottom <= r.getChildAt(1).top)
                     for (col in 0..1) {
                         val cell = r.getChildAt(col) as LinearLayout
                         val value = cell.getChildAt(1) as TextView
                         assertTrue(value.width > 0); assertNotNull(value.layout)
                         for (line in 0 until value.layout.lineCount) assertEquals(0, value.layout.getEllipsisCount(line))
                         assertTrue(value.height >= value.layout.height)
+                        Regex("-?\\d+(?:[.,]\\d+)?").findAll(value.text).forEach { number ->
+                            assertEquals("Number split across lines: ${number.value}",
+                                value.layout.getLineForOffset(number.range.first), value.layout.getLineForOffset(number.range.last))
+                        }
                     }
                 }
             }

@@ -635,3 +635,69 @@ Room23 не изменены; их проверка перенесена в sand
 Production APK не опубликована; Release не создан; production signing и оригинальный
 keystore не использованы; реальные данные не затронуты; установки на физический
 смартфон не было; PR не объединён. После отчёта остановиться для review.
+
+
+# Issue #42 — интерфейс и диагностика установленной сборки, 20.10.2026
+
+Задача: https://github.com/Arch-relic/AgroNaliz/issues/42. Ветка
+`feature/issue-42-ui-diagnostics`, база main
+`6da84bf09cf0cd3e9d1b5a40887a134bf25d7fe4`, tree
+`de8717d46fc94b279f9a44ff1270f019fb54eb16` (совпадает с локальным efd7cf1).
+Прочитаны актуальные main/AGENTS.md и handoff; прежняя история сохранена.
+Статус этой первоначальной записи: реализация подготовлена, реальные результаты CI
+и номер Draft PR будут добавлены по завершении, пока они не объявлены успешными.
+
+Карточка результатов сохраняет все строки модели/форматирование/арифметику.
+ReplacementSpan делает числа и составные единицы неделимыми при переносе.
+Если две колонки не вмещают отформатированные показатели, используется одна колонка;
+размер шрифта не уменьшается. Диапазон может переноситься между границами, число — нет.
+Раскрытие/модель/расчёты не меняются. Главный заголовок и MAIN app_name — «АгроНализ»;
+TEST сохраняет собственное имя «АгроНализ TEST». Package/имя файла БД не переименованы.
+
+Options читает PackageManager только собственного установленного пакета: имя/код
+версии, SHA256 всех текущих подписантов (не историческую signing lineage), API28+
+GET_SIGNING_CERTIFICATES/apkContentsSigners, до28 GET_SIGNATURES. Полные отпечатки
+сортируются/без дубликатов, доступны выделение и явная кнопка копирования. При ошибке
+подпись/код неизвестны, кнопка выключена; имя может безопасно браться из BuildConfig
+того же APK. Ключей/Secrets/сетевых запросов нет. Room schema берётся из генерируемой
+BuildConfig.ROOM_SCHEMA_VERSION: Gradle читает фактический literal @Database.version
+при сборке, без дублирующей ручной константы и без открытия/создания пользовательской БД.
+
+Новые3 JVM-теста SHA256; отдельный UiPolishTest: реальные installed metadata/clipboard,
+брендинг, пересоздание Options без изменения БД, ошибка metadata; переносы/отсутствие
+обрезки на280/360/600dp и font1/1.6. Отдельный CI API23/35 проверяет MAIN и TEST.
+Существующая проверка compactLargeFont карточки учитывает адаптивную компоновку и
+дополнительно проверяет отсутствие разрыва внутри числа; остальные assertions сохранены.
+
+Локально `python3 -m unittest discover -s docs -p 'test_*.py' -q`:96тестов,
+94passed/2SDKskipped; вложенные архивные проверки не суммировать. Первая проверка
+обнаружила несовместимость с прежним source guard BuildConfig.VERSION_NAME; оставлен
+корректный fallback на compiled versionName при недоступных PackageManager metadata,
+защитные тесты не менялись. Локальная обязательная команда
+`source /workspace/agronaliz-env.sh; agrogradle :app:assembleDebug :app:test`
+не доходит до компиляции: FileLockContentionHandler / Could not determine a usable
+wildcard IP for this machine. Причина — среда, настройки проекта ради неё не менялись.
+Android/JVM/instrumentation результаты должны быть получены из CI.
+
+versionName1.0.9/default versionCode/Actions-механизм без изменений. Для будущего
+выпуска нужен отдельный выбор версии и стандартный возрастающий код, аудит точного SHA
+и разрешение; этот PR ничего не объявляет опубликованным. Подписи/production workflows,
+Room24/миграции, backup, таймеры, расчёты и рабочие данные не изменяются.
+Физический смартфон не проверялся. Production signing/publish/Release/merge запрещены.
+
+Изменённые/созданные файлы (полные пути от корня):
+- `.github/workflows/ui-polish-checks.yml`
+- `app/build.gradle.kts`
+- `app/src/main/java/ru/fo6osik/workjournal/HarvestResultsCardView.kt`
+- `app/src/main/java/ru/fo6osik/workjournal/InstalledAppDiagnostics.kt`
+- `app/src/main/java/ru/fo6osik/workjournal/OptionsActivity.kt`
+- `app/src/main/res/layout/activity_main.xml`
+- `app/src/main/res/layout/activity_options.xml`
+- `app/src/main/res/values/strings.xml`
+- `app/src/test/java/ru/fo6osik/workjournal/InstalledAppDiagnosticsTest.kt`
+- `app/src/androidTest/java/ru/fo6osik/workjournal/UiPolishTest.kt`
+- `app/src/androidTest/java/ru/fo6osik/workjournal/HarvestResultsCardUiTest.kt`
+- `docs/run-ui-polish-checks.py`
+- `docs/codex-handoff.md`
+
+Удалённых файлов нет. Итоговые SHA/CI/PR — следующим дополнением после проверки.
