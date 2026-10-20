@@ -819,3 +819,33 @@ production-политику в issue42; здесь она остаётся по�
 крупном шрифте; переключить подробности и календарь; в Options сверить код/Room/
 SHA256 с системными сведениями и скопировать отпечаток; проверить сохранность
 TEST-маркировки. Сейчас разрешения на APK/установку нет, такой тест не заявлен.
+
+
+# Issue44 — подготовка MAIN1.0.10, Room24→24, 20.10.2026
+
+Ветка feature/main-1-0-10-room24-update, base main
+e77e6241885e8ecbe031aed475312b6664b5eb58/tree7a3ea68619d51b0519ca29eb540d2088d30f60ae
+(локальный eda5aee — то же дерево). AGENTS/main handoff прочитаны, старая история сохранена.
+Baseline подтверждён по успешному run39378839045/artifact12244079517: MAIN1.0.9,
+code3000007, Room24, source6da84bf09cf0cd3e9d1b5a40887a134bf25d7fe4, исходный cert
+3FE57967C15F81EE39EA2B9B88DD96A7506C1B5B9032606ECBEA04BBDB15EE3C,
+APK hash56ca5f9e54e94e773d1a053ad617a484e8a1c4f29f76f70ffa6a95d2d402d22b.
+Проверены verification.json/aapt2/apksigner/исходник Room24. Оригинальная APK не
+устанавливалась, original keystore не использовался. META-INF warnings apksigner
+о неподписанных отдельных metadata entries не помешали успешной проверке подписи;
+APK не изменялась. Git fetch/proxy и Gradle будут проверены отдельно.
+
+Текущий статус первоначального коммита: Draft PR/регистрация нового workflow.
+Новый gate временно fail-closed с workflowID0, пока GitHub не зарегистрирует новый
+main-room24-same-checks.yml. После получения реального ID он будет закреплён и
+выполнен полный финальный CI. Эта промежуточная версия не готова к выпуску/merge.
+Версия1.0.10, схема24/миграции/backup/бизнес-логика не меняются. Новый seed24 сохраняет
+step5/1, all-column JSON и schema_version/sqlite_master; upgrade без удаления,
+отдельный restore/restart/MAIN и TEST. История1.0.10 «В разработке»,1.0.9 без
+недостоверной даты и без прежнего статуса разработки (публикация подтверждена).
+План смартфона/резервной копии/точного owner-main audit — docs/main-original-update.md.
+
+Локально Python106:104pass/2SDKskip до регистрации ID. Прежние22/23/23→24 правила
+проверяются в отдельных historical product sandboxes, их assertions не отключены.
+Финальные команды/полные пути/SHA/PR/результаты CI будут добавлены по завершении.
+Ни production signing, ни публикация, ни merge не разрешены и не выполнялись.

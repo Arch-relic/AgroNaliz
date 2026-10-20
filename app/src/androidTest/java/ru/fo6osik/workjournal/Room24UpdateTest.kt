@@ -32,8 +32,16 @@ class Room24UpdateTest {
     }
     private fun read(name:String)=JSONObject(context.contentResolver.openInputStream(uri(name))!!.bufferedReader().use { it.readText() })
     @Suppress("DEPRECATION") private fun cert()=MessageDigest.getInstance("SHA-256").digest(context.packageManager.getPackageInfo(context.packageName,64).signatures!!.single().toByteArray()).joinToString("") { "%02X".format(it) }
-    @Test fun seed23()=runBlocking(Dispatchers.IO) {
-        guard();val room=DatabaseProvider.getDatabase(context);val db=room.openHelper.writableDatabase;assertEquals(23,db.version)
+    private fun schemaVersion(db:androidx.sqlite.db.SupportSQLiteDatabase):Int = db.query("PRAGMA schema_version").use { it.moveToFirst();it.getInt(0) }
+    private fun schemaSql(db:androidx.sqlite.db.SupportSQLiteDatabase):String = db.query("SELECT type,name,tbl_name,sql FROM sqlite_master ORDER BY type,name").use { c ->
+        val rows=org.json.JSONArray()
+        while(c.moveToNext()) rows.put(org.json.JSONArray((0 until c.columnCount).map { c.getString(it) }))
+        rows.toString()
+    }
+    @Test fun seed23()=seed(23)
+    @Test fun seed24()=seed(24)
+    private fun seed(originalRoom:Int)=runBlocking(Dispatchers.IO) {
+        guard();val room=DatabaseProvider.getDatabase(context);val db=room.openHelper.writableDatabase;assertEquals(originalRoom,db.version)
         val dao=room.harvestDao()
         assertTrue(dao.getAllProcessSummaries().isEmpty())
         db.execSQL("INSERT INTO fields(id,name,areaHa,isActive) VALUES(26001,'synthetic',120,1)")
@@ -61,10 +69,16 @@ class Room24UpdateTest {
         File(context.filesDir,"synthetic-room24-retained").writeText("keep")
         File(context.filesDir,"synthetic-room24-documents/manual.txt").apply { parentFile!!.mkdirs();writeText("synthetic document retained") }
         File(context.getExternalFilesDir(null),"synthetic-room24-document.txt").writeText("synthetic external document retained")
+        if(originalRoom==24) {
+            db.execSQL("UPDATE harvest_days SET reminderStepMinutes=5 WHERE id=26201")
+            context.getSharedPreferences("synthetic-room24",0).edit().putInt("schemaVersion",schemaVersion(db)).putString("schemaSql",schemaSql(db)).commit()
+        }
         val exported=DatabaseBackupManager.exportBackup(context,uri("before23"))
         assertTrue(exported.exceptionOrNull()?.stackTraceToString(),exported.isSuccess)
     }
-    @Test fun verify24AndSeparateRestore()=runBlocking(Dispatchers.IO) {
+    @Test fun verify24AndSeparateRestore()=verify(23)
+    @Test fun verify24SameAndSeparateRestore()=verify(24)
+    private fun verify(originalRoom:Int)=runBlocking(Dispatchers.IO) {
         guard();val room=DatabaseProvider.getDatabase(context);assertEquals(24,room.openHelper.readableDatabase.version)
         val prefs=context.getSharedPreferences("synthetic-room24",0)
         assertEquals(prefs.getString("cert",null),cert());assertEquals(32,prefs.getInt("interval",0))
@@ -82,14 +96,18 @@ class Room24UpdateTest {
                 for(i in 0 until rows.length()) for(k in rows.getJSONObject(i).keys()) assertEquals("$t/$i/$k",rows.getJSONObject(i).get(k).toString(),other.getJSONObject(i).get(k).toString()) }
         }
         compare(read("before23"),read("after24"))
-        for(id in 26201..26202) { val d=room.harvestDao().getDayById(id)!!;assertEquals(1,d.reminderStepMinutes);assertEquals(32,d.workIntervalMinutes);assertEquals(555.125,d.bulkDensityKgM3!!,0.0) }
+        for(id in 26201..26202) { val d=room.harvestDao().getDayById(id)!!;assertEquals(if(originalRoom==24 && id==26201)5 else 1,d.reminderStepMinutes);assertEquals(32,d.workIntervalMinutes);assertEquals(555.125,d.bulkDensityKgM3!!,0.0) }
         room.openHelper.readableDatabase.query("PRAGMA foreign_key_check").use { assertFalse(it.moveToFirst()) }
+        if(originalRoom==24) {
+            assertEquals(prefs.getInt("schemaVersion",-1),schemaVersion(room.openHelper.readableDatabase))
+            assertEquals(prefs.getString("schemaSql",null),schemaSql(room.openHelper.readableDatabase))
+        }
         val target=Room.inMemoryDatabaseBuilder(context,AppDatabase::class.java).build()
         try {
             assertTrue(DatabaseBackupManager.importBackup(context,uri("before23"),target).isSuccess)
             assertTrue(DatabaseBackupManager.exportBackup(context,uri("restored23"),target).isSuccess)
             compare(read("before23"),read("restored23"))
-            assertEquals(1,target.harvestDao().getDayById(26201)!!.reminderStepMinutes)
+            assertEquals(if(originalRoom==24)5 else 1,target.harvestDao().getDayById(26201)!!.reminderStepMinutes)
             assertTrue(DatabaseBackupManager.importBackup(context,uri("after24"),target).isSuccess)
             assertTrue(DatabaseBackupManager.exportBackup(context,uri("roundtrip24"),target).isSuccess)
             compare(read("after24"),read("roundtrip24"))

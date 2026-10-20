@@ -60,20 +60,20 @@ class ChangelogUiTest {
     @Test fun navigationIndependentExpansionAndRecreation() {
         ActivityScenario.launch(OptionsActivity::class.java).use {
             onView(withId(R.id.buttonChangelog)).perform(scrollTo(), click())
-            header("1.0.9").check(matches(withText(org.hamcrest.Matchers.containsString("В разработке"))))
+            header("1.0.10").check(matches(withText(org.hamcrest.Matchers.containsString("В разработке"))))
             pressBack()
         }
         ActivityScenario.launch(ChangelogActivity::class.java).use { scenario ->
-            visibility(scenario,"1.0.9",View.VISIBLE)
+            visibility(scenario,"1.0.10",View.VISIBLE)
             visibility(scenario,"1.0.8",View.GONE)
             tap(scenario,"1.0.8")
-            visibility(scenario,"1.0.9",View.VISIBLE)
+            visibility(scenario,"1.0.10",View.VISIBLE)
             tap(scenario,"1.0.7")
             scenario.recreate()
-            visibility(scenario,"1.0.9",View.VISIBLE)
+            visibility(scenario,"1.0.10",View.VISIBLE)
             visibility(scenario,"1.0.7",View.VISIBLE)
-            tap(scenario,"1.0.9")
-            visibility(scenario,"1.0.9",View.GONE)
+            tap(scenario,"1.0.10")
+            visibility(scenario,"1.0.10",View.GONE)
             visibility(scenario,"1.0.7",View.VISIBLE)
             tap(scenario,"1.0.8")
             tap(scenario,"1.0.7")

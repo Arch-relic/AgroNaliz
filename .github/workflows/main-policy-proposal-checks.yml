@@ -6,6 +6,8 @@ on:
       - 'docs/patches/main-room23-release-policy.*'
       - 'docs/test_main_room23_policy_patch.py'
       - 'docs/test_main_room24_release.py'
+      - 'docs/test_main_room24_same_release.py'
+      - '.github/workflows/main-room24-same-checks.yml'
       - '.github/workflows/main-policy-proposal-checks.yml'
       - '.github/workflows/main-apk-publish.yml'
       - 'docs/test_main_apk_release.py'
@@ -26,3 +28,5 @@ jobs:
         run: python3 -m unittest discover -s docs -p 'test_main_room23_policy_patch.py' -v
       - name: Validate live Room22/23/24 release policy with fake APIs and keys
         run: python3 -m unittest discover -s docs -p 'test_main_room24_release.py' -v
+      - name: Validate MAIN1.0.10 Room24 same-schema admission
+        run: python3 -m unittest discover -s docs -p 'test_main_room24_same_release.py' -v
