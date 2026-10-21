@@ -61,7 +61,7 @@ GITHUB_TOKEN — installation token встроенного Actions App, а не 
 | app_id | Реальный положительный integer, подтверждённый App API |
 | installation_id | Реальный installation ID именно этого App |
 | installation_account_id | Закреплённый аккаунт установки, первоначально owner 240867647 |
-| repository_id | Закреплённый ID 1411593273, проверяется также ожидаемое имя |
+| repository_id | Для AgroNaliz закреплён ID 1411593273 и ожидаемое имя; изолированный стенд имеет отдельный явно согласованный subject/registry |
 | policy_version | Неизменяемая версия доверенной политики с проверяемым hash |
 
 User/App/installation IDs не взаимозаменяемы, даже при совпадении чисел. Bot login,
@@ -205,6 +205,13 @@ R10. Read-only installation permissions:
 не запрашивать, включая Issues, Checks/Statuses write, Actions write, Workflows,
 Administration, Secrets, Packages. Actions job GITHUB_TOKEN также остаётся read-only;
 права App и GITHUB_TOKEN — отдельные слои, одно не расширяет другое.
+Для первого изолированного proof D11 выбран только его test repository вместо
+AgroNaliz, с отдельными registry/task/consent. При переходе убрать прежний repo
+из selection, проверить отсутствие лишнего доступа, затем отдельно разрешить
+AgroNaliz binding. Не требовать двух installations одного App на одном аккаунте:
+installation может остаться той же, но repository subject и consent обязательно новые.
+Нельзя одновременно использовать test binding как допуск к AgroNaliz или выдавать
+оба репозитория одному token для удобства.
 У GitHub installation token обычный срок 1 час; использовать returned expires_at,
 не обещать API TTL 5 минут. Предлагаемый controller session timeout 10 минут,
 не больше оставшихся сроков token/consent; один run — один task/request.
