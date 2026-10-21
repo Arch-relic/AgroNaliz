@@ -68,6 +68,11 @@ class HarvestFixedFillUpgradeTest {
     }
     private fun verifyMath(room: AppDatabase) {
         val dao=room.harvestDao();val process=dao.getProcessById(48001)!!;val day=dao.getDayById(48001)!!
+        // The linked card is the source of calculation, even if an old snapshot differs.
+        assertEquals(4.7,dao.calculationProcess(process.copy(bunkerVolumeM3=9.9)).bunkerVolumeM3!!,0.0)
+        assertEquals(9.9,dao.calculationProcess(process.copy(combineVehicleId=null,bunkerVolumeM3=9.9)).bunkerVolumeM3!!,0.0)
+        assertNull(dao.calculationProcess(process.copy(combineVehicleId=null,bunkerVolumeM3=null)).bunkerVolumeM3)
+        assertEquals(process,dao.getProcessById(48001))
         val input=HarvestCalculator.DayInput(dao.getBunkersForDay(day.id).map { it.fillLevel },day.harvestedAreaHa,day.bulkDensityKgM3)
         val result=HarvestCalculator.day(process.bunkerVolumeM3,input)
         val volume=requireNotNull(result.volumeM3);val mass=requireNotNull(result.massTonnes)
