@@ -1396,3 +1396,98 @@ SHA5e80cb9; на новом SHA согласованный defect устранё
 Main остался 2a37bfe,protected:false; production policies/Room24/backup/signatures/
 release admission не изменены. Merge,APK/Release публикация,production secrets,
 физический смартфон и автоматический Codex не затрагивались. Дальше — только review.
+## G2 Offline Agent Identity v2 — 21.10.2026
+
+Цель: реализовать согласованную offline часть Issue54 без live entrypoint/credentials.
+Разрешение владельца:
+https://github.com/Arch-relic/AgroNaliz/issues/54#issuecomment-6315717967.
+Статус: offline код и аудит готовы к Draft PR/review; live и merge не разрешены.
+Архитектурный источник: PR53 head96d8535ec544fcd13e93335e3d0f096c966da0f8,
+G1 D01–D12 утверждены. PR51 и PR53 не объединялись и не cherry-pick целиком.
+
+Реализованы task/registry/policy schemas v2, typed App subject, immutable approval
+context, append-only state/history/requests, owner/run/source/policy verification,
+fresh-main offline controller, фиксированный smoke, disabled credential boundary,
+safe audit и synthetic fakes/fixtures. V1 интерфейсы и документы не меняются;
+App не исполняет старые grants, никаких миграций пользовательских данных нет.
+
+Созданы файлы:
+- agent_core/schemas/task-v2.json
+- agent_core/schemas/registry-v2.json
+- agent_core/schemas/policy-v2.json
+- agent_core/v2/__init__.py
+- agent_core/v2/model.py
+- agent_core/v2/task.py
+- agent_core/v2/approval.py
+- agent_core/v2/trust.py
+- agent_core/v2/controller.py
+- agent_core/v2/credentials.py
+- agent_core/v2/audit.py
+- tests/agent_core/v2_fakes.py
+- tests/agent_core/test_v2_schema.py
+- tests/agent_core/test_v2_approval.py
+- tests/agent_core/test_v2_controller.py
+- tests/agent_core/test_v2_compatibility.py
+- tests/agent_core/fixtures/v2/policy.json
+- tests/agent_core/fixtures/v2/registry.json
+- tests/agent_core/fixtures/v2/request-task.json
+- docs/agent-identity-v2/g2-offline-implementation.md
+- docs/agent-identity-v2/acceptance-matrix.md
+
+Изменены только отчёты:
+- docs/agent-core-security-audit.md
+- docs/codex-handoff.md
+
+Удалений нет. core.py/check.py/task-v1/requirements/v1 tests/workflows/tasks/
+recommendations/app сравнивались с main: изменений нет. Permissions/secrets,
+main policies, Room24/backup/signing/release admission не менялись.
+
+Ветка: feature/agent-identity-v2-g2-offline.
+Base: e5e0aeae9474307562a90ca4d3d075dc11800841.
+Проверенный локальный code SHA: 6e0cdb90ce91f23cc391c94ca4ea517f8bf70b6a,
+tree4d68c4e06b2bd38640bb52f8cd412c636ee3dd6e. Его содержимое проверялось до
+создания commit, без последующего изменения кода; отчёты добавляются отдельным commit.
+Git fetch недоступен: proxy connection refused. Main commit восстановлен из GitHub API
+signed payload с проверкой точного SHA; worktree создан от этого main, не от старой ветки.
+Для публикации используется connector; remote commit SHA может отличаться, tree
+проверяется независимо. Точный remote head и CI относятся к PR, не подменяют local SHA.
+
+Команды/результаты:
+- python3 -m unittest discover -s tests/agent_core -v: passed до двух финальных
+  дополнительных boundary tests; окончательный запуск всей suite ниже включает их.
+- Полная unittest discovery с socket.socket=forbidden и очищенным os.environ:
+  140 methods, 0 failures/errors, 342 subtest cases; 69 прежних +71 новых методов.
+  Код воспроизведения в g2-offline-implementation.md. Это новый запуск, не UP-TO-DATE.
+- python3 -m agent_core.check local: passed, действующие directories пусты;
+  не доказательство реального approval или регистрации v2.
+- python3 -m compileall -q agent_core/v2 tests/agent_core/test_v2_*.py: passed.
+- git diff --check и scope diff для защищённых файлов: passed.
+- Первый запуск имел SyntaxError в новом тесте; исправлен до итогового запуска.
+
+Матрица A01–A32 содержит отдельные passed/not_run/blocked по O/N/L.
+Live тестов не было. Не проверены реальные App/install credentials, pagination adapter,
+environment/key release, platform isolation, token revoke и branch protection.
+ABA/in-flight ограничения явно воспроизведены/описаны; полной атомарности нет.
+Finally не гарантируется при forced runner kill; blocked cleanup после smoke не
+отменяет уже выполненный read. Outcome и fake source/complete не являются live authority.
+
+PR ещё не открыт на момент этого отчётного commit; следующий разрешённый шаг —
+публикация Draft PR с кодом/документацией и ссылкой на этот handoff.
+Ожидается блокировка trusted PR gate из-за agent_core/: это штатный запрет self-approval
+governance changes. Фактический результат/URL/remote SHA будут указаны при создании PR.
+Если gate отклонит PR, не исправлять/обходить/перезапускать ради авторизации: остановиться
+для отдельного owner review. Автоматические CI не называются успешными заранее.
+
+G3–G6 не разрешены: App/environments/keys/tokens/secrets не создавать; live task,
+approval/dispatch, production APK/release, merge и write permissions не выполнять.
+Следующий исполнитель сначала читает PR и точный head/CI, затем ждёт решения владельца.
+
+### Публикация G2 Draft PR — 21.10.2026
+
+Открыт Draft PR55: https://github.com/Arch-relic/AgroNaliz/pull/55.
+Первый remote head: 4839e0fd4cdb55054a881d36cd07b74dc01d5f52,
+base e5e0aeae9474307562a90ca4d3d075dc11800841, tree169ce78cbb7cf4d8c7344fc0ca5adaba030861e7
+совпадает с локальным c18ecf5afb107b1de2a43743c26203ecb1108b2d.
+Этот следующий commit только фиксирует URL публикации; код не изменён.
+Remote CI запущены автоматически; итоговый статус/run/SHA проверять в PR55.
+Trusted gate не обходить; его отказ требует остановки для review, не исправления защиты.

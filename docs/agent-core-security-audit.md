@@ -1,3 +1,5 @@
+Текущий этап: G2 offline; новый раздел в конце. Remote CI и merge readiness не подтверждены.
+
 Актуальный статус: согласованный вариант 1 реализован; новый аудит и CI приведены
 в конце. Предыдущий раздел описывает дефект на SHA5e80cb9 и сохранён как история.
 
@@ -319,3 +321,76 @@ protected:false. GitHub подтвердил PR47 Draft и прежнюю баз
 Готово для review кода и аудита владельцем. Merge не выполнялся и не разрешается
 этим отчётом. Полная эксплуатационная готовность требует отдельно согласованных
 live bootstrap tests, защиты main и интеграции исполнителя; она не заявляется.
+# G2 Offline Agent Identity v2 — 21.10.2026
+
+Разрешение: https://github.com/Arch-relic/AgroNaliz/issues/54#issuecomment-6315717967.
+Архитектура: PR53 head `96d8535ec544fcd13e93335e3d0f096c966da0f8`, D01–D12.
+Base main: `e5e0aeae9474307562a90ca4d3d075dc11800841`.
+Проверенный локальный code commit: `6e0cdb90ce91f23cc391c94ca4ea517f8bf70b6a`,
+tree `4d68c4e06b2bd38640bb52f8cd412c636ee3dd6e`.
+Следующий отчётный commit добавляет только документацию. Публикация через connector
+может иметь другой commit SHA; соответствие проверяется по полному tree и PR files.
+
+## Результат аудита
+
+Offline scope реализован. Live identity/credentials/approval/executor не подключены.
+Старые файлы core.py/check.py/task-v1 schema, requirements, v1 tests, workflows,
+tasks/recommendations и Android-код сверены с base через git diff: изменений нет.
+Permissions, secrets, branch policies и production release admission не менялись.
+
+Проверены вручную data flow, trust inputs, порядок fresh-main checks, immutable
+request/history binding, resource addressing, scope/time проверки и cleanup.
+Новые модули не импортируются существующим entrypoint. Нет network/process/env
+imports в v2, реального credential adapter, PEM/JWT/token строк или command handler.
+Default credential boundary отказывает. Только tests содержат fakes/synthetic IDs.
+Source anchors — явная offline предпосылка; caller-supplied fake не доказывает trust.
+
+Защита от основных угроз:
+- T01–T07: typed IDs, User owner actors, independent normalized evidence,
+  context/hash/source binding, append-only и replay rejection.
+- T08–T10: fresh main и повторная проверка перед действием; run/env mismatch denied.
+- T11–T15: фиксированный handler, отсутствие secrets/network adapters, exact scope,
+  expiry/suspension checks, fail-closed на каждом доверенном чтении.
+- T16–T18: v1 grant не исполняется App, scope только test, write/protected операции denied.
+- T19–T20: environment/key-release не созданы; будущая проверка D02/D03 обязательна,
+  registry/policy/source pins смоделированы, PR config не подключён к live authority.
+
+Audit Outcome имеет фиксированный allowlist полей/reason codes; raw API exceptions,
+handles, headers и содержимое specs не выводятся. Canary-проверки включают malformed
+main/time/expiry и transport exception. Cleanup failure явно blocked, не success.
+
+## Автоматические проверки
+
+140 unittest methods, 0 failures/errors: 69 прежних v1 +71 новых v2.
+В том же запуске 342 subtest cases; это не дополнительные 342 unittest methods.
+Вся suite выполнена с socket forbidden и очищенным environment, без credentials.
+Команда воспроизведения — docs/agent-identity-v2/g2-offline-implementation.md.
+`python3 -m agent_core.check local`, compileall и `git diff --check` — passed.
+Local mode при пустых task directories не доказывает approval и не проверяет live v2.
+
+Первый запуск обнаружил SyntaxError в новом compatibility test; исправлен до
+публикации. Итоговый offline запуск полностью зелёный; ранняя ошибка не скрывается.
+
+Матрица A01–A32 со статусами O/N/L:
+docs/agent-identity-v2/acceptance-matrix.md. L не выполнялись, необходимые live случаи
+blocked. N, требующие реальных environment/runner/mint/protection, также blocked.
+
+## Остаточные риски и CI boundary
+
+Два main чтения не обнаруживают ABA; тест воспроизводит это ограничение. Нет атомарного
+stop/in-flight rollback. Finally не гарантирован при forced kill и не может отозвать
+lease, который acquire не вернул. Cleanup failure после smoke не отменяет выполненный read.
+Opaque lease и normalized source/hash/complete поля — offline contract, не доказательство
+реальных GitHub credentials/source/pagination. Полного durable live audit store нет.
+Физическое присутствие owner и компрометация его аккаунта протоколом не решаются.
+
+Действующий PR gate из base намеренно отклоняет любые agent_core/ governance changes.
+Для этого G2 PR ожидается `Governance/workflow changes require separate owner review;
+gate cannot authorize itself`. Это обязательный BLOCKED для merge, а не основание
+изменить gate. Фактические CI run/job/SHA и остановка отражаются в финальном PR report.
+На момент записи этого раздела PR ещё не открыт; remote CI не объявлены пройденными.
+
+Существующие PR workflows запускаются автоматически без их изменения. Manual dispatch,
+live approval, APK/Release publishing не выполняются. При фактическом отказе trusted
+gate — остановиться без rerun/bypass/изменения защиты. Новых прав не выдавать.
+Готовность только к owner review offline implementation; merge/live readiness не заявляется.

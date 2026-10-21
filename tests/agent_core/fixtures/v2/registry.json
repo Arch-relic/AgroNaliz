@@ -1,0 +1,33 @@
+{
+  "schema_version": 2,
+  "version": "offline-1",
+  "owner_id": 240867647,
+  "repository_name": "synthetic/fixture",
+  "executor": {
+    "kind": "github_app_installation",
+    "app_id": 9001,
+    "installation_id": 9002,
+    "installation_account_id": 9003,
+    "repository_id": 9004,
+    "policy_version": "offline-1"
+  },
+  "permissions": {
+    "metadata": "read",
+    "contents": "read",
+    "actions": "read",
+    "pull_requests": "read"
+  },
+  "approval_workflow": {
+    "id": 9005,
+    "path": ".github/workflows/offline-approval.yml",
+    "source_sha": "cccccccccccccccccccccccccccccccccccccccc",
+    "source_hash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+  },
+  "controller_workflow": {
+    "id": 9006,
+    "path": ".github/workflows/offline-controller.yml",
+    "source_sha": "cccccccccccccccccccccccccccccccccccccccc",
+    "source_hash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+  },
+  "policy_hash": "e6abfe5f41e40dd7941942e221a53318bef32b7e2397b8857e121c1716a9a6db"
+}

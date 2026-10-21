@@ -1,0 +1,11 @@
+{
+  "schema_version": 2,
+  "version": "offline-1",
+  "operations": [
+    "test"
+  ],
+  "handler": "read_identity_smoke",
+  "consent_seconds": 28800,
+  "session_seconds": 600,
+  "clock_skew_seconds": 60
+}

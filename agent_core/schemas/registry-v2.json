@@ -1,0 +1,154 @@
+{
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 2
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "owner_id": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "repository_name": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+    },
+    "executor": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "github_app_installation"
+        },
+        "app_id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "installation_id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "installation_account_id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "repository_id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "policy_version": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "kind",
+        "app_id",
+        "installation_id",
+        "installation_account_id",
+        "repository_id",
+        "policy_version"
+      ],
+      "additionalProperties": false
+    },
+    "permissions": {
+      "type": "object",
+      "properties": {
+        "metadata": {
+          "const": "read"
+        },
+        "contents": {
+          "const": "read"
+        },
+        "actions": {
+          "const": "read"
+        },
+        "pull_requests": {
+          "const": "read"
+        }
+      },
+      "required": [
+        "metadata",
+        "contents",
+        "actions",
+        "pull_requests"
+      ],
+      "additionalProperties": false
+    },
+    "approval_workflow": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^\\.github/workflows/[a-z0-9-]+\\.yml$"
+        },
+        "source_sha": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "source_hash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "id",
+        "path",
+        "source_sha",
+        "source_hash"
+      ],
+      "additionalProperties": false
+    },
+    "controller_workflow": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^\\.github/workflows/[a-z0-9-]+\\.yml$"
+        },
+        "source_sha": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "source_hash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "id",
+        "path",
+        "source_sha",
+        "source_hash"
+      ],
+      "additionalProperties": false
+    },
+    "policy_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "required": [
+    "schema_version",
+    "version",
+    "owner_id",
+    "repository_name",
+    "executor",
+    "permissions",
+    "approval_workflow",
+    "controller_workflow",
+    "policy_hash"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}
