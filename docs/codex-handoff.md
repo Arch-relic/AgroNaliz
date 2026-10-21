@@ -1481,3 +1481,13 @@ governance changes. Фактический результат/URL/remote SHA б�
 G3–G6 не разрешены: App/environments/keys/tokens/secrets не создавать; live task,
 approval/dispatch, production APK/release, merge и write permissions не выполнять.
 Следующий исполнитель сначала читает PR и точный head/CI, затем ждёт решения владельца.
+
+### Публикация G2 Draft PR — 21.10.2026
+
+Открыт Draft PR55: https://github.com/Arch-relic/AgroNaliz/pull/55.
+Первый remote head: 4839e0fd4cdb55054a881d36cd07b74dc01d5f52,
+base e5e0aeae9474307562a90ca4d3d075dc11800841, tree169ce78cbb7cf4d8c7344fc0ca5adaba030861e7
+совпадает с локальным c18ecf5afb107b1de2a43743c26203ecb1108b2d.
+Этот следующий commit только фиксирует URL публикации; код не изменён.
+Remote CI запущены автоматически; итоговый статус/run/SHA проверять в PR55.
+Trusted gate не обходить; его отказ требует остановки для review, не исправления защиты.
