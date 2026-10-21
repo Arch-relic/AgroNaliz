@@ -143,6 +143,16 @@ class MainApkRelease(unittest.TestCase):
         before=hashlib.sha256(source.read_bytes()).hexdigest()
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder);key,pin=fixture_key(root,'fixture')
+            main_badging=subprocess.check_output([str(sdk()/'aapt2'),'dump','badging',str(source)],text=True)
+            if "versionName='1.0.11'" in main_badging:
+                # Candidate1.0.11 has no approved production admission. Exercise the exact
+                # real-APK signer rejection, including refusal before decoding any key.
+                with patch('base64.b64decode',side_effect=AssertionError('No key decoding for unapproved product')):
+                    with self.assertRaises(ERROR):sign_fixture(source,root,key,pin)
+                self.assertFalse((root/'agronaliz-main-output').exists())
+                self.assertEqual([],list(root.glob('agronaliz-main-key-*')))
+                self.assertEqual(before,hashlib.sha256(source.read_bytes()).hexdigest())
+                return
             output=sign_fixture(source,root,key,pin)
             info=json.loads((output.parent/'verification.json').read_text())
             self.assertEqual(pin,info['certificateSha256'])
