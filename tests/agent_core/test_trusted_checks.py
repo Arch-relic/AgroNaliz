@@ -83,7 +83,7 @@ class AdditionalApprovalTests(unittest.TestCase):
     def test_executor_identity_required(self):
         for identity in [None,999]:
             with self.subTest(identity=identity), self.assertRaises(Denied):
-                authorize(self.fixture.t,'implement',self.fixture.api,actor_id=identity)
+                fixtures.authorize_fixture(self.fixture.t,'implement',self.fixture.api,actor_id=identity)
     def test_injected_operation_requires_reapproval(self):
         r=self.fixture.t['revisions'][0]; r['spec']['operations'].append('room'); r['hash']=digest(r['spec'])
         with self.assertRaises(Denied): validate(self.fixture.t,api=self.fixture.api)

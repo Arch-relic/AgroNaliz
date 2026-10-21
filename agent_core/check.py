@@ -5,7 +5,7 @@ import os
 import re
 import sys
 from urllib.request import Request, urlopen
-from agent_core.core import REPO, OWNER_ID, Denied, require, validate, approval_title, schema, load_json
+from agent_core.core import REPO, OWNER_ID, Denied, require, validate, approval_title, schema, load_json, WORKFLOW
 
 
 def api(path):
@@ -21,6 +21,35 @@ def document(path, ref):
     data = api(f'contents/{path}?ref={ref}')
     require(data['type'] == 'file' and data['encoding'] == 'base64', 'Expected JSON file')
     return load_json(base64.b64decode(data['content']))
+
+
+def execution_actor():
+    """Identity from GitHub run metadata, within a trusted main runner only.
+
+    Not exposed as a task/dispatch input. Never run this in PR-controlled code.
+    Stage 1 does not invoke an autonomous executor.
+    """
+    require(os.environ['GITHUB_REPOSITORY'] == REPO
+            and os.environ['GITHUB_REF'] == 'refs/heads/main'
+            and os.environ['GITHUB_WORKFLOW_REF'] == f'{REPO}/{WORKFLOW}@refs/heads/main'
+            and os.environ['GITHUB_EVENT_NAME'] == 'workflow_dispatch'
+            and os.environ['GITHUB_RUN_ATTEMPT'] == '1', 'Trusted main execution context required')
+    run_id = os.environ['GITHUB_RUN_ID']
+    require(re.fullmatch('[1-9][0-9]*', run_id), 'Invalid execution run ID')
+    run = api(f'actions/runs/{run_id}')
+    require(run['id'] == int(run_id) and run['repository']['full_name'] == REPO
+            and run['head_repository']['full_name'] == REPO and run['head_branch'] == 'main'
+            and run['head_sha'] == os.environ['GITHUB_SHA']
+            and re.fullmatch('[0-9a-f]{40}', run['head_sha'])
+            and run['event'] == 'workflow_dispatch' and run['run_attempt'] == 1
+            and run['status'] == 'in_progress' and run['path'] == WORKFLOW
+            and run['workflow_id'] == api('actions/workflows/agent-core.yml')['id'],
+            'Untrusted execution run')
+    actor = run['actor']['id']
+    require(type(actor) is int and actor > 0 and run['triggering_actor']['id'] == actor
+            and os.environ['GITHUB_ACTOR_ID'] == str(actor),
+            'Ambiguous execution identity')
+    return actor
 
 
 def directory(kind, ref):

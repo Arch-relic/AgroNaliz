@@ -2,6 +2,7 @@
 from datetime import datetime
 import hashlib
 import json
+import re
 from pathlib import Path
 from jsonschema import Draft202012Validator, FormatChecker
 
@@ -133,10 +134,42 @@ def validate(task, previous=None, api=None):
     return task
 
 
-def authorize(task, operation, api=None, *, actor_id=None):
-    require(actor_id == task['executor_id'], 'Verified executor identity required')
-    validate(task, api=api)
-    require(operation not in PROTECTED, 'Separate protected-operation permission required')
-    require(task['state'] in {'approved', 'implementing', 'review'}, 'Task is not authorized for work')
-    current = next(r for r in task['revisions'] if r['spec']['id'] == task['current_revision'])
-    require(operation in current['spec']['operations'], 'Operation outside approved scope')
+def authorize(task, operation):
+    """Check one action against fresh main; transport/identity are not caller inputs.
+
+    Must run in trusted main code, never an executor-controlled Python process.
+    This is a point-in-time check, not a lease or an emergency stop mechanism.
+    """
+    from agent_core.check import api, execution_actor
+    try:
+        snapshot = load_json(json.dumps(task, allow_nan=False))
+        schema(snapshot, 'task-v1.json')
+        require(re.fullmatch(r'AGN-[0-9]+', snapshot['id']), 'Invalid task ID')
+        require(operation not in PROTECTED, 'Separate protected-operation permission required')
+        actor = execution_actor()
+        require(actor == snapshot['executor_id'], 'Verified executor identity required')
+
+        def main_sha():
+            ref = api('git/ref/heads/main')
+            require(ref['ref'] == 'refs/heads/main' and ref['object']['type'] == 'commit'
+                    and re.fullmatch('[0-9a-f]{40}', ref['object']['sha']), 'Invalid main ref')
+            return ref['object']['sha']
+
+        before = main_sha()
+        path = f"agent_core/tasks/{snapshot['id']}.json"
+        data = api(f'contents/{path}?ref={before}')
+        require(data['type'] == 'file' and data['path'] == path
+                and data['encoding'] == 'base64', 'Expected immutable main task file')
+        import base64
+        encoded = data['content'].replace('\n', '').replace('\r', '')
+        current = load_json(base64.b64decode(encoded, validate=True))
+        require(current == snapshot, 'Stale task snapshot; current main task required')
+        validate(current, api=api)
+        require(current['state'] in {'approved', 'implementing', 'review'}, 'Task is not authorized for work')
+        revision = next(r for r in current['revisions'] if r['spec']['id'] == current['current_revision'])
+        require(operation in revision['spec']['operations'], 'Operation outside approved scope')
+        require(main_sha() == before, 'Main changed during authorization; retry with fresh data')
+    except Denied:
+        raise
+    except Exception as exc:
+        raise Denied('Authorization unavailable: incomplete, ambiguous or inaccessible trusted data') from exc
