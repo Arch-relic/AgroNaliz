@@ -1,6 +1,7 @@
 package ru.fo6osik.workjournal
 
-/** Pure calculation; lower/upper bounds retain the existing bunker-fill estimates. */
+/** Pure fixed-percentage calculation. Range is retained as a compatible result container; bounds are equal.
+ * Stored level codes are never rewritten: old records and restored backups use the same new scale. */
 object HarvestCalculator {
     data class Range(val min: Double, val max: Double) {
         init { require(min.isFinite() && max.isFinite() && min >= 0 && max >= min) }
@@ -35,20 +36,19 @@ object HarvestCalculator {
 
     fun volume(bunkerVolumeM3: Double?, fillLevels: List<String>): Range? {
         val capacity = positive(bunkerVolumeM3) ?: return null
-        var min = 0.0
-        var max = 0.0
+        // Sum quarter-units before multiplying; no rounding or persisted conversion per bunker.
+        var quarters = 0L
         for (level in fillLevels) {
-            val coefficient = when (level) {
-                "FULL" -> 1.0 to 1.0
-                "HALF" -> 0.5 to 0.5
-                "MORE_THAN_HALF" -> 0.5 to 1.0
-                "LESS_THAN_HALF" -> 0.0 to 0.5
-                else -> return null // Corrupt/unknown levels must not silently contribute zero.
+            quarters += when (level) {
+                "FULL" -> 4
+                "HALF" -> 2
+                "MORE_THAN_HALF" -> 3
+                "LESS_THAN_HALF" -> 1
+                else -> return null // Unknown levels must not silently contribute zero.
             }
-            min += coefficient.first * capacity
-            max += coefficient.second * capacity
         }
-        return finiteRange(min, max)
+        val total = capacity * (quarters / 4.0)
+        return finiteRange(total, total)
     }
 
     fun averageVolume(bunkerVolumeM3: Double?, fillLevels: List<String>): Range? {

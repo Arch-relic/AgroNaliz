@@ -101,7 +101,7 @@ class HarvestResultsCardUiTest {
                 v.update(HarvestResultsCardModel.from(r, null, 100.0, false)); v.setExpansion(true)
             }
             update(110.0, 1000.0)
-            assertTrue(v.findViewWithTag<TextView>("harvest-result-2").text.contains("75–150 т"))
+            assertTrue(v.findViewWithTag<TextView>("harvest-result-2").text.contains("112,5 т"))
             assertEquals("110,0%", v.currentModel!!.progressText)
             assertEquals(100, v.findViewWithTag<ProgressBar>("harvest-results-progress").progress)
             assertTrue(v.currentModel!!.details.any { it.first == "Осталось убрать" && it.second == "-10 га" })

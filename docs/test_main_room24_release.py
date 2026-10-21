@@ -23,7 +23,7 @@ class MainRoom24Release(unittest.TestCase):
         for name in ['app/build.gradle.kts','app/src/main/java/ru/fo6osik/workjournal/AppDatabase.kt']:
             dest=self.stage/name;dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(ROOT/name,dest)
         gradle=self.stage/'app/build.gradle.kts'
-        gradle.write_text(gradle.read_text().replace('versionName = "1.0.10"','versionName = "1.0.9"'))
+        gradle.write_text(gradle.read_text().replace('versionName = "1.0.11"','versionName = "1.0.9"'))
         self.workflow=(ROOT/'.github/workflows/main-apk-publish.yml').read_text()
         self.preflight=h.inline(self.workflow)
         self.signer={'__name__':'synthetic_room24_signer'}

@@ -16,7 +16,7 @@ class Main109UpdateUiTest {
     }
     @Test fun verify109Screens() {
         guard()
-        assertEquals("1.0.10",context.packageManager.getPackageInfo(context.packageName,0).versionName)
+        assertEquals("1.0.11",context.packageManager.getPackageInfo(context.packageName,0).versionName)
         androidx.test.core.app.ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             var ready=false
             val until=System.nanoTime()+10_000_000_000L
@@ -32,8 +32,8 @@ class Main109UpdateUiTest {
         androidx.test.core.app.ActivityScenario.launch(ChangelogActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
                 val scroll=activity.findViewById<android.widget.ScrollView>(R.id.changelogScroll)
-                assertEquals(android.view.View.VISIBLE,scroll.findViewWithTag<android.view.View>("changelog-details-1.0.10").visibility)
-                assertTrue(scroll.findViewWithTag<android.widget.Button>("changelog-header-1.0.10").text.contains("В разработке"))
+                assertEquals(android.view.View.VISIBLE,scroll.findViewWithTag<android.view.View>("changelog-details-1.0.11").visibility)
+                assertTrue(scroll.findViewWithTag<android.widget.Button>("changelog-header-1.0.11").text.contains("В разработке"))
             }
         }
         val intent=android.content.Intent(context,HarvestProcessActivity::class.java)

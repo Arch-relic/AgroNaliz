@@ -23,11 +23,11 @@ class HarvestResultsCardModelTest {
         assertEquals("10 га", c.details.toMap()["Осталось убрать"])
         assertTrue(c.shortNotice.isEmpty())
     }
-    @Test fun allThreeRangesRetainBoundsAndUnits() {
+    @Test fun allThreeQuantitiesAreSingleValuesWithUnits() {
         val c = card(metrics(listOf(day(fill = "MORE_THAN_HALF"))))
-        assertEquals("75–150 т", c.overview[2].second)
-        assertEquals("75–150 м³", c.details.toMap()["Общий расчётный объём бункеров"])
-        assertTrue(c.overview[3].second.contains("–")); assertTrue(c.overview[3].second.contains("ц/га"))
+        assertEquals("112,5 т", c.overview[2].second)
+        assertEquals("112,5 м³", c.details.toMap()["Общий расчётный объём бункеров"])
+        assertFalse(c.overview[3].second.contains("–")); assertTrue(c.overview[3].second.contains("ц/га"))
     }
     @Test fun emptyCampaignDoesNotInventMassOrYield() {
         val c = card(metrics(emptyList()))

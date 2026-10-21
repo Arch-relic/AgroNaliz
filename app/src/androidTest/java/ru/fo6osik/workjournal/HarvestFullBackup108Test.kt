@@ -68,8 +68,8 @@ class HarvestFullBackup108Test {
             val days=db.harvestDao().getDaysForProcess(p.id)
             val result=HarvestCalculator.campaign(p.bunkerVolumeM3,days.map { day ->
                 HarvestCalculator.DayInput(db.harvestDao().getBunkersForDay(day.id).map { it.fillLevel },day.harvestedAreaHa,day.bulkDensityKgM3) })
-            assertEquals(24.0,result.massTonnes!!.min,0.0)
-            assertEquals(36.0,result.massTonnes!!.max,0.0)
+            assertEquals(30.0,result.massTonnes!!.min,0.0)
+            assertEquals(30.0,result.massTonnes!!.max,0.0)
             for(day in days.filter { it.status=="COMPLETED" }) {
                 val fuel=db.harvestFuelDao().getDay(day.id)!!
                 val used=HarvestFuelCalculator.calculate(fuel.startPercent,fuel.endPercent,

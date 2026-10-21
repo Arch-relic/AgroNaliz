@@ -22,8 +22,8 @@ def main():
     source = root / 'app/src/main/java/ru/fo6osik/workjournal'
     tests = root / 'app/src/test/java/ru/fo6osik/workjournal'
     names = ['HarvestCalculator', 'HarvestCampaignMetrics', 'HarvestResultsFormatter',
-             'HarvestBackupCompatibility', 'HarvestDensityCatalog']
-    test_names = ['HarvestCalculatorTest', 'HarvestCampaignMetricsTest']
+             'HarvestBackupCompatibility', 'HarvestDensityCatalog', 'HarvestResultsCardModel']
+    test_names = ['HarvestCalculatorTest', 'HarvestCampaignMetricsTest', 'HarvestResultsCardModelTest', 'HarvestFixedFillTest']
     with tempfile.TemporaryDirectory(prefix='harvest-jvm-') as folder:
         command = ['java', '-cp', classpath, 'org.jetbrains.kotlin.cli.jvm.K2JVMCompiler',
                    '-no-stdlib', '-no-reflect', '-jvm-target', '17', '-classpath', classpath, '-d', folder]

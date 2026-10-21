@@ -73,7 +73,7 @@ class MainRoom23MigrationTest {
         assertTrue(DatabaseBackupManager.exportBackup(context,uri("before22")).isSuccess)
     }
     @Test fun verifyMain108Room23AndSeparateRestore() = runBlocking(Dispatchers.IO) {
-        guard(); assertEquals("1.0.10", installed().versionName); assertEquals(3000004, installed().versionCode)
+        guard(); assertEquals("1.0.11", installed().versionName); assertEquals(3000004, installed().versionCode)
         assertEquals(prefs.getString("certificate", null), certificate())
         assertEquals(47,prefs.getInt("interval",0)); assertFalse(prefs.getBoolean("enabled",true))
         val timers=context.getSharedPreferences("harvest_reminder_prefs",0)

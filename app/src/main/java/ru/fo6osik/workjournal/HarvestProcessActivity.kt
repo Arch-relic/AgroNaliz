@@ -217,6 +217,7 @@ class HarvestProcessActivity : AppCompatActivity() {
                             )
                     }
 
+                val calculationProcess = dao.calculationProcess(process)
                 runOnUiThread {
                     if (generation != loadGeneration || isFinishing || isDestroyed) return@runOnUiThread
                     currentProcess =
@@ -226,7 +227,7 @@ class HarvestProcessActivity : AppCompatActivity() {
                         days
 
                     renderProcess(
-                        process,
+                        calculationProcess,
                         days,
                         bunkersByDay
                     )
@@ -1138,31 +1139,10 @@ class HarvestProcessActivity : AppCompatActivity() {
         bunkerVolumeM3, bunkers.map { it.fillLevel }
     )?.asPair()
 
-    private fun calculationText(
-        label: String,
-        bunkerVolumeM3: Double?,
-        bunkers: List<HarvestBunker>
-    ): String {
-        val range =
-            totalVolumeRange(
-                bunkerVolumeM3,
-                bunkers
-            )
-                ?: return "$label: не настроен"
-
-        return if (
-            kotlin.math.abs(
-                range.first -
-                    range.second
-            ) <
-            0.0001
-        ) {
-            "$label: ${formatNumber(range.first)} м³"
-        } else {
-            "$label: ${formatNumber(range.first)}–" +
-                "${formatNumber(range.second)} м³"
-        }
-    }
+    private fun calculationText(label: String, bunkerVolumeM3: Double?, bunkers: List<HarvestBunker>): String =
+        HarvestCalculator.volume(bunkerVolumeM3, bunkers.map { it.fillLevel })
+            ?.let { "$label: ${HarvestResultsFormatter.range(it, "м³")}" }
+            ?: "$label: не рассчитан — вместимость не указана или состояние неизвестно"
 
     private fun averageText(bunkerVolumeM3: Double?, bunkers: List<HarvestBunker>): String {
         if (bunkers.isEmpty()) return "Средний объём бункера: —"
@@ -1171,30 +1151,9 @@ class HarvestProcessActivity : AppCompatActivity() {
         return "Средний объём бункера: ${HarvestResultsFormatter.range(average, "м³")}"
     }
 
-    private fun shortCalculationText(
-        bunkerVolumeM3: Double?,
-        bunkers: List<HarvestBunker>
-    ): String {
-        val range =
-            totalVolumeRange(
-                bunkerVolumeM3,
-                bunkers
-            )
-                ?: return ""
-
-        return if (
-            kotlin.math.abs(
-                range.first -
-                    range.second
-            ) <
-            0.0001
-        ) {
-            " • ${formatNumber(range.first)} м³"
-        } else {
-            " • ${formatNumber(range.first)}–" +
-                "${formatNumber(range.second)} м³"
-        }
-    }
+    private fun shortCalculationText(bunkerVolumeM3: Double?, bunkers: List<HarvestBunker>): String =
+        HarvestCalculator.volume(bunkerVolumeM3, bunkers.map { it.fillLevel })
+            ?.let { " • ${HarvestResultsFormatter.range(it, "м³")}" } ?: ""
 
     private fun parseVolume(
         value: String

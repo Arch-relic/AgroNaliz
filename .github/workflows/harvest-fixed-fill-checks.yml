@@ -1,0 +1,55 @@
+name: Fixed bunker percentages and MAIN 1.0.10 update
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  fixed-fill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Prepare SDK
+        run: |
+          sed -i '/^android\.aapt2FromMavenOverride=/d' gradle.properties
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;35.0.0"
+          chmod +x gradlew
+      - name: Build disposable candidate and tests
+        run: |
+          ./gradlew -PmainVersionCode=3000009 -PtestVersionCode=1000302 :app:assembleDebug :app:assembleDebugTest :app:assembleDebugAndroidTest :app:testDebugUnitTest :app:testDebugTestUnitTest --no-daemon --console=plain
+          ./gradlew -PmainVersionCode=3000009 -PtestVersionCode=1000302 -PtestBuildType=debugTest :app:assembleDebugTestAndroidTest --no-daemon --console=plain
+      - uses: actions/checkout@v4
+        with:
+          ref: 2a37bfe05c9b60f04035f7b64fae7f726117d647
+          path: .main110
+          persist-credentials: false
+      - name: Build pinned MAIN1.0.10 baseline without production secrets
+        run: |
+          sed -i '/^android\.aapt2FromMavenOverride=/d' .main110/gradle.properties
+          chmod +x .main110/gradlew
+          .main110/gradlew -p .main110 -PmainVersionCode=3000008 -PtestVersionCode=1000301 :app:assembleDebug :app:assembleDebugTest --no-daemon --console=plain
+      - name: Enable KVM
+        run: sudo chmod 666 /dev/kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: python3 docs/run-harvest-fixed-fill-checks.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fixed-fill-test-reports
+          path: |
+            app/build/test-results/
+            harvest-fixed-fill-verification.json
+          retention-days: 7
