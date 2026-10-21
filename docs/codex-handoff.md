@@ -1,3 +1,5 @@
+Актуальный этап: план первого запуска Agent Core, Draft PR #51; подготовка без live approval, отчёт в конце.
+
 Актуальный этап: PR47, вариант1 отзыва полномочий по решению владельца21.10.2026; новый отчёт в конце.
 
 Актуальный этап: повторный аудит и синхронизация Agent Core, Draft PR #47, 21.10.2026; отчёт в конце.
@@ -1396,3 +1398,76 @@ SHA5e80cb9; на новом SHA согласованный defect устранё
 Main остался 2a37bfe,protected:false; production policies/Room24/backup/signatures/
 release admission не изменены. Merge,APK/Release публикация,production secrets,
 физический смартфон и автоматический Codex не затрагивались. Дальше — только review.
+
+
+# Первый запуск Agent Core — подготовка, Draft PR #51, 21.10.2026
+
+Цель: подготовить безопасный owner/main approval rehearsal после merge PR47,
+не запускать реальные согласования, не менять main protection/permissions/APK.
+Статус: Draft PR51 подготовлен, offline проверки и read-only PR-target CI успешны;
+остановка для review до регистрации задачи и любых dispatch.
+https://github.com/Arch-relic/AgroNaliz/pull/51 — open/Draft.
+
+Проверен main e5e0aeae9474307562a90ca4d3d075dc11800841, PR47 merged именно этим commit.
+Tree159b09961b9f50c2d46633238de00e88330978e0 совпал с последним локальным результатом
+0b937832280b853ba828f5af498847ea6dceec47. Новая изолированная ветка
+feature/agent-core-bootstrap-plan. Проверенный локальный commit20f8ea9402686202a01e916ab88b1022109229ee,
+remote67f1ce8793fe7ac57dffd728ee0f4469ec237bdc, одинаковое tree87755cd3dd53c1908e60eed797fcf2b82ef67f9f.
+Этот handoff добавлен следующим docs-only коммитом и не подменяет проверенный SHA.
+Публикация через GitHub API от актуального main, без force push/обновления main.
+
+Созданы:
+- docs/agent-core-bootstrap/README.md — preflight, P0–P4, approvals/отказы/evidence,
+  отмена без удаления истории, критерии проверки и разрешения на будущие действия.
+- docs/agent-core-bootstrap/task.example.json — неактивный schema-valid proposed пример
+  AGN-47001,bootstrap-r1,operations=[test],без approvals. Находится вне agent_core/tasks.
+Изменён docs/codex-handoff.md — сохранена вся прежняя история, добавлен этот отчёт.
+Удалений нет. Код core/app/AGENTS/workflows/Room24/backup/signing/production policies
+и настройки main не изменены; активные tasks содержат только.gitkeep.
+
+Пример содержит synthetic executor_id123 и reference issue47 (исходный AgentCore PR).
+Они НЕ проверенная live identity/issue. Владелец должен выбрать существующую identity,
+отличную от owner240867647, и реальную test issue; проверить уникальностьtaskID/редакцию/
+scope и отдельно разрешить регистрацию metadata PR. Не копировать пример как есть,
+не добавлять права/аккаунты/токены ради тестов. Если identity/issue нет — STOP.
+После регистрации merge только владельцем; затем отдельное разрешение на конкретный
+owner/main/attempt1 approve, отдельное разрешение на evidence/transitions/negative cases
+и отмену task в main. Никаких автоматических workflow_dispatch/rerun approval.
+
+Проверки:
+- python3 -m unittest discover -s tests/agent_core -q:69tests,0failures/errors/skips.
+- Offline load_json/validate(example), digest/spec/operations и safe scope:passed.
+- Offline proposed→awaiting transition с append-only историей:passed.
+- Offline approval без API evidence:Denied, ожидаемый отказ.
+- git diff --check и отсутствие diff core/app/workflows/AGENTS/tasks:passed.
+Новые tests/framework/workflow не добавлялись. Проверочный inline Python только
+в памяти проверял fixture, ничего в активный каталог не записывал.
+
+Реальный read-only CI на remote67f1ce8:
+- AgentCore pull_request run39587037540/job119178390041:69tests success, trusted job skipped.
+- AgentCore pull_request_target run39587037703/job119178391923:trusted-validation success,
+  код checkout base main e5e0aea, permissions contents/actions/pull-requests:read.
+  Оба лога прочитаны. Это успешная проверка PR-данных, НЕ workflow_dispatch/approval.
+Существующие Android CI запустились автоматически, на момент отчёта ещё выполнялись;
+их успех не заявляется. Для docs-only изменений сборка не обязательна по AGENTS.md.
+
+API main сообщает protected:false,rulesets[]. Workflow detail/runs-by-workflow URL
+connector отклоняет как неподдерживаемые; activation state не подтверждён этим путём.
+Владелец должен проверить Actions перед live запуском, включение/изменения policies
+не делать автоматически. В доступной выборке19main workflow_dispatch runs не найден
+AgentCore; это ограниченное наблюдение, не доказательство всей истории.
+Существующий weekly schedule не изменён; manual/session/approve dispatch не запускались.
+
+Runbook различает validate и authorize: успешная история/grant не означает право
+выполнить действие, cancelled history может validate успешно. Live authorize executor
+с текущим owner-only workflow не предусмотрен; не подделывать runtime/actor/API ради
+положительного теста. Нужна отдельная будущая интеграция execution context.
+Отзыв — после task изменения в main, перед каждым действием; уже начатая операция
+не останавливается. No required checks/защита main и возможный force-push остаются
+ограничениями. Полная эксплуатационная готовность AgentCore не заявляется.
+
+Следующая точка: review Draft PR51. P1 registration, merge metadata/documentation,
+P2 real approvals, P3 state changes/evidence и P4 negative dispatch/cancel — только
+после соответствующих явных разрешений владельца. Ничего из этого не выполнено.
+Production secrets, write permissions, APK/Release, main push/merge, пользовательские
+данные/смартфон, автономный Codex и AI recommendations не затрагивались.
