@@ -1,3 +1,5 @@
+Актуальный этап: PR47, вариант1 отзыва полномочий по решению владельца21.10.2026; новый отчёт в конце.
+
 Актуальный этап: повторный аудит и синхронизация Agent Core, Draft PR #47, 21.10.2026; отчёт в конце.
 
 Актуальный этап: Agent Core v1.0, этап 1, Draft PR #47; итог и ограничения в конце документа.
@@ -1279,3 +1281,118 @@ Android: сборки MAIN/TEST и JVM tests успешно; 53 инструме
 Результаты и ссылки — в docs/agent-core-security-audit.md. Последующий docs-only
 коммит может автоматически запустить повторные CI; их успех здесь не заявлен.
 Готовность к merge остаётся заблокированной дефектом отзыва, несмотря на зелёный CI.
+
+
+# PR47 — согласованный вариант 1 отзыва полномочий, 21.10.2026
+
+Источник задания: прямой запрос пользователя и решение владельца
+https://github.com/Arch-relic/AgroNaliz/pull/47#issuecomment-6312800007.
+Автор решения GitHub ID 240867647 проверен через API. Это разрешение на доработку PR;
+комментарии не становятся машинными task approvals. PR47 open/Draft, не объединён.
+
+Ветка feature/agent-core-stage1. Main2a37bfe05c9b60f04035f7b64fae7f726117d647.
+Проверенный код GitHub34b89e4e8a544a5ee833640fa2a6b079aa7323cc,
+tree 5fc57eb7ba976c4d7086b5fc2cc0f804772e8ec4. Локальный эквивалент с тем же деревом
+83976df6ea3b626f6f6d6b900cd661cd4487123c. Публикация через API с expected_sha,
+без force push. Отчётный коммит после кода меняет только документацию и не подменяет
+SHA проверенного кода. Старые аудиты/решения/история handoff сохранены.
+
+Реализовано:
+- authorize(task, operation) больше не принимает api/actor_id от вызывающего кода.
+- Фиксированный GitHub transport и identity из run API; repo/head repo/main/SHA,
+  workflow path/ID/ref, dispatch/attempt1/active run, actor=triggering_actor и runner
+  GITHUB_ACTOR_ID проверяются. Недоверенный процесс/PR не должен управлять runtime,
+  GH_TOKEN, GITHUB_*, импортами или monkeypatch доверенного процесса.
+- Main SHA через refs API → task строго по SHA → полное сравнение snapshot →
+  validate/history/hash/approval/state/revision/scope → повтор main SHA.
+  Ошибки/404/неполные или противоречивые данные/смена main — Denied без fallback.
+- Отзыв действует после изменения task в main. Проверять перед каждым действием;
+  нет кэша/lease, немедленной остановки уже запущенной операции или атомарности
+  проверки с исполнением. Force-push/обход write-пользователем требует защиты main.
+- Старый defect stale-approved snapshot закрыт. Прежние policy-тесты адаптированы
+  к новому API; отдельные full-context tests не подменяют execution_actor.
+
+Изменены:
+agent_core/core.py
+agent_core/check.py
+tests/agent_core/test_core.py
+tests/agent_core/test_trusted_checks.py
+docs/agent-core.md
+docs/agent-core-security-audit.md
+docs/codex-handoff.md
+Создан tests/agent_core/test_revocation.py. Удалений нет.
+App/, AGENTS.md и10прежних workflows точно совпадают с main. Новый agent-core.yml
+не изменялся этой итерацией. Protected production policies/Room24/backup/подписи/
+release admission/main settings не менялись. Код Issue48/PR49 не включён.
+
+Новые локальные запуски:
+python3 -m unittest discover -s tests/agent_core -q —69 tests,0 failures/errors/skips.
+python3 -m unittest discover -s docs -p 'test_*.py' -q —107 tests,0 failures/errors,2 SDK skips;
+вложенные временные patch-tests не прибавляются к 107.
+python3 -m agent_core.check local — passed, пустые каталоги (не live approval).
+python3 -m compileall -q agent_core tests/agent_core — passed.
+YAML parsing11workflows, git diff --check, scope comparison — passed.
+Android локально не собирался: код не менялся, сборки/эмуляторы выполняются CI.
+
+16новых regression tests с subcases: текущий approval/implementing/review; stale
+blocked/cancelled/awaiting_approval/новаяредакция; matching revoked snapshot; replay;
+новое действие после отзыва; main SHA race; outage на каждом API чтении; missing task;
+смена executor/scope/history/links; неподдерживаемые api/actor parameters; untrusted
+run/runner; неполные main/task ответы и duplicate JSON/invalid Base64.
+AgentCore CI39579506821 —69 tests success; trusted-validation skipped для PR ожидаемо.
+Лог job119153311247 прочитан. Все применимые CI исправления и ссылки внесены
+в docs/agent-core-security-audit.md по завершении; старые результаты не переиспользуются.
+
+Независимо от unit fixtures выполнен ручной аудит входов, транспорта, последовательности
+чтений/отказов и workflow trust boundary. Реальный API main task directory вернул404,
+старый AgentCore PR run имеет feature branch/completed/PR event и не подходит для
+execution context. Main protected:false/rulesets[]; настройки не менялись.
+Live owner/main positive/negative approval и weekly run не проверены из-за bootstrap;
+после отдельного owner review/решения о включении нужны реальные проверки.
+Текущий workflow не вызывает authorize для реальных действий, исполнитель не подключён;
+execution context пока допускает только trusted AgentCore main dispatch. Future executor
+integration/workflow contexts — отдельное согласование. AI recommendations не подключены.
+
+Статус: исправление варианта 1 реализовано, для review владельца; полной эксплуатационной
+готовности не заявлять. Остаточные риски и будущие шаги — live bootstrap validation,
+защита main/required checks и отдельно согласованная интеграция исполнителя.
+PR https://github.com/Arch-relic/AgroNaliz/pull/47 оставить Draft и остановиться для review.
+Merge, публикация APK/Release, production secrets и смартфон не использовались.
+
+
+## Android CI: первый сбой и повтор
+
+Все 6 остальных workflow исправления завершились success. Общий AndroidPR run39579506701
+attempt1/job119153310556 прошёл сборки и JVM suites (175+175 tests,0 errors/failures/skips,
+подтверждено XML из diagnostic artifact12336965208), но остановился на первом
+AppVersionUiTest#showsInstalledVersion: Espresso RootViewWithoutFocusException,
+окно не получило focus за 10 секунд. Это не assertion проверки Agent Core.
+APK в diagnostic archive нет. Сохранены логи/первый результат; код не менялся.
+Перезапущен только этот job на том же code SHA: attempt2/job119159373964.
+Это не approval workflow, повтор не выдаёт полномочий. Окончательный результат
+внесён ниже и в docs/agent-core-security-audit.md после завершения.
+
+
+## Финал CI варианта 1 — review владельца, 21.10.2026
+
+Все 7 применимых CI проверенного code SHA 34b89e4e8a544a5ee833640fa2a6b079aa7323cc — success:
+- AgentCore39579506821:69 tests.
+- AndroidPR39579506701 attempt2/job119159373964: сборки MAIN/TEST, JVM-тесты,53 инструментальных
+  вызова/107 исполнений; первая попытка с focus error сохранена выше, код не менялся.
+- MAINsafe39579506619:28 Python и 3 инструментальных вызова.
+- Room22regression39579506708:3 инструментальных вызова.
+- Room23→24 39579506618:10 инструментальных вызовов.
+- Room24same39579506666:10 инструментальных вызовов.
+- UIAPI23/35 39579506650:6+6 инструментальных вызовов.
+Логи8 успешных jobs и исходного failed Android job прочитаны. Последующий отчётный
+коммит изменяет только docs/codex-handoff.md и docs/agent-core-security-audit.md;
+его возможные автоматические CI не приравниваются к уже проверенному коду.
+Все подробности/ссылки/ограничения: docs/agent-core-security-audit.md, новый раздел
+«Вариант 1: устранение дефекта отзыва». Предыдущий блокирующий аудит относится к старому
+SHA5e80cb9; на новом SHA согласованный defect устранён, предыдущая история сохранена.
+
+Статус: готово для review владельца, PR47 оставить Draft. Эксплуатационная готовность
+без live bootstrap/защиты main/согласованной интеграции исполнителя не заявляется.
+Main остался 2a37bfe,protected:false; production policies/Room24/backup/signatures/
+release admission не изменены. Merge,APK/Release публикация,production secrets,
+физический смартфон и автоматический Codex не затрагивались. Дальше — только review.

@@ -1,3 +1,6 @@
+Актуальный статус: согласованный вариант 1 реализован; новый аудит и CI приведены
+в конце. Предыдущий раздел описывает дефект на SHA5e80cb9 и сохранён как история.
+
 # Agent Core: повторный аудит PR #47 — 21.10.2026
 
 PR: https://github.com/Arch-relic/AgroNaliz/pull/47 (Draft).
@@ -162,3 +165,157 @@ Gate проверяет зарегистрированные задачи, не 
 PR остаётся Draft; merge не рекомендуется из-за описанного пробела отзыва. Полную эксплуатационную готовность Approval
 Gate до live-проверки и решения об обязательности checks подтверждать нельзя.
 Merge PR, изменение архитектуры/production-политик и выпуск не выполняются.
+
+
+# Вариант 1: устранение дефекта отзыва, 21.10.2026
+
+Решение владельца: https://github.com/Arch-relic/AgroNaliz/pull/47#issuecomment-6312800007.
+Числовой GitHub ID автора 240867647 совпадает с закреплённым владельцем; решение
+прочитано через GitHub API перед реализацией. Прямое задание пользователя разрешает
+его реализацию. Этот комментарий не превращается в машинный task approval.
+
+Ветка feature/agent-core-stage1, PR47 open/Draft. Main:
+2a37bfe05c9b60f04035f7b64fae7f726117d647. Проверенный код GitHub:
+34b89e4e8a544a5ee833640fa2a6b079aa7323cc, tree 5fc57eb7ba976c4d7086b5fc2cc0f804772e8ec4.
+Локальный эквивалент: 83976df6ea3b626f6f6d6b900cd661cd4487123c с тем же деревом.
+Отчёт сохраняется отдельным docs-only коммитом после кода; это не его собственный SHA.
+История прежнего аудита выше сохранена и относится к старому SHA5e80cb9.
+
+## Исправление и граница доверия
+
+authorize(task, operation) больше не принимает api или actor_id. Транспорт
+agent_core.check.api обращается только к api.github.com/repos/Arch-relic/AgroNaliz
+через HTTPS с read token из доверенной среды. Идентичность берётся из GitHub run API:
+repo/head repo, main, exact SHA, workflow path/ID, dispatch, first attempt, active run,
+actor=triggering_actor; также сверяются GITHUB_ACTOR_ID и workflow ref доверенного
+main runner. PR, другая ветка/workflow/run/actor, изменённые поля и rerun отклоняются.
+Код текущего workflow не запускает автоматический исполнитель и не вызывает
+authorize для реальных действий. Разрешённый execution context намеренно ограничен
+Agent Core main dispatch; расширение для будущего исполнителя требует отдельного review.
+
+Python-функция не является sandbox для кода, способного менять её модули/окружение.
+Только проверенный main-код, runner environment, импорты и транспорт могут находиться
+в доверенном процессе. PR/недоверенный исполнитель не должен управлять GH_TOKEN,
+GITHUB_* переменными, monkeypatch, PYTHONPATH или callback этого процесса.
+Публичных task/dispatch inputs для подмены API/actor нет. Unit-моки изолированы тестами.
+
+Каждый вызов отдельно:
+1. Копирует/проверяет task и ID, блокирует защищённые операции, проверяет identity.
+2. Читает git/ref/heads/main, требует точный ref, commit type и SHA40.
+3. Читает task только по закреплённому SHA, требует ожидаемый file/path/base64,
+   строго декодирует и разбирает JSON, полностью сравнивает снимки.
+4. Заново проверяет hash, историю, состояние, редакцию, scope и исторический approval.
+5. Повторяет чтение main SHA; изменение или недоступность означают отказ без fallback.
+
+Ошибка API/404, отсутствие записи, невалидные поля, JSON с duplicate keys,
+невалидный Base64/схема, устаревшие snapshot/executor/scope, смена main, revoked
+state/revision или replay — отказ с причиной, не разрешение. API/format exceptions
+нормализуются в Denied; успех не кэшируется и не создаёт долгоживущий token.
+
+**Отзыв вступает в силу после фиксации изменения задачи в main.** Вызов перед каждым
+действием обязателен. Проверка не останавливает уже запущенное действие и не атомарна
+с исполнением: main может измениться после второго чтения. Аварийная остановка —
+будущий этап. Два чтения не доказывают отсутствие промежуточного изменения с возвратом
+к прежнему SHA; защита от force push/обхода write-пользователем требует защиты main.
+
+## Проверки и независимые свидетельства
+
+Новые локальные запуски на указанном дереве:
+- python3 -m unittest discover -s tests/agent_core -q:69 tests,0 failures/errors/skips.
+- python3 -m unittest discover -s docs -p 'test_*.py' -q:107 tests,0 failures/errors,2 SDK skips.
+  Вложенные временные patch-tests не прибавляются к 107.
+- python3 -m agent_core.check local:passed (пустые каталоги, не реальный approval).
+- python3 -m compileall -q agent_core tests/agent_core:passed.
+- YAML parsing всех 11 workflow, git diff --check, сравнение защищённых путей:passed.
+
+Добавлено 16 regression tests (с несколькими subcases): fresh approval/implementing/
+review; stale после blocked/cancelled/awaiting_approval/новойредакции; повторный grant;
+повторная проверка перед следующим действием; смена main; API failure на каждом
+чтении; missing task; смена executor/scope/history/links; запрет передачи API/actor;
+контекст run/runner; malformed main/file/JSON/Base64. Прежние policy-тесты сохранены,
+тестовые helpers явно отделяют их от новых full-context/freshness тестов.
+
+Проверки не сводятся к зелёным мокам: вручную проаудированы источник транспорта,
+все входы identity, порядок чтений, иммутабельные refs, путь ошибки и trusted/untrusted
+jobs; через реальный GitHub API подтверждены текущие main/PR/owner comment и rulesets.
+Реальный contents/agent_core/tasks на текущем main возвращает 404. Реальный старый
+AgentCore run 39560669437 — completed/pull_request/feature branch и не подходит
+execution_actor. Дополнительно фактические метаданные нового run 39579506821
+получены через GitHub API, затем воспроизведены через транспортный test adapter
+в execution_actor при заявленных main/dispatch runner variables. Результат:
+Denied: Untrusted execution run. Это воспроизведение на реальных серверных данных,
+не live вызов текущего workflow и не положительный owner grant.
+Положительный live owner/main approval НЕ выполнен: bootstrap
+workflow/задачи отсутствуют в main, merge не разрешён. Это остаётся отдельной
+проверкой после решения владельца о первом включении, а не объявляется успешным
+по результатам unit fixtures.
+
+## CI текущего исправления
+
+Новые runs на SHA 34b89e4e8a544a5ee833640fa2a6b079aa7323cc:
+
+| Workflow | Run | Результат |
+| --- | --- | --- |
+| Agent Core | [39579506821](https://github.com/Arch-relic/AgroNaliz/actions/runs/39579506821) | success: 69 tests; trusted-validation skipped для PR |
+| Android PR | [39579506701](https://github.com/Arch-relic/AgroNaliz/actions/runs/39579506701) | success attempt2:53 инструментальных вызова/107 исполнений; attempt1:window focus failure |
+| MAIN safe update | [39579506619](https://github.com/Arch-relic/AgroNaliz/actions/runs/39579506619) | success: 28 Python,3 инструментальных вызова |
+| Room22→23 regression | [39579506708](https://github.com/Arch-relic/AgroNaliz/actions/runs/39579506708) | success: 3 инструментальных вызова |
+| Room23→24 MAIN/TEST | [39579506618](https://github.com/Arch-relic/AgroNaliz/actions/runs/39579506618) | success: 10 инструментальных вызовов |
+| Room24→24 MAIN1.0.10 | [39579506666](https://github.com/Arch-relic/AgroNaliz/actions/runs/39579506666) | success: 10 инструментальных вызовов |
+| UI API23/API35 | [39579506650](https://github.com/Arch-relic/AgroNaliz/actions/runs/39579506650) | success: 6+6 инструментальных вызовов |
+
+Прежние зелёные runs выше не используются как доказательство нового исправления.
+Changelog/detached-policy workflows не применяются к diff (paths filters); policy
+проверки вошли в 107 локальных Python-тестов. Оба publish workflows не запускались.
+Документация сохраняется следующим коммитом; его автоматические CI не подменяют
+результаты проверенного SHA.
+
+## Объём и итог аудита
+
+Изменены agent_core/core.py, agent_core/check.py, tests/agent_core/test_core.py,
+tests/agent_core/test_trusted_checks.py, docs/agent-core.md, docs/agent-core-security-audit.md,
+docs/codex-handoff.md; создан tests/agent_core/test_revocation.py. Удалений нет.
+App/, AGENTS.md и все прежние workflows побайтно совпадают с main; новый agent-core.yml
+не изменялся этой итерацией. Production policies, Room24, backup, подписи, release
+admission и ограничения main не изменены. Main push/merge, APK/Release публикация,
+production secrets и физическое устройство не использовались.
+
+Дефект stale-snapshot устранён в рамках варианта 1. PR остаётся Draft для review;
+полная эксплуатационная готовность не заявляется. Остаточные ограничения:
+bootstrap live approval, отсутствие required checks/branch protection (API protected:false,
+rulesets[]), доверенность runtime и будущая интеграция исполнителя. Следующие шаги —
+review владельца; затем отдельно согласованные включение, live positive/negative
+тесты и защита main. Авто-Codex и AI recommendations не подключены.
+
+
+## Android CI: сохранённая история повторного запуска
+
+Run39579506701 attempt1/job119153310556: сборки MAIN/TEST, обе JVM suites и
+проверки Python/metadata/signing tools успешны. В скачанном диагностическом архиве
+artifact12336965208 XML подтверждают175 tests на testDebugUnitTest и175 tests на
+ testDebugTestUnitTest,0 failures/errors/skips. APK entries отсутствуют.
+Инструментальный шаг остановился на первом showsInstalledVersion (AppVersionUiTest):
+Espresso RootViewWithoutFocusException, ожидание window focus 10 секунд. Лог прочитан;
+это ошибка ожидания фокуса, не assertion несовпадения версии/логики Agent Core.
+
+Запрошен повтор только failed Android job на том же SHA 34b89e4, без изменения кода:
+attempt2/job119159373964. Это обычный тестовый PR job, не повтор approval workflow;
+его успех не создаёт разрешение. Итог второй попытки внесён после завершения.
+Первую неудачу не скрывать и не приравнивать к успешной полной проверке.
+
+
+## Финальный результат — review владельца
+
+Все 7 применимых workflow SHA 34b89e4e8a544a5ee833640fa2a6b079aa7323cc завершились success.
+Android attempt2/job119159373964: сборки MAIN/TEST, JVM suites и все 53 инструментальных
+вызова (107 исполнений) успешны. Просмотрен полный лог; исходная ошибка фокуса окна
+не повторилась без изменения кода. Первый failed job остаётся в истории run и отчёта;
+успех повтора не означает устранения причины нестабильности UI-теста. Новые8 успешных
+jobs (UI matrix=2) и исходный failed job проаудированы по логам. Артефакты только
+reports/diagnostics; publish workflows не запускались. Main по-прежнему 2a37bfe,
+protected:false. GitHub подтвердил PR47 Draft и прежнюю базу.
+
+Вариант1 реализован в согласованном объёме, найденный stale-snapshot defect закрыт.
+Готово для review кода и аудита владельцем. Merge не выполнялся и не разрешается
+этим отчётом. Полная эксплуатационная готовность требует отдельно согласованных
+live bootstrap tests, защиты main и интеграции исполнителя; она не заявляется.
