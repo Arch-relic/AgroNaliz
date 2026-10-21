@@ -1396,3 +1396,68 @@ SHA5e80cb9; на новом SHA согласованный defect устранё
 Main остался 2a37bfe,protected:false; production policies/Room24/backup/signatures/
 release admission не изменены. Merge,APK/Release публикация,production secrets,
 физический смартфон и автоматический Codex не затрагивались. Дальше — только review.
+## Issue56 — проект governance review PR55, 21.10.2026
+
+Статус: подготовлено ТЗ для owner review; governance admission/merge не выполнялись.
+Основание: https://github.com/Arch-relic/AgroNaliz/issues/56, docs-only полномочия.
+Создан docs/agent-core-governance-review.md; изменён только docs/codex-handoff.md.
+Удалений нет. Код/workflows/settings/permissions/protection/secrets/tasks/approvals,
+Android/Room/backup/signing/release не изменялись. PR55 остаётся Draft.
+
+Ветка: docs/issue-56-governance-review.
+Base main: e5e0aeae9474307562a90ca4d3d075dc11800841.
+Проверенный doc SHA: b2ed2961fe972ec0bf5225ede75bdbf1c4d4e411,
+tree aa13b17a3e303df12e1c11668863cc0535660f57.
+Следующий commit содержит только этот handoff; remote publication SHA может отличаться,
+полный tree сверяется независимо через connector. Worktree создан от exact main.
+
+Read-only проверка: PR55 headf6f6707dff9bfca4c9634c3119f240902093ff95,
+base e5e0aeae9474307562a90ca4d3d075dc11800841, Draft/open/not merged,23 files.
+Trusted gate .github/workflows/agent-core.yml ID390876734 исполняет base check.py,
+PR-target checkout e5 подтверждён логом run39600837769/job119224610271.
+Отказ governance paths штатный, override/admission consumer в gate отсутствует.
+На head есть одноимённый trusted-validation skipped из PR run39600840702;
+он не отменяет failure target job. Combined commit status pending/0 не агрегирует Checks API.
+
+Main metadata: protected=false, required checks off/[], rulesets=[] в том числе
+includes_parents=true. Полный protection endpoint403 Resource not accessible by integration;
+admin rights не запрашивались. Перед любым будущим merge требуется owner UI confirmation.
+Все7 ordinary PR55 CI на pinned head завершились success attempt1; это новые чтения
+метаданных прежних runs, не новые тестовые запуски и не governance authorization.
+Run IDs и evidence приведены в ТЗ. PR55 reviews=[]; owner является автором PR и не может
+одобрить собственный PR GitHub APPROVED review. Фиктивный reviewer не предлагается.
+
+Варианты: V1 одноразовый ручной owner review и отдельный owner merge при отсутствии
+required blocker; V2 отдельное formal admission за новым ТЗ/PR/разрешениями;
+V3 отложить. Рекомендован V1 условно для pinned offline PR55, без изменения gate,
+без check success подмены и bypass. Незащищённый main не считается разрешением merge.
+Если owner требует enforcement/не принимает риск либо UI требует override — STOP/V3.
+
+Определены R0 утверждение редакции процедуры, R1 отдельный review acknowledgement,
+R2 отдельное merge разрешение; ни одно сейчас не получено. Любое изменение head/base/
+manifest/settings аннулирует применимость прежнего snapshot. Structured owner record
+не является machine grant и не потребляется gate. Merge только отдельным будущим
+решением владельца и его ручным действием; Ready сейчас не выполняется.
+Описаны SHA/diff/CI/security/settings checks, матрица GR01–GR20, чек-лист, post-merge
+parents/tree verification, TOCTOU/ABA и недеструктивный incident/revert порядок.
+G3–G6 остаются запрещены; App/environment/credentials/live dispatch не запускались.
+
+Проверки документации: Python content assertions — passed:20 matrix IDs,23 manifest
+records и SHA256 digest, HTTPS link syntax/Markdown fences; git diff --check — passed.
+Unit/Android build не запускались: docs-only этап. GitHub настройки не тестировались
+пробным merge или live экспериментами. Прочитаны текущие API metadata и trusted log.
+
+На момент записи новый docs-only PR ещё не открыт; следующий шаг — разрешённая
+публикация Draft PR с этим ТЗ и handoff, затем запись его URL в этой ветке.
+Merge документации также требует отдельного решения и изменит main, поэтому прежний
+PR55 evidence snapshot после такого merge потребует повторной проверки.
+Остановиться для owner review, не выполнять предложенную процедуру admission/merge.
+
+### Публикация документации Issue56
+
+Открыт отдельный docs-only Draft PR57: https://github.com/Arch-relic/AgroNaliz/pull/57.
+Первый remote head947f2a8199791c364d444a5d847b31ed7e01b84c,
+tree4dd50234b8c362da03a1ef7034d7d6beedec93a2 совпадает с local53b72cbc.
+Этот последующий commit фиксирует только URL публикации. CI нового docs PR могут
+запускаться автоматически существующими workflows; manual dispatch/re-run не было.
+PR55 остаётся неизменным Draft; R0/R1/R2 не выданы. Следующий шаг — только owner review.
