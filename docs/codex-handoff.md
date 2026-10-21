@@ -1452,3 +1452,12 @@ Unit/Android build не запускались: docs-only этап. GitHub на�
 Merge документации также требует отдельного решения и изменит main, поэтому прежний
 PR55 evidence snapshot после такого merge потребует повторной проверки.
 Остановиться для owner review, не выполнять предложенную процедуру admission/merge.
+
+### Публикация документации Issue56
+
+Открыт отдельный docs-only Draft PR57: https://github.com/Arch-relic/AgroNaliz/pull/57.
+Первый remote head947f2a8199791c364d444a5d847b31ed7e01b84c,
+tree4dd50234b8c362da03a1ef7034d7d6beedec93a2 совпадает с local53b72cbc.
+Этот последующий commit фиксирует только URL публикации. CI нового docs PR могут
+запускаться автоматически существующими workflows; manual dispatch/re-run не было.
+PR55 остаётся неизменным Draft; R0/R1/R2 не выданы. Следующий шаг — только owner review.
