@@ -1,0 +1,286 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^AGN-[0-9]+$"
+    },
+    "type": {
+      "enum": [
+        "feature",
+        "bugfix",
+        "maintenance",
+        "proposal"
+      ]
+    },
+    "state": {
+      "enum": [
+        "proposed",
+        "awaiting_approval",
+        "approved",
+        "implementing",
+        "review",
+        "done",
+        "blocked",
+        "cancelled"
+      ]
+    },
+    "issue": {
+      "type": "string",
+      "pattern": "^https://github.com/Arch-relic/AgroNaliz/issues/[1-9][0-9]*$"
+    },
+    "executor_id": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "current_revision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "revisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "spec": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1
+              },
+              "acceptance": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 1,
+                "uniqueItems": true
+              },
+              "operations": {
+                "type": "array",
+                "items": {
+                  "enum": [
+                    "implement",
+                    "technical_fix",
+                    "test",
+                    "draft_pr",
+                    "room",
+                    "backup",
+                    "signing",
+                    "production_policy",
+                    "merge_main",
+                    "publish_apk"
+                  ]
+                },
+                "uniqueItems": true,
+                "minItems": 1
+              },
+              "constraints": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 1,
+                "uniqueItems": true
+              },
+              "risks": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 1,
+                "uniqueItems": true
+              }
+            },
+            "required": [
+              "id",
+              "title",
+              "description",
+              "acceptance",
+              "operations",
+              "constraints",
+              "risks"
+            ],
+            "additionalProperties": false
+          },
+          "hash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "required": [
+          "spec",
+          "hash"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "to": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "approval_run": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "revision",
+          "reason",
+          "at",
+          "approval_run"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "selected": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "at",
+          "options",
+          "selected",
+          "reason",
+          "revision"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "links": {
+      "type": "object",
+      "properties": {
+        "branches": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^https://github\\.com/Arch-relic/AgroNaliz/tree/.+$"
+          },
+          "uniqueItems": true
+        },
+        "commits": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^https://github\\.com/Arch-relic/AgroNaliz/commit/[a-f0-9]{40}$"
+          },
+          "uniqueItems": true
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^https://github\\.com/Arch-relic/AgroNaliz/actions/runs/[1-9][0-9]*$"
+          },
+          "uniqueItems": true
+        },
+        "prs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^https://github\\.com/Arch-relic/AgroNaliz/pull/[1-9][0-9]*$"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "branches",
+        "commits",
+        "checks",
+        "prs"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schema_version",
+    "id",
+    "type",
+    "state",
+    "issue",
+    "executor_id",
+    "current_revision",
+    "revisions",
+    "history",
+    "decisions",
+    "links"
+  ],
+  "additionalProperties": false
+}
