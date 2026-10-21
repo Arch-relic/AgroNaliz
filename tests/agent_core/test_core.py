@@ -52,6 +52,20 @@ class CoreTests(unittest.TestCase):
     def test_no_approval(self):
         with self.assertRaises(Denied): validate(self.t)
     def test_exact_approval(self): authorize(self.t,'implement',self.api,actor_id=123)
+    def test_github_wrapped_base64_approval(self):
+        def api(path):
+            response = self.api(path)
+            if path.startswith('contents/'):
+                response['content'] = base64.encodebytes(json.dumps(self.original).encode()).decode()
+            return response
+        authorize(self.t,'implement',api,actor_id=123)
+    def test_invalid_base64_approval_denied(self):
+        def api(path):
+            response = self.api(path)
+            if path.startswith('contents/'):
+                response['content'] += '!'
+            return response
+        with self.assertRaises(ValueError): validate(self.t,api=api)
     def test_foreign_approver(self):
         self.receipt['actor']['id']=999
         with self.assertRaises(Denied): validate(self.t,api=self.api)

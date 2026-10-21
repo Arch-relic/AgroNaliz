@@ -16,7 +16,13 @@ data class ChangelogEntry(
 object AppChangelog {
     // Newest first. Add entries here without changing the screen or database.
     val entries = listOf(
-        ChangelogEntry("1.0.9", "1.0.9", version = "1.0.9", status = "В разработке",
+        ChangelogEntry("1.0.10", "1.0.10", version = "1.0.10", status = "В разработке",
+            summary = "Улучшения интерфейса и сведения об установленной сборке.",
+            categories = linkedMapOf(
+                "Исправления" to listOf("Числа в результатах уборки не разрываются при переносе; карточка подстраивается под ширину экрана."),
+                "Улучшения" to listOf("Заголовок «АгроНализ»; версия, код, схема и полный отпечаток сертификата в «Опциях»."),
+                "Технические изменения" to listOf("Подготовлена проверка обновления с сохранением данных без изменения схемы базы."))),
+        ChangelogEntry("1.0.9", "1.0.9", version = "1.0.9",
             summary = "Новые расчёты и удобное управление уборочной кампанией.",
             categories = linkedMapOf(
                 "Новое" to listOf("Календарь рабочих дней с выбором даты и краткой сводкой.",

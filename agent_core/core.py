@@ -72,7 +72,9 @@ def verify_approval(task, revision, sequence, run_id, api):
     # Independently read the immutable main commit that issued the approval.
     trusted = api(f"contents/agent_core/tasks/{task['id']}.json?ref={run['head_sha']}")
     import base64
-    original = load_json(base64.b64decode(trusted['content'], validate=True))
+    # GitHub Contents API wraps Base64 lines; retain strict alphabet validation.
+    encoded = trusted['content'].replace('\n', '').replace('\r', '')
+    original = load_json(base64.b64decode(encoded, validate=True))
     require(original['id'] == task['id'] and original['executor_id'] == task['executor_id']
             and original['current_revision'] == revision['spec']['id']
             and original['revisions'] == task['revisions'][:task['revisions'].index(revision)+1]

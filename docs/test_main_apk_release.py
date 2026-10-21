@@ -57,7 +57,7 @@ def sign_fixture(source, folder, key, pin):
         # Synthetic signer fixture only; production receives this from checked build outputs.
         variables.update(INSTALLED_ROOM='22', MAIN_MIGRATION_AUDIT_RUN_ID='123')
     if variables['MAIN_ROOM_VERSION'] == '24':
-        variables.update(INSTALLED_ROOM='23', INSTALLED_CODE='3000005', MAIN_MIGRATION_AUDIT_RUN_ID='123')
+        variables.update(INSTALLED_ROOM='24', INSTALLED_CODE='3000007', MAIN_MIGRATION_AUDIT_RUN_ID='123')
     with patch.dict(os.environ,variables),contextlib.redirect_stdout(io.StringIO()):PROGRAM['main']()
     return root/'agronaliz-main-output/app-main-original.apk'
 

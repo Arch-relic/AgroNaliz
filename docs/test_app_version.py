@@ -30,7 +30,7 @@ class AppVersionTest(unittest.TestCase):
     def test_single_three_component_version_for_all_variants(self):
         text = (ROOT / 'app/build.gradle.kts').read_text()
         versions = re.findall(r'versionName\s*=\s*"([^"]+)"', text)
-        self.assertEqual(['1.0.9'], versions)
+        self.assertEqual(['1.0.10'], versions)
         self.assertRegex(versions[0], r'^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$')
         self.assertNotIn('versionNameSuffix', text)
 
@@ -50,14 +50,14 @@ class AppVersionTest(unittest.TestCase):
         def room23(path, *args, **kwargs):
             if path.name == 'AppDatabase.kt': return 'version = 23'
             value = original(path, *args, **kwargs)
-            return value.replace('versionName = "1.0.9"', 'versionName = "1.0.8"') if path.name == 'build.gradle.kts' else value
+            return value.replace('versionName = "1.0.10"', 'versionName = "1.0.8"') if path.name == 'build.gradle.kts' else value
         with patch('pathlib.Path.read_text', room23):
             with self.assertRaisesRegex(SystemExit, 'separate verified migration audit'):
                 preflight('main-apk-publish.yml', 5, 3000003, room=22)
 
     def test_room24_main_is_blocked_without_exact_audit(self):
         with self.assertRaisesRegex(SystemExit, 'separate verified migration audit'):
-            preflight('main-apk-publish.yml', 6, 3000005)
+            preflight('main-apk-publish.yml', 8, 3000007, room=24)
 
     def test_test_release_codes_increase_without_reset(self):
         self.assertEqual(2000005, preflight('test-apk-publish.yml', 5, 53, room=22))

@@ -23,7 +23,7 @@ class AppVersionUiTest {
     @Test fun showsInstalledVersion() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val installed = context.packageManager.getPackageInfo(context.packageName, 0)
-        assertEquals("1.0.9", installed.versionName)
+        assertEquals("1.0.10", installed.versionName)
         assertEquals(installed.versionName, BuildConfig.VERSION_NAME)
         assertEquals(24, DatabaseProvider.getDatabase(context).openHelper.readableDatabase.version)
         val test = context.packageName == "ru.fo6osik.workjournal.debugtest"

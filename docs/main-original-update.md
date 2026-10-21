@@ -1,3 +1,51 @@
+# MAIN1.0.10 / Room24→24 — подготовка, не разрешение выпуска
+
+Подтверждён MAIN1.0.9: run39378839045, artifact12244079517, code3000007,
+source6da84bf09cf0cd3e9d1b5a40887a134bf25d7fe4, Room24, package ru.fo6osik.workjournal.
+verification.json и подписанная APK проверены read-only (hash/aapt2/apksigner), без установки.
+Original certificate SHA256:3FE57967C15F81EE39EA2B9B88DD96A7506C1B5B9032606ECBEA04BBDB15EE3C.
+APK SHA256:56ca5f9e54e94e773d1a053ad617a484e8a1c4f29f76f70ffa6a95d2d402d22b.
+Run6 неуспешен; подтверждённый опубликованный код7, не6. Публичные метаданные —
+docs/main109-baseline.json. Оригинальная APK никогда не устанавливается CI-аудитом.
+
+После отдельного review/merge и разрешения дальнейших действий:
+
+1. Сохранить штатный MAIN JSON-backup вне приложения; проверить доступность файла и
+   databaseVersion24. Произвольные документы/preferences JSON не содержит — нужные
+   файлы сохранить отдельно. Не испытывать restore на рабочей БД.
+2. Сверить установленную MAIN: name1.0.9, code3000007 (либо отдельно проверенный более
+   новый), Room24, package и полный исходный cert выше. MAIN1.0.9 из подтверждённого
+   выпуска предшествует PR43 и может не иметь новой диагностики: версию/код/подпись
+   получить штатными сведениями Android/просмотрщиком установленной APK; Room24 —
+   из её резервной копии. Отсутствующие поля не угадывать. Новая диагностика появится
+   в1.0.10. При несовпадении/неизвестных данных остановиться, не удалять/не clear.
+3. На точном итоговом main SHA владелец вручную запускает новый
+   main-room24-same-checks.yml. Нужны owner/main/workflow_dispatch/attempt1, success,
+   workflow ID390524624/path, job room24-same-update и все обязательные шаги.
+   PR-CI или аудит иного SHA не заменяет его. После изменения main нужен новый аудит.
+4. Только с отдельным разрешением владелец делает новый dispatch Publish original
+   main APK: minimum_room_version=24, minimum_installed_version_code=фактический
+   (не ниже3000007), migration_audit_run_id=успешный run из шага3. Только первая
+   попытка. Code=3000000+GITHUB_RUN_NUMBER строго выше установленного; не менять
+   workflow name/offset/счётчик, не задавать произвольный код.
+5. Проверить APK+verification.json: MAIN id, name1.0.10, Room24, original cert,
+   sourceSha==auditSourceSha==точный проверенный main, правильный auditWorkflowId,
+   installedRoomVersion24, возрастающий code и APK SHA256. TEST запрещён независимо
+   от сертификата. Наличие production Secrets сейчас не проверялось настоящим signer.
+6. После отдельного разрешения на смартфон выполнить read-only verify-main-apk-update.py
+   с --installed-room-version24 и фактическими APK/report; затем обычное обновление
+   поверх приложения без удаления/очистки. Перезапустить, проверить записи/бункеры/
+   события/топливо/файлы/настройки и новую диагностику. Downgrade не предлагается.
+
+В рамках подготовки нет production signing/publish/Release/установки на смартфон.
+Синтетический audit пересобирает точный published source1.0.9 с одноразовым CI-ключом,
+проверяет MAIN3000007→3000008 и TEST1000301→1000302, schema_version/sqlite_master
+и все исходные колонки/связи/файлы/preferences/backup/restart. Эти коды только fixtures,
+production code определит штатный Actions-счётчик. Предыдущие ветви22/23/23→24 сохранены.
+
+---
+Исторические планы предыдущих этапов (сохранены без изменения):
+
 # MAIN 1.0.9 / Room24 — подготовка, не разрешение на выпуск
 
 В этой ветке подготовлен допуск только MAIN1.0.9/Room24 поверх установленной
