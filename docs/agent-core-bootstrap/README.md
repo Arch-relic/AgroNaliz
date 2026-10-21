@@ -21,7 +21,13 @@ Checkout trusted job закреплён на base SHA/main SHA, код PR не �
 Наличие файла workflow не доказывает, что Actions включены и workflow активен.
 Connector отклонил GET workflow-detail/runs-by-workflow как неподдерживаемые URL;
 это ограничение connector, не результат проверки GitHub workflow state.
-Владелец должен проверить состояние в Actions перед любым запуском. Если workflow
+После создания Draft PR #51 получено отдельное реальное свидетельство:
+[PR-target run39587037703](https://github.com/Arch-relic/AgroNaliz/actions/runs/39587037703)
+успешно выполнил trusted-validation с checkout main e5e0aea и read permissions;
+[PR run39587037540](https://github.com/Arch-relic/AgroNaliz/actions/runs/39587037540)
+прошёл69unit-тестов. Логи просмотрены. Значит, PR-event проверки работают на эту дату;
+это не подтверждение owner/main dispatch, grant или execution entrypoint.
+Владелец должен заново проверить состояние в Actions перед любым запуском. Если workflow
 выключен или policy требует новых прав — остановиться, не включать и не расширять
 права автоматически. История реальных approvals здесь не проверена исчерпывающе;
 прежние unit/PR runs не считаются live grant. Положительный live approval этим этапом
