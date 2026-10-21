@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "id": "AGN-47001",
+  "type": "maintenance",
+  "state": "proposed",
+  "issue": "https://github.com/Arch-relic/AgroNaliz/issues/47",
+  "executor_id": 123,
+  "current_revision": "bootstrap-r1",
+  "revisions": [
+    {
+      "spec": {
+        "id": "bootstrap-r1",
+        "title": "SYNTHETIC: first owner/main approval rehearsal",
+        "description": "Metadata-only rehearsal. No executor, application changes or operational actions. This example is inactive until separately reviewed registration.",
+        "acceptance": [
+          "Verify owner/main approval evidence against immutable revision and history",
+          "Record negative cases and cancel the synthetic task without deleting history"
+        ],
+        "operations": [
+          "test"
+        ],
+        "constraints": [
+          "Read-only inspection and synthetic metadata only",
+          "No implementation, technical_fix, draft_pr, protected operations or APK publication",
+          "No new permissions, accounts, tokens or autonomous executor",
+          "Owner authorization is required before registration, dispatch and task state changes"
+        ],
+        "risks": [
+          "Example executor ID 123 is synthetic and must be replaced with an independently verified existing identity before registration",
+          "Issue 47 is a reference to the original Agent Core PR, not an approved live test issue",
+          "Main lacks branch protection and required checks",
+          "Approval evidence does not prove live authorize or emergency-stop behavior"
+        ]
+      },
+      "hash": "dc6ac69e60bf3931add8343d40ba26e5a04d0d371bc6ddde01689846a3901f3b"
+    }
+  ],
+  "history": [
+    {
+      "from": null,
+      "to": "proposed",
+      "revision": "bootstrap-r1",
+      "reason": "Inactive synthetic example for owner review, not registered in active tasks",
+      "at": "2026-10-21T00:00:00Z",
+      "approval_run": null
+    }
+  ],
+  "decisions": [
+    {
+      "at": "2026-10-21T00:00:00Z",
+      "options": [
+        "Inactive documentation fixture",
+        "Active task registration now"
+      ],
+      "selected": "Inactive documentation fixture",
+      "reason": "Live registration and approval are outside the currently authorized preparation stage",
+      "revision": "bootstrap-r1"
+    }
+  ],
+  "links": {
+    "branches": [],
+    "commits": [],
+    "checks": [],
+    "prs": []
+  }
+}
