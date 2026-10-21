@@ -28,20 +28,20 @@ def main():
     old = Path('.main-room22/app/build/outputs/apk/debug/app-debug.apk')
     new = Path('app/build/outputs/apk/debug/app-debug.apk')
     unsigned = Path('app/build/outputs/apk/release/app-release-unsigned.apk')
-    identity(old, 3000003, '1.0.7'); identity(new, 3000004, '1.0.10')
+    identity(old, 3000003, '1.0.7'); identity(new, 3000004, '1.0.11')
     pin = certificate(old)
     if certificate(new) != pin:
         raise RuntimeError('CI fixture certificates differ')
     if pin == '3FE57967C15F81EE39EA2B9B88DD96A7506C1B5B9032606ECBEA04BBDB15EE3C':
         raise RuntimeError('Production certificate must never enter disposable CI fixtures')
-    identity(unsigned, 1, '1.0.10')
+    identity(unsigned, 1, '1.0.11')
     result = subprocess.run([str(sdk/'apksigner'), 'verify', str(unsigned)], capture_output=True, text=True)
     if result.returncode == 0 or 'DOES NOT VERIFY' not in result.stderr + result.stdout:
         raise RuntimeError('Expected genuinely unsigned analysis APK, not an installable release')
     Path('main-room23-analysis.json').write_text(json.dumps(dict(
         sourceSha=os.environ['GITHUB_SHA'], applicationId='ru.fo6osik.workjournal',
         oldVersionCode=3000003, fixtureVersionCode=3000004, ciCertificateSha256=pin,
-        unsignedAnalysis=dict(versionCode=1, versionName='1.0.10', signed=False,
+        unsignedAnalysis=dict(versionCode=1, versionName='1.0.11', signed=False,
             apkSha256=hashlib.sha256(unsigned.read_bytes()).hexdigest(), published=False),
         productionReleaseAuthorized=False), indent=2)+'\n')
     print('MAIN fixture identity, common CI certificate, and unsigned analysis APK verified; no APK publication')

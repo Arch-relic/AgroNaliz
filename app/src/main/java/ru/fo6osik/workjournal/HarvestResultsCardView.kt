@@ -50,6 +50,20 @@ class HarvestResultsCardView @JvmOverloads constructor(context: Context, attrs: 
                 value.text.split('\n').any { value.paint.measureText(it) + cell.paddingLeft + cell.paddingRight +
                     value.compoundPaddingLeft + value.compoundPaddingRight > columnWidth }
             }
+            // A quantity wider than the whole card cannot wrap without separating its unit.
+            // Keep the system font and full text; only that value becomes horizontally scrollable.
+            for (cell in cells) {
+                val value = cell.getChildAt(1) as TextView
+                val available = MeasureSpec.getSize(widthMeasureSpec) - paddingLeft - paddingRight -
+                    cell.paddingLeft - cell.paddingRight - value.compoundPaddingLeft - value.compoundPaddingRight
+                val spans = value.text as? android.text.Spanned
+                val oversized = spans?.getSpans(0, spans.length, ReplacementSpan::class.java)?.any {
+                    value.paint.measureText(spans, spans.getSpanStart(it), spans.getSpanEnd(it)) > available
+                } == true
+                value.setHorizontallyScrolling(oversized)
+                value.isHorizontalScrollBarEnabled = oversized
+                value.movementMethod = if (oversized) android.text.method.ScrollingMovementMethod.getInstance() else null
+            }
             for (r in 0 until grid.childCount) {
                 val row = grid.getChildAt(r) as LinearLayout
                 val orientation = if (stacked) VERTICAL else HORIZONTAL
