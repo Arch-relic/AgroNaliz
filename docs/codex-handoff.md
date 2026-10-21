@@ -1,3 +1,5 @@
+Актуальный этап: Issue #52 Agent Identity v2, docs-only Draft PR #53; проект для review, никаких live действий. Отчёт в конце.
+
 Актуальный этап: PR47, вариант1 отзыва полномочий по решению владельца21.10.2026; новый отчёт в конце.
 
 Актуальный этап: повторный аудит и синхронизация Agent Core, Draft PR #47, 21.10.2026; отчёт в конце.
@@ -1396,3 +1398,95 @@ SHA5e80cb9; на новом SHA согласованный defect устранё
 Main остался 2a37bfe,protected:false; production policies/Room24/backup/signatures/
 release admission не изменены. Merge,APK/Release публикация,production secrets,
 физический смартфон и автоматический Codex не затрагивались. Дальше — только review.
+
+
+# Issue #52 — Agent Identity v2, документация, 21.10.2026
+
+Задание: отдельные ветка/Draft PR с полным ТЗ, threat model, acceptance matrix,
+поэтапным внедрением и конкретными вариантами/рекомендациями по открытым вопросам.
+Источник: https://github.com/Arch-relic/AgroNaliz/issues/52 и owner review
+https://github.com/Arch-relic/AgroNaliz/pull/51#issuecomment-6315029722.
+Автор owner decisions проверен как GitHub user ID240867647. Направление App installation
+и trusted Actions controller принято; детали D01–D12 ниже только предложены для review.
+Статус: подготовлено, остановиться для review; реализации/provisioning не выполнено.
+
+PR https://github.com/Arch-relic/AgroNaliz/pull/53 — open/Draft.
+Ветка docs/issue-52-agent-identity-v2. Фактический main:
+e5e0aeae9474307562a90ca4d3d075dc11800841, tree159b09961b9f50c2d46633238de00e88330978e0.
+PR47 merged; PR51 остаётся offline/Draft, head1248890d81b109ff7a955daa273454a2361a4765.
+Main protected:false, rulesets[]. Эти settings не менялись. Исходный локальный
+0b937832280b853ba828f5af498847ea6dceec47 имеет точно такое же дерево main; из него
+создан отдельный worktree. Публикация через GitHub API от настоящего main SHA.
+Прежние worktrees/ветки и вся прежняя история этого handoff сохранены.
+
+Проверенный docs source: локальный953c58fa12121190112fcfb2689cd72ac84ceec2,
+GitHub8647951cc31a22d3cff8a55e97186da6ae98516f, одинаковое tree
+e414a5fd43a8738c01faea8c8ae5ca2e711d05f4. Этот handoff — следующий отчётный commit;
+его SHA не подменяет проверенный source. Первоначальный docs commit14ce35daa6e74ab866a9fd3179eec19068930d16
+соответствовал локальномуdc8f5a48e995b0c27f117e40512475ff8b25b669, treec0b3c292e41179be16f9425e53a99bb7d15cf56e.
+Следующее уточнение source только документирует single-repository test binding;
+права/registry/задачи не создаёт.
+
+Созданы:
+- docs/agent-identity-v2/README.md — R01–R16, полный проект ТЗ, текущее состояние,
+  typed executor, v1 совместимость, approval requests/context hash, controller,
+  permissions/secret isolation, fresh main, revocation, audit, ссылки на GitHub Docs.
+- docs/agent-identity-v2/threat-model.md — T01–T20, trust boundaries, attack/controls,
+  остаточные риски, отсутствие атомарности/гарантии against admin или main ABA.
+- docs/agent-identity-v2/acceptance-matrix.md — A01–A32, offline/live/config review,
+  expected outcomes/evidence и условия будущей приёмки, не заранее выполненные tests.
+- docs/agent-identity-v2/rollout-and-decisions.md — D01–D12 с альтернативами,
+  рекомендацией/обоснованием/решением owner и gates G0–G6.
+Изменён docs/codex-handoff.md: сохранена прежняя история, добавлен отчёт. Удалений нет.
+Итоговый diff/stat публикуется в PR; состав строго5Markdown paths.
+
+Основные рекомендации для утверждения: on-demand Actions controller без server;
+protected environment с manual owner review key release и KMS/OIDC как отдельной
+альтернативой, если нужных controls нет; явно учтён единственный human reviewer,
+никаких фиктивных accounts или обещаний four-eyes. Versioned registry/digests;
+новые v2 tasks/predecessor links без переноса v1 grants; immutable append-only
+approval_requests с typed identity/policy/scope/history/expiry/nonce binding.
+Consent максимум8часов, session timeout10минут, audit retention90дней — предложения,
+не существующая policy. Revoke token и task/infrastructure revocation разделены.
+Первый proof в отдельно разрешённом изолированном repo, потом новый AgroNaliz binding;
+один token/subject только один выбранный repo, не оба сразу. Actual App/install IDs,
+key fingerprint и environment/test repo выбираются только при отдельно разрешённом
+provisioning; это не пробел, заполняемый123 или owner ID. Future writes отдельно
+blocked: contentswrite не feature-only и затрагивает release API, protection main
+сама по себе не блокирует releases. Список owner решений и альтернатив не оставлен
+просто перечнем вопросов: см. D01–D12. Каждый дальнейший gate требует нового разрешения.
+
+Проверки документации (новые, локальные, без новых зависимостей):
+- Inline Python/std lib: existence внутренних Markdown links, balanced code fences,
+  одинаковое число cells в таблицах, UTF8/EOF newline, отсутствие conflict markers.
+- Полнота и корректность refs: R01–R16, A01–A32, T01–T20, D01–D12, G0–G6.
+- Secret-pattern scan новых документов: нет private-key header/длинных GitHub tokens.
+  Это ограниченный pattern scan, не формальное доказательство отсутствия секретов.
+- git diff --check / --cached --check:passed; сравнение защищённых путей с base:passed.
+- Сверка фактических owner/repository IDs, main/PR51/review и rulesets через GitHub API.
+Эти проверки выполнены на checked source SHA выше и повторяются для итогового report.
+Markdown structure проверена, browser rendering не заявляется. Код/Android/Core тесты
+вручную не запускались: только документация, по AGENTS.md достаточно содержания/diff.
+Никакая строка A01–A32 этим не становится выполненной live acceptance.
+
+Автоматический CI на первоначальном docs SHA14ce35d:
+AgentCore PR run39595948299/job119208160160 —69tests success;
+AgentCore PR-target run39595948090/job119208160976 —trusted-validation success,
+checkout e5e0aea, contents/actions/pull-requests:read. Логи обоих jobs прочитаны.
+Противоположные jobs skipped по event ожидаемо. Это обычная read-only PR validation,
+не owner approval/GitHub App live test. Уточнение source и отчётный commit docs-only;
+их повторные CI не объявляются уже проверенными. Существующие Android CI GitHub
+запустил автоматически; на момент отчёта выполнялись, их успех не заявляется.
+
+Проверено отсутствие diff app/, agent_core/, .github/, AGENTS.md и всех остальных
+не-docs путей. Schemas/workflows/policy/permissions/secrets/active tasks/approvals,
+Room24/backup/signatures/production admission не менялись. GitHub App/installation/
+keys/tokens не создавались. Dispatch, task registration, merge, APK/Release, write
+permissions, смартфон/пользовательские данные, autonomous Codex не затрагивались.
+
+Следующий шаг — owner review Draft PR53 и выбор/утверждение D01–D12 как редакции ТЗ.
+После этого отдельное задание на G2 offline implementation; G3 provisioning,
+G4 approval и G5 live read-only proof требуют собственных разрешений. G6 write
+требует нового security review и branch protection/required checks до выдачи прав.
+PR51 не активируется, executor_id123 не является live identity. Существенные изменения
+архитектуры требуют нового review, не неявной реализации. Остановиться, оставить Draft.
