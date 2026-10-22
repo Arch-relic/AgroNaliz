@@ -1491,3 +1491,53 @@ base e5e0aeae9474307562a90ca4d3d075dc11800841, tree169ce78cbb7cf4d8c7344fc0ca5ad
 Этот следующий commit только фиксирует URL публикации; код не изменён.
 Remote CI запущены автоматически; итоговый статус/run/SHA проверять в PR55.
 Trusted gate не обходить; его отказ требует остановки для review, не исправления защиты.
+## Issue58 — Agent Environment Gate, 22.10.2026
+
+Цель: подготовить минимальный workflow environment smoke-test без запуска/merge.
+Источник: https://github.com/Arch-relic/AgroNaliz/issues/58 и прямое задание владельца.
+Статус: YAML и security scope проверены локально; live gate НЕ проверен.
+
+Созданы:
+- .github/workflows/agent-environment-gate-smoke.yml
+- docs/agent-environment-gate-smoke.md
+Изменён только docs/codex-handoff.md, append-only. Удалений нет.
+
+Workflow: только workflow_dispatch без inputs; permissions={}; один job ubuntu-latest,
+timeout3, environment agronaliz-agent-readonly; единственный run echo заданной строки.
+Нет checkout/uses, secret/token references, API/network commands, App, artifacts/cache,
+outputs/env или repository write. Job permissions не расширяются. Workflow не запускался,
+команда вывода не исполнялась локально. Agent Core и существующие workflows не менялись.
+
+Ветка: feature/agent-environment-gate-smoke.
+Base main: 0b41d1251363696b5bc99a5109752baa02911ae8 (PR55 уже merged владельцем).
+Проверенный локальный implementation/doc SHA: de7ef9fefcf1078ac7989dd80e5184872f1ecf80,
+tree c6d200f1e545924aaf5f776e80f82a4b1bcaa15f. Проверки выполнены до commit на тех же
+файлах; следующий отчётный commit только добавляет этот handoff. База восстановлена
+из GitHub API signed payload с проверкой exact SHA; worktree от актуального main.
+При публикации connector SHA может отличаться, полный tree сверяется отдельно.
+
+Выполнены проверки:
+- PyYAML SafeLoader с duplicate-key rejection и exact structure assertions: passed.
+- Запрет uses/expressions/secrets/token refs/network commands/env/inputs/auto triggers/
+  write в новом YAML: passed. В репозитории не добавлены dependencies или test files.
+- bash -n для единственной команды, без её исполнения: passed.
+- git diff --check и защищённый scope diff: passed.
+actionlint не установлен; его запуск не заявляется. Android/Agent Core suite вручную
+не запускались, так как код приложения/Core не затронут. Новых workflow runs/dispatch/
+rerun/approval этим этапом не создавалось. Автоматические CI PR существуют отдельно
+от нового manual-only workflow и не доказывают environment approval.
+
+Настройки environment (owner reviewer, self-review allowed, bypass disabled, main-only,
+no secrets) сообщены владельцем в Issue58; live независимо не проверены. Environment/
+secrets/permissions/settings/main/protection/Room/backup/signing/release не менялись.
+В будущем нужны отдельные разрешения на merge, затем dispatch ref=main; проверить
+Waiting for review, owner UI approval и success. Сейчас это not_run. Не ослаблять
+main-only deployment rule и не создавать заменяющий environment ради запуска из PR.
+
+Trusted gate защищает .github/workflows/: ожидается governance failure, его не менять
+и не обходить. Ни этот smoke, ни его будущий success не выдают machine/task consent.
+G3–G6 не открываются. APK/Release не публиковались, main не изменялся этим заданием.
+
+На момент записи Draft PR ещё не открыт; следующий шаг — публикация workflow/report
+в отдельный Draft PR и фиксация его URL в этой ветке. После этого остановиться для
+owner review. Не выполнять merge, Ready, environment approval, dispatch или cleanup.
