@@ -1541,3 +1541,12 @@ G3–G6 не открываются. APK/Release не публиковались
 На момент записи Draft PR ещё не открыт; следующий шаг — публикация workflow/report
 в отдельный Draft PR и фиксация его URL в этой ветке. После этого остановиться для
 owner review. Не выполнять merge, Ready, environment approval, dispatch или cleanup.
+
+### Публикация Issue58
+
+Открыт Draft PR59: https://github.com/Arch-relic/AgroNaliz/pull/59.
+Первый remote head79311884b3d477d5baecef24a6133d65f7b7bdbc,
+tree69a8124954aaa381b88fd17156438ae93bf4989b совпадает с local4c90404b.
+Этот следующий commit фиксирует только URL публикации. Новый environment smoke
+workflow не запускался; state Waiting for review/approval/success остаётся not_run.
+Main и settings не менялись. PR оставить Draft и остановиться для owner review.
