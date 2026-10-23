@@ -144,4 +144,86 @@ class CoreTests(unittest.TestCase):
         self.assertIn('persist-credentials: false',text)
         self.assertIn('pull_request.base.sha',text)
 
+
+class AGN60SyntheticLifecycleTests(unittest.TestCase):
+    """Issue #60: no real task, approval, dispatch or executor is created."""
+
+    def setUp(self):
+        self.t = task()
+        self.t['id'] = 'AGN-60'
+        self.t['issue'] = 'https://github.com/Arch-relic/AgroNaliz/issues/60'
+        self.t['type'] = 'maintenance'
+        self.t['revisions'][0]['spec']['operations'] = ['test']
+        self.t['revisions'][0]['spec']['title'] = 'Synthetic lifecycle validation'
+        self.t['revisions'][0]['hash'] = digest(self.t['revisions'][0]['spec'])
+
+    def test_proposed_is_valid_without_approval(self):
+        validate(self.t)
+        self.assertIsNone(self.t['history'][0]['approval_run'])
+
+    def test_awaiting_approval_is_valid_without_grant(self):
+        move(self.t, 'awaiting_approval')
+        validate(self.t)
+
+    def test_approved_without_evidence_is_denied(self):
+        move(self.t, 'awaiting_approval')
+        move(self.t, 'approved')
+        with self.assertRaises(Denied):
+            validate(self.t)
+
+    def test_direct_implementing_is_denied(self):
+        move(self.t, 'implementing')
+        with self.assertRaises(Denied):
+            validate(self.t)
+
+    def test_tampered_spec_hash_is_denied(self):
+        self.t['revisions'][0]['spec']['description'] = 'Changed without new hash'
+        with self.assertRaises(Denied):
+            validate(self.t)
+
+    def test_unknown_operation_is_denied(self):
+        self.t['revisions'][0]['spec']['operations'] = ['unknown_operation']
+        with self.assertRaises(Denied):
+            validate(self.t)
+
+    def test_protected_operation_is_denied_even_with_rehashed_spec(self):
+        self.t['revisions'][0]['spec']['operations'] = ['publish_apk']
+        self.t['revisions'][0]['hash'] = digest(self.t['revisions'][0]['spec'])
+        validate(self.t)
+        with self.assertRaises(Denied):
+            authorize(self.t, 'publish_apk')
+
+    def test_unapproved_task_cannot_authorize_test(self):
+        with self.assertRaises(Denied):
+            authorize(self.t, 'test')
+
+    def test_reused_approval_evidence_is_denied(self):
+        fixture = CoreTests()
+        fixture.setUp()
+        move(fixture.t, 'blocked')
+        move(fixture.t, 'awaiting_approval')
+        move(fixture.t, 'approved', 10)
+        with self.assertRaises(Denied):
+            validate(fixture.t, api=fixture.api)
+
+    def test_stale_snapshot_is_denied(self):
+        fixture = CoreTests()
+        fixture.setUp()
+        current = copy.deepcopy(fixture.t)
+        move(current, 'blocked')
+
+        def transport(path):
+            if path == 'git/ref/heads/main':
+                return {'ref': 'refs/heads/main', 'object': {'type': 'commit', 'sha': 'b' * 40}}
+            if path == 'contents/agent_core/tasks/AGN-1.json?ref=' + 'b' * 40:
+                return {'type': 'file', 'path': 'agent_core/tasks/AGN-1.json',
+                        'encoding': 'base64',
+                        'content': base64.b64encode(json.dumps(current).encode()).decode()}
+            return fixture.api(path)
+
+        with patch('agent_core.check.api', side_effect=transport), \
+             patch('agent_core.check.execution_actor', return_value=123):
+            with self.assertRaises(Denied):
+                authorize(fixture.t, 'implement')
+
 if __name__=='__main__': unittest.main()
