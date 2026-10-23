@@ -1670,3 +1670,20 @@ STOP_REQUESTED_UNVERIFIED. Reconciliation требует отдельной ра
 На момент этого отчётного commit Draft PR ещё не создан; публикация — следующий
 разрешённый шаг. Номер/URL и подтверждённый Draft status будут добавлены отдельным
 отчётным commit в эту же ветку. Remote CI пока не запускался этой локальной проверкой.
+
+
+### Публикация этапа B
+
+Создан Draft PR #62: https://github.com/Arch-relic/AgroNaliz/pull/62.
+Состояние при создании: open, draft=true, merged=false. Base main остаётся
+e13fd1e19f531824e148fff1d17d481098929e43.
+Первый remote implementation/report commit: 7f551c4bf869fb25ed3e0cf4ac7be48c0150cb54,
+tree 9e547118cfca25373ee142b170191faf9212f8af точно совпал с local report commit
+53bfce6f74caa8defe85dd386cad9daa0e7ef6d3. Код идентичен проверенному local
+0b774e040fc62be0d38376c953817e8e4dd2c795; различаются только commit metadata и
+группировка implementation/handoff в истории. Следующий commit меняет только этот
+отчёт, фиксируя PR URL; тестируемый код не меняется. Local worktree после commit чист.
+Автоматические remote CI не выдаются за локальные 49 прошедших тестов; их итог
+на момент этой записи не проверен. Workflows/rerun/dispatch вручную не запускались.
+PR оставить Draft. После этой отчётной публикации остановиться для owner review;
+не merge, не Ready, не запускать настоящего worker/publisher и production actions.
