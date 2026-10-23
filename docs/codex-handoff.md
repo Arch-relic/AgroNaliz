@@ -1687,3 +1687,47 @@ tree 9e547118cfca25373ee142b170191faf9212f8af точно совпал с local r
 на момент этой записи не проверен. Workflows/rerun/dispatch вручную не запускались.
 PR оставить Draft. После этой отчётной публикации остановиться для owner review;
 не merge, не Ready, не запускать настоящего worker/publisher и production actions.
+
+## PR62: аудит защищённых путей, 23.10.2026
+
+Обход подтверждён на исходном PR head cc6a93c28f20b7746387d7f275e7625f439dde55:
+при явном allowlist synthetic ADD для APP/example.txt и .GIT/config проходил validator.
+Причина: системный denylist сравнивал исходный регистр, тогда как только sensitive
+keywords и snapshot collision check уже использовали lower(). Case-only DELETE/ADD
+также обходил проверку конечного snapshot, поскольку исходный alias удалялся.
+
+Исправление не меняет протокол, wire schema, specification/response bytes, JCS,
+digests или case-sensitive allowlist. Только проверки защиты сравнивают ASCII lower
+для системного denylist и protected selectors с прежними границами сегментов.
+Все операции одного diff проверяются на одинаковый lower(path), включая DELETE/ADD
+в обоих порядках. Ранее существовавшая проверка коллизий с неизменёнными файлами
+сохранена. Нет case normalization записываемых путей и ослабления denylist.
+
+Изменены tools/agent_mock_b/diff_validator.py,
+tools/agent_mock_b/tests/test_snapshot_diff.py,
+tools/agent_mock_b/tests/test_acceptance_15.py и только этот docs/codex-handoff.md.
+Созданных/удалённых файлов нет. AGENTS.md, утверждённый план, main, workflows,
+production policies, identity v1/v2 и Android/Room не менялись.
+
+Отрицательные тесты сначала воспроизвели ошибку (100 failing assertions/subcases
+в 12 методах snapshot/diff suite). После исправления новый полный запуск:
+
+```bash
+PYTHONPATH=/tmp/codex-rfc8785-igo5yiag:$PWD python -B -m unittest discover -s tools/agent_mock_b/tests -q
+```
+
+Результат: 54 test methods, 0 failures/errors, 5.485 s, все 15 групп приёмки, включая
+все ранее утверждённые проверки. Добавлены upper/mixed-case denylist для ADD/MODIFY/
+DELETE, custom protection, case-only DELETE/ADD, границы сегментов и сохранение
+case-sensitive allowlist; end-to-end примеры дают PROTECTED_PATH, REJECTED validation,
+zero publisherCalls и ни одного SIMULATED_* события. git diff --check passed.
+Проверенный local code commit: 481bb5977047bbb93508a2e69950d9b8e7f9dd30;
+следующий commit содержит только этот отчёт. Ветка feature/agent-mock-b-v1-4,
+base main e13fd1e19f531824e148fff1d17d481098929e43.
+
+Существующий PR https://github.com/Arch-relic/AgroNaliz/pull/62 остаётся Draft.
+Предыдущий head cc6a93c... имел 7 успешных CI workflows, но это не проверка исправления.
+Новый push запускает весь штатный PR CI; результаты исправленного head проверяются
+отдельно и будут отражены в PR. Нет ручного dispatch/rerun, изменения workflow или
+ослабления защиты. Модель остаётся synthetic; вывод не является гарантией OS sandbox.
+После обновления Draft PR и проверки полного CI — остановиться для owner review.

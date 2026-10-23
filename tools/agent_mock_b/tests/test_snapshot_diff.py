@@ -89,3 +89,43 @@ class SnapshotDiff(unittest.TestCase):
             f.spec['allowedOperations'] = ['ADD', 'DELETE', 'MODIFY']; f.spec['allowedPaths'] = ['dir:scratch/']
             with self.assertRaisesRegex(Refusal, 'INVALID_DIFF'):
                 apply(f.spec, f.snapshot, [op])
+
+    def test_denylist_rejects_case_variants_for_all_operations(self):
+        from tools.agent_mock_b.contracts import DENY
+        for denied in DENY:
+            for variant in (denied.upper(), denied.swapcase()):
+                name = variant + 'example.txt' if denied.endswith('/') else variant
+                for operation in ('ADD', 'MODIFY', 'DELETE'):
+                    with self.subTest(name=name, operation=operation):
+                        files = {'scratch/a.txt': b'a\n'}
+                        if operation != 'ADD':
+                            files[name] = b'a\n'
+                        f = Fixture(self, files=files)
+                        f.spec['allowedPaths'] = ['file:' + name]
+                        with self.assertRaisesRegex(Refusal, 'PROTECTED_PATH'):
+                            apply(f.spec, f.snapshot, [modify(path=name, op=operation)])
+
+    def test_custom_protection_rejects_case_variants(self):
+        for selector, name in [('file:scratch/Keep.txt', 'scratch/KEEP.TXT'),
+                               ('dir:scratch/private/', 'scratch/PRIVATE/file.txt')]:
+            f = Fixture(self); f.spec['protectedPaths'].append(selector)
+            f.spec['allowedPaths'] = ['file:' + name]
+            with self.subTest(selector=selector), self.assertRaisesRegex(Refusal, 'PROTECTED_PATH'):
+                apply(f.spec, f.snapshot, [modify(path=name, op='ADD')])
+
+    def test_case_only_delete_add_is_a_collision(self):
+        for ops in ([modify(op='DELETE'), modify(path='scratch/A.TXT', op='ADD')],
+                    [modify(path='scratch/A.TXT', op='ADD'), modify(op='DELETE')]):
+            f = Fixture(self)
+            with self.assertRaisesRegex(Refusal, 'INVALID_DIFF'):
+                apply(f.spec, f.snapshot, ops)
+
+    def test_protection_preserves_segment_boundaries_and_allowlist_case(self):
+        from tools.agent_mock_b.diff_validator import protected
+        self.assertTrue(protected('APP', []))
+        self.assertTrue(protected('.Git', []))
+        self.assertFalse(protected('APPLICATION/example.txt', []))
+        self.assertFalse(protected('.GITHUB_EXTRA/example.txt', []))
+        f = Fixture(self); f.spec['allowedPaths'] = ['dir:scratch/lower/']
+        with self.assertRaisesRegex(Refusal, 'INVALID_PATH'):
+            apply(f.spec, f.snapshot, [modify(path='scratch/LOWER/file', op='ADD')])

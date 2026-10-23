@@ -11,10 +11,15 @@ from .snapshot import Snapshot, text
 
 def protected(name, selectors):
     # Existing identity/key/signing/policy paths remain denied independent of spec.
-    parts = name.lower().split('/')
+    # Paths are ASCII by contract. Fold protection comparisons only: the
+    # original spelling remains authoritative for allowlists, bytes and hashes.
+    folded = name.lower()
+    parts = folded.split('/')
     sensitive = any(any(word in part for word in ('secret', 'credential', 'signing', 'policy', 'identity'))
                     or part.endswith(('.pem', '.key', '.jks', '.keystore')) for part in parts)
-    return sensitive or any(name == p.rstrip('/') or (p.endswith('/') and name.startswith(p)) for p in DENY) or matches(name, selectors)
+    return sensitive or any(folded == p.lower().rstrip('/') or
+                            (p.endswith('/') and folded.startswith(p.lower()))
+                            for p in DENY) or matches(folded, [s.lower() for s in selectors])
 
 
 def lines(raw):
@@ -30,7 +35,10 @@ def apply(spec, snapshot, ops):
     for op in ops:
         diffop(op)
         name = op['path']
-        require(name not in seen, 'INVALID_DIFF'); seen.add(name)
+        # Reject case aliases across the entire diff, even when DELETE/ADD
+        # would remove the collision from the final snapshot (a case-only rename).
+        folded = name.lower()
+        require(folded not in seen, 'INVALID_DIFF'); seen.add(folded)
         require(not protected(name, spec['protectedPaths']), 'PROTECTED_PATH')
         require(matches(name, spec['allowedPaths']), 'INVALID_PATH')
         require(op['op'] in spec['allowedOperations'], 'INVALID_DIFF')

@@ -398,3 +398,20 @@ class Acceptance15(unittest.TestCase):
                                                reference, obj, Snapshot({'scratch/a.txt': b'b\n'}), 0)
         self.assertEqual(f.controller.publisherCalls, 0)
         self.assertNotIn('PUBLISHED', [e['eventType'] for e in p.events])
+
+    def test_07_case_variants_fail_before_simulated_publication(self):
+        for name in ('APP/example.txt', 'App/example.txt', '.GIT/config', '.GiT/config',
+                     '.GitHub/workflows/x', 'DoCs/CoDeX-HaNdOfF.Md'):
+            with self.subTest(path=name):
+                f = Fixture(self)
+                f.spec['allowedPaths'] = ['file:' + name]
+                f.record.update(taskDigest=digest('spec', f.spec), scope=['file:' + name])
+                f.approvalStore = ApprovalStore()
+                f.approvalStore.put(f.record)
+                f.controller.approvals = f.approvalStore
+                f.envelope = {k: f.record[k] for k in ('approvalId', 'taskDigest', 'ownerId')}
+                f.diff = [modify(path=name, op='ADD')]
+                self.refused(f, 'PROTECTED_PATH', worker=1)
+                p = replay(f.evidence)
+                self.assertEqual(p.validations[f.run_id]['payload']['validationReceipt']['validationStatus'], 'REJECTED')
+                self.assertFalse(any(e['eventType'].startswith('SIMULATED_') for e in p.events))
