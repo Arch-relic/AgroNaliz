@@ -1797,3 +1797,30 @@ Draft PR на момент этого отчётного commit ещё не со
 в эту feature-ветку, фиксация номера/URL и доступных CI. После подготовки остановиться
 для owner review, не merge и не Ready for review. Новые target live результаты не
 выдаются за подтверждённые, pending/skipped не выдаются за success.
+
+### Публикация этапа 4.3 и доступный CI
+
+Создан Draft PR #63: https://github.com/Arch-relic/AgroNaliz/pull/63.
+При создании open/draft=true/merged=false. Первый remote commit
+f5164cbc5c1c1b5228357a94552317e8fb66aa29 имеет tree
+47cb3017634b4eba47e43592a8bdc7a6292e85c9, точно совпавшее с local report commit
+5b0c5b8a58b134a3d29f8e95959745823f0f6e70. Проверенный код41000be... не менялся.
+Следующий commit меняет только этот handoff, фиксируя PR/CI; это не новый code test SHA.
+
+На первом head подтверждены:
+- Candidate unit workflow run39923598677, job trusted-pr-gate-tests: success;
+  https://github.com/Arch-relic/AgroNaliz/actions/runs/39923598677.
+- Existing Agent Core pull_request run39923598543: success.
+- Existing pull_request_target run39923598545, trusted-validation: failure;
+  https://github.com/Arch-relic/AgroNaliz/actions/runs/39923598545.
+  Проверенный лог: DENIED: Denied: Governance/workflow changes require separate
+  owner review; gate cannot authorize itself. Это ожидаемый governance отказ
+  bootstrap, а не запуск нового trusted-pr-gate. Обходов, rerun и ослабления gate нет.
+- Остальные штатные Android workflows на момент записи ещё выполнялись; их успех
+  не заявляется. Новый target workflow не запускался: его пока нет в main.
+
+Требование live доказательства невозможности подмены check остаётся открытым;
+name+Actions App доказанно недостаточны. Требуется отдельное решение владельца о
+поддерживаемом механизме enforcement и разрешении live negative tests. Этот Draft
+не означает готовности действующей защиты, разрешения merge или перехода L1/L2.
+После отчётной публикации остановиться для owner review, PR оставить Draft.
