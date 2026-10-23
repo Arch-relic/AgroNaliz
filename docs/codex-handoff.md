@@ -1550,3 +1550,123 @@ tree69a8124954aaa381b88fd17156438ae93bf4989b совпадает с local4c90404b
 Этот следующий commit фиксирует только URL публикации. Новый environment smoke
 workflow не запускался; state Waiting for review/approval/success остаётся not_run.
 Main и settings не менялись. PR оставить Draft и остановиться для owner review.
+
+
+## Этап 3 / B — mock-first v1.4 Final с поправкой WORKER RESULT, 23.10.2026
+
+Цель: реализовать только локальную synthetic модель controller → approvals → fake
+worker → independent validator → simulated publisher → evidence/checkpoint.
+Статус: реализация и локальные проверки завершены; требуется owner review Draft PR.
+
+### Основание и решения
+
+Владелец отдельно утвердил план v1.4 Final (исходная дата 22.10.2026), реализацию,
+feature-ветку, тесты, Draft PR и только отчётное изменение этого handoff. SHA256
+исходного вложения: 223d45ceb4c01b086d564202154fab908aa49d2a3a7180c2648e08934ea5e409.
+План и нормативная поправка к §13.2 воспроизведены в docs/agent-mock-b/protocol-v1.md.
+Исходное вложение и AGENTS.md не изменены. Только конечные пробелы строк копии плана
+в новой документации удалены для git diff --check.
+
+Официальная внешняя библиотека rfc8785==0.1.4 используется через PYTHONPATH, без
+копирования исходников, новой установки или изменения зависимостей приложения.
+Контроллер проверяет пакет при импорте. RFC-векторы (float/negative zero, Unicode,
+escaping, UTF-16 key order) проверены до кода и повторно в тестах. Доменные схемы
+запрещают float, duplicate keys, неизвестные поля, surrogate, invalid integer.
+
+WORKER RESULT сохраняет доверенный workerResponseDigest; replay восстанавливает
+его только из checkpointed prefix. VALIDATOR и simulated publisher проверяют связь
+подтверждённых результатов одного run с разными operationId. Journal fsync и
+независимый monotonic checkpoint моделируют durable authorization/action evidence.
+Budget резервируется только WORKER INTENT, не возвращается после отказов/crash и не
+обнуляется новым approval. Trusted adapter закрепляет один retained log на taskDigest.
+
+Snapshot/diff проверяются по immutable bytes; scope/denylist, Base64/UTF-8/hash/mode,
+case collisions и ресурсные пределы проверяются независимо от worker report.
+workerKind=mock, publishAllowed=false, externalCalls=0. Никакого настоящего агента,
+GitHub publisher, сети или рабочих credentials в runtime/тестах. Создание Draft PR —
+отдельное разрешённое действие разработки, не simulated publisher.
+
+### Файлы
+
+Созданы:
+- docs/agent-mock-b/protocol-v1.md
+- tools/agent_mock_b/README.md
+- tools/agent_mock_b/__init__.py
+- tools/agent_mock_b/approval_store.py
+- tools/agent_mock_b/budget.py
+- tools/agent_mock_b/canonical.py
+- tools/agent_mock_b/checkpoint.py
+- tools/agent_mock_b/contracts.py
+- tools/agent_mock_b/controller.py
+- tools/agent_mock_b/diff_validator.py
+- tools/agent_mock_b/evidence.py
+- tools/agent_mock_b/fake_worker.py
+- tools/agent_mock_b/fixtures/README.md
+- tools/agent_mock_b/recovery.py
+- tools/agent_mock_b/repository_store.py
+- tools/agent_mock_b/simulated_publisher.py
+- tools/agent_mock_b/snapshot.py
+- tools/agent_mock_b/state_machine.py
+- tools/agent_mock_b/tests/test_acceptance_15.py
+- tools/agent_mock_b/tests/test_contracts.py
+- tools/agent_mock_b/tests/test_snapshot_diff.py
+- tools/agent_mock_b/tests/test_state_recovery.py
+
+Изменён существующий docs/codex-handoff.md только этим отчётом. Удалений нет.
+
+### Ветка и проверенный результат
+
+Ветка: feature/agent-mock-b-v1-4.
+Base remote main: e13fd1e19f531824e148fff1d17d481098929e43; дважды сверён через GitHub
+перед реализацией. Локальный HEAD совпадал с ним. Устаревший origin/main ранее был
+28f34f8e95785daf62ea54bd08dd4b97131b5eca (отставание 124 commit); ссылка актуализирована.
+Проверенный implementation commit: 0b774e040fc62be0d38376c953817e8e4dd2c795,
+tree c148287d4092c3fcdc1404e2b892fa783d7b6c42. Тесты выполнены на точном содержимом
+этого commit до его фиксации. Следующий commit добавляет только этот handoff;
+его SHA не подменяет SHA проверенного кода. Remote tree при публикации сверяется.
+
+### Проверки
+
+Новый полный запуск:
+
+```bash
+PYTHONPATH=/tmp/codex-rfc8785-igo5yiag:$PWD python -B -m unittest discover -s tools/agent_mock_b/tests -q
+```
+
+Результат: 49 test methods, 0 failures, 0 errors, 5.347 s; все 15 acceptance groups
+выполнены, включая утверждённые дополнительные подслучаи. Ранние проходы 15/44/48
+были промежуточными; окончательный результат — 49. Это новый запуск, не UP-TO-DATE.
+Подслучаи сгруппированы через subTest и циклы и не выдаются за отдельные test methods.
+Матрица и synthetic fixture metadata: tools/agent_mock_b/fixtures/README.md.
+
+Также: git diff --cached --check; AST parse; проверка точного file scope; отсутствие
+runtime network/process/legacy imports; исходный SHA256 плана сохранился. Проверен
+итоговый diff на посторонние изменения и секреты: только synthetic тестовые данные.
+Android build, emulator, смартфон и прежние v1/v2 suites не запускались: их файлы,
+workflows, схемы Room, APK/signing/release и grants/hashes не изменены.
+
+### Ограничения и дальнейшая работа
+
+Это single-writer модель, не OS sandbox и не production tamper-proof store. Trusted
+checkpoint anchor и operation ledger — отдельные synthetic adapters в памяти;
+при потере adapters нет заявления о восстановлении доверия из файлов. Повторное
+чтение использует retained independent anchor. Замена trusted store вне модели угроз.
+UTC и monotonic clock инъецированы. Worker factory — trusted fixture, не недоверенный
+Python. Тесты ограничивают буферизацию контроллера, не память генератора fixture.
+
+Recovery read-only классифицирует prefix/tail и независимый worker receipt. Unknown
+tail/pending outcome не принимается и не запускается повторно; автоматического
+resume нет. Controller.stop допускает protective cancel без approval и фиксирует
+CANCELLED только после synthetic acknowledgment; при outage только недоверенный
+STOP_REQUESTED_UNVERIFIED. Reconciliation требует отдельной разрешённой процедуры.
+Временный пакет может исчезнуть с Cloud session; при отсутствии остановиться,
+не заменять JCS. Никаких гарантий реального worker/publisher эти тесты не дают.
+
+Следующее действие: owner review кода, поправки и evidence/recovery ограничений.
+Не выполнять merge, Ready for review, dispatch, реальный worker или production actions.
+
+### Draft PR
+
+На момент этого отчётного commit Draft PR ещё не создан; публикация — следующий
+разрешённый шаг. Номер/URL и подтверждённый Draft status будут добавлены отдельным
+отчётным commit в эту же ветку. Remote CI пока не запускался этой локальной проверкой.
