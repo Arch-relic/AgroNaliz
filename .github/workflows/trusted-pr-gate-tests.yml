@@ -1,0 +1,19 @@
+name: Trusted PR gate unit tests (untrusted candidate)
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  trusted-pr-gate-tests:
+    name: trusted-pr-gate-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          submodules: false
+          lfs: false
+      - name: Test candidate code without secrets or write token
+        run: python3 -I -B -m unittest discover -s tests/trusted_pr_gate -v

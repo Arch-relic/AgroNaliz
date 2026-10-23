@@ -1731,3 +1731,96 @@ base main e13fd1e19f531824e148fff1d17d481098929e43.
 отдельно и будут отражены в PR. Нет ручного dispatch/rerun, изменения workflow или
 ослабления защиты. Модель остаётся synthetic; вывод не является гарантией OS sandbox.
 После обновления Draft PR и проверки полного CI — остановиться для owner review.
+
+## Этап 4.3 — независимый trusted-pr-gate, 23.10.2026
+
+Статус: минимальная реализация для Draft PR/owner review; защита main не включена,
+доказательство платформенной неподменяемости НЕ завершено. Основание — ТЗ 4.3.
+Base main 4c21c59acf8febc71d123e3582b74eeac613b49e (PR62 уже merged владельцем).
+Remote branch API проверен перед работой, protected=false, Rulesets=[] на момент
+проверки. Локальный origin/main актуализирован до этого exact SHA; commit восстановлен
+из GitHub signed payload с проверкой точного Git object hash, без подмены истории.
+Ветка feature/trusted-pr-gate-4-3, без записи в main. Проверенный implementation commit
+41000be3207814a5fd6b009e2ee2bb6bcb7ae6d3,
+tree e65a558ae13ffc36d6295f1950d7bf6b52e9aafa. Тесты выполнены до commit на идентичных
+файлах; следующий отчётный commit изменяет только этот handoff.
+
+Созданы:
+- .github/trusted_pr_gate/gate.py
+- .github/trusted_pr_gate/policy.json
+- .github/workflows/trusted-pr-gate.yml
+- .github/workflows/trusted-pr-gate-tests.yml
+- tests/trusted_pr_gate/test_gate.py
+- docs/trusted-pr-gate.md
+Изменён только docs/codex-handoff.md для отчёта. Удалений нет. AGENTS.md, прежний
+agent-core workflow/код, Android/Room, release/signing workflows не изменены.
+Rulesets, Branch Protection, App permissions, secrets, environments не менялись.
+
+Gate использует pull_request_target, code/policy из exact base SHA, только read
+permissions и штатный read-only GITHUB_TOKEN; без production credentials, pip install,
+кода/зависимостей PR, caches/artifacts/dispatch. API GET проверяет repo/event/run identity,
+head/base SHA, current main, ancestry, pagination, полные trees, exact diff/modes/SHA,
+allowlist и защищённые пути/rename source с учётом регистра. Любая неопределённость
+ведёт к nonzero. Повторный attempt отвергается. Policy предложена для owner review,
+не читается из PR как полномочие. Она не является семантическим анализом Android-кода.
+Candidate unit workflow отдельно называется trusted-pr-gate-tests и работает в
+pull_request с read-only permissions; его зелёный статус не считается trusted gate.
+
+Новые локальные проверки:
+- python -I -B -m unittest discover -s tests/trusted_pr_gate -q: 16 test methods,
+  0 failures/errors, финальный прогон0.027 s; все 10 обязательных synthetic сценариев.
+- python -B -m unittest discover -s tests/agent_core -q: 140 test methods,
+  0 failures/errors,1.077 s; не UP-TO-DATE. Synthetic approve output тестов не является
+  реальным approval/dispatch или запуском агента.
+- AST и YAML BaseLoader parse: passed, зависимости не устанавливались.
+- git diff --check, scope/diff: passed. Только synthetic fixtures, без секретов.
+Android build/emulator локально не запускались — app не меняется.
+
+Ключевое ограничение: check name trusted-pr-gate и Actions App15368 не закрепляют
+конкретный workflow. API PR62 реально показывает одноимённые trusted-validation от
+pull_request (skipped) и pull_request_target (success) с одним App. GitHub Docs допускает
+success/skipped/neutral для required checks. Контролируемая synthetic контрмодель
+доказывает недостаточность name+App, а НЕ невозможность live обхода. Нового target
+workflow в main пока нет, bootstrap PR не может доверенно проверить себя. Старый
+trusted-validation должен штатно отказать на изменении .github/workflows; его не
+ослаблять/не отключать. Live negative spoofing/merge tests не выполнялись: enforcement
+не настроен, менять настройки/выдавать новые права этим ТЗ запрещено.
+
+Следующие решения владельца: review предлагаемой policy и кода, выбор реально
+доступного required-workflow binding либо отдельного независимого App/controller.
+Нельзя считать ordinary required name+github-actions безопасным fallback. Далее —
+отдельные разрешения на bootstrap/настройки и live negative acceptance. До доказательства
+нужного enforcement L1/L2 закрыты. Реальный агент не запускался, APK не публиковались.
+Подробные план, матрица и официальные ссылки — docs/trusted-pr-gate.md.
+
+Draft PR на момент этого отчётного commit ещё не создан; следующим шагом публикация
+в эту feature-ветку, фиксация номера/URL и доступных CI. После подготовки остановиться
+для owner review, не merge и не Ready for review. Новые target live результаты не
+выдаются за подтверждённые, pending/skipped не выдаются за success.
+
+### Публикация этапа 4.3 и доступный CI
+
+Создан Draft PR #63: https://github.com/Arch-relic/AgroNaliz/pull/63.
+При создании open/draft=true/merged=false. Первый remote commit
+f5164cbc5c1c1b5228357a94552317e8fb66aa29 имеет tree
+47cb3017634b4eba47e43592a8bdc7a6292e85c9, точно совпавшее с local report commit
+5b0c5b8a58b134a3d29f8e95959745823f0f6e70. Проверенный код41000be... не менялся.
+Следующий commit меняет только этот handoff, фиксируя PR/CI; это не новый code test SHA.
+
+На первом head подтверждены:
+- Candidate unit workflow run39923598677, job trusted-pr-gate-tests: success;
+  https://github.com/Arch-relic/AgroNaliz/actions/runs/39923598677.
+- Existing Agent Core pull_request run39923598543: success.
+- Existing pull_request_target run39923598545, trusted-validation: failure;
+  https://github.com/Arch-relic/AgroNaliz/actions/runs/39923598545.
+  Проверенный лог: DENIED: Denied: Governance/workflow changes require separate
+  owner review; gate cannot authorize itself. Это ожидаемый governance отказ
+  bootstrap, а не запуск нового trusted-pr-gate. Обходов, rerun и ослабления gate нет.
+- Остальные штатные Android workflows на момент записи ещё выполнялись; их успех
+  не заявляется. Новый target workflow не запускался: его пока нет в main.
+
+Требование live доказательства невозможности подмены check остаётся открытым;
+name+Actions App доказанно недостаточны. Требуется отдельное решение владельца о
+поддерживаемом механизме enforcement и разрешении live negative tests. Этот Draft
+не означает готовности действующей защиты, разрешения merge или перехода L1/L2.
+После отчётной публикации остановиться для owner review, PR оставить Draft.
