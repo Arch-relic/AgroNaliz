@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "repository": "Arch-relic/AgroNaliz",
+  "baseRef": "main",
+  "maxFiles": 200,
+  "allowed": [
+    {"prefix": "docs/", "extensions": [".md", ".txt"]},
+    {"prefix": "app/src/main/java/", "extensions": [".kt", ".java"]},
+    {"prefix": "app/src/test/java/", "extensions": [".kt", ".java"]},
+    {"prefix": "app/src/androidTest/java/", "extensions": [".kt", ".java"]}
+  ]
+}
