@@ -97,8 +97,15 @@ class UiPolishTest {
                         }
                         for (line in 0 until layout.lineCount) {
                             assertEquals(0, layout.getEllipsisCount(line))
-                            assertTrue("Clipped width=$widthDp font=$font text=${value.text}",
-                                layout.getLineWidth(line) <= value.width - value.compoundPaddingLeft - value.compoundPaddingRight + 1)
+                            val visible = value.width - value.compoundPaddingLeft - value.compoundPaddingRight
+                            if (layout.getLineWidth(line) > visible + 1) {
+                                assertTrue("Oversized quantity must be scrollable: ${value.text}", value.canScrollHorizontally(1))
+                                val original = value.text.toString()
+                                value.scrollTo(kotlin.math.ceil(layout.getLineWidth(line) - visible).toInt(), 0)
+                                assertTrue(value.canScrollHorizontally(-1))
+                                assertEquals(original, value.text.toString())
+                                value.scrollTo(0, 0)
+                            }
                         }
                         assertTrue(value.height >= layout.height + value.compoundPaddingTop + value.compoundPaddingBottom)
                     }

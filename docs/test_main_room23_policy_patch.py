@@ -49,7 +49,7 @@ class MainRoom23PolicyPatchTest(unittest.TestCase):
                                 ('docs/main-original-update.md', 'room23-main-original-update.md.txt')]:
             shutil.copyfile(ROOT/'docs/fixtures'/fixture, self.stage/target)
         gradle=self.stage/'app/build.gradle.kts'
-        gradle.write_text(gradle.read_text().replace('versionName = "1.0.10"','versionName = "1.0.8"'))
+        gradle.write_text(gradle.read_text().replace('versionName = "1.0.11"','versionName = "1.0.8"'))
         db = self.stage/'app/src/main/java/ru/fo6osik/workjournal/AppDatabase.kt'
         db.write_text(re.sub(r'version\s*=\s*24', 'version = 23', db.read_text()))
         before = all(hashlib.sha256((self.stage/p).read_bytes()).hexdigest() == v['beforeSha256']

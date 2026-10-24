@@ -36,7 +36,7 @@ def main():
         new=Path(f'app/build/outputs/apk/{variant}/app-{variant}.apk')
         tests=Path(f'app/build/outputs/apk/androidTest/{variant}/app-{variant}-androidTest.apk')
         pin=inspect(old,app,oldcode,'1.0.8')
-        if inspect(new,app,newcode,'1.0.10')!=pin: raise RuntimeError('Certificate mismatch')
+        if inspect(new,app,newcode,'1.0.11')!=pin: raise RuntimeError('Certificate mismatch')
         adb('install',str(old));adb('install',str(tests))
         h['instrument'](app,'seed23','Room24UpdateTest')
         adb('install','-r',str(new))
@@ -45,7 +45,7 @@ def main():
         h['instrument'](app,'verify24AndSeparateRestore','Room24UpdateTest')
         h['instrument'](app,'verify109Screens','Main109UpdateUiTest')
         h['instrument'](app,'verify24AndSeparateRestore','Room24UpdateTest')
-        reports.append(dict(applicationId=app,oldRoom=23,newRoom=24,oldVersionName='1.0.8',newVersionName='1.0.10',oldVersionCode=oldcode,fixtureVersionCode=newcode,
+        reports.append(dict(applicationId=app,oldRoom=23,newRoom=24,oldVersionName='1.0.8',newVersionName='1.0.11',oldVersionCode=oldcode,fixtureVersionCode=newcode,
             ciCertificateSha256=pin,apkSha256=hashlib.sha256(new.read_bytes()).hexdigest(),dataRetained=True,separateRestore=True,restart=True))
     Path('room24-update-verification.json').write_text(json.dumps(dict(sourceSha=os.environ['GITHUB_SHA'],fixtures=reports,productionReleaseAuthorized=False),indent=2)+'\n')
     print('ROOM24 UPDATE SUCCESS: both synthetic packages retain all old data, files, preferences and certificate; JSON restore and restart passed; release not authorized')

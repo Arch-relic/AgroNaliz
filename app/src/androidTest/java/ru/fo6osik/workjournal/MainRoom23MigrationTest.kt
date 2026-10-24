@@ -73,7 +73,7 @@ class MainRoom23MigrationTest {
         assertTrue(DatabaseBackupManager.exportBackup(context,uri("before22")).isSuccess)
     }
     @Test fun verifyMain108Room23AndSeparateRestore() = runBlocking(Dispatchers.IO) {
-        guard(); assertEquals("1.0.10", installed().versionName); assertEquals(3000004, installed().versionCode)
+        guard(); assertEquals("1.0.11", installed().versionName); assertEquals(3000004, installed().versionCode)
         assertEquals(prefs.getString("certificate", null), certificate())
         assertEquals(47,prefs.getInt("interval",0)); assertFalse(prefs.getBoolean("enabled",true))
         val timers=context.getSharedPreferences("harvest_reminder_prefs",0)
@@ -92,7 +92,7 @@ class MainRoom23MigrationTest {
         val day=room.harvestDao().getDayById(12202)!!
         val mass=HarvestCalculator.day(8.0,HarvestCalculator.DayInput(
             room.harvestDao().getBunkersForDay(day.id).map { it.fillLevel },day.harvestedAreaHa,day.bulkDensityKgM3))
-        assertEquals(12.0,mass.massTonnes!!.min,0.0);assertEquals(18.0,mass.massTonnes!!.max,0.0)
+        assertEquals(15.0,mass.massTonnes!!.min,0.0);assertEquals(15.0,mass.massTonnes!!.max,0.0)
         val fuel=room.harvestFuelDao().getDay(day.id)!!
         val used=HarvestFuelCalculator.calculate(fuel.startPercent,fuel.endPercent,
             room.harvestFuelDao().getRefills(day.id).map { HarvestFuelCalculator.Refill(it.beforePercent,it.afterPercent,it.scope=="BEFORE_DAY") },day.harvestedAreaHa)

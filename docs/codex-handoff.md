@@ -1,3 +1,7 @@
+Актуальный этап: AGN-49, синхронизация Draft PR #49 с main, 24.10.2026; отчёт в конце.
+
+Актуальный этап: Issue48 / Draft PR49, MAIN1.0.11; новый отчёт в конце.
+
 Актуальный этап: PR47, вариант1 отзыва полномочий по решению владельца21.10.2026; новый отчёт в конце.
 
 Актуальный этап: повторный аудит и синхронизация Agent Core, Draft PR #47, 21.10.2026; отчёт в конце.
@@ -1049,6 +1053,312 @@ original keystore не использован; реальные данные н�
 устройства не было; PR45 остаётся Draft и не объединён. После отчёта остановиться.
 
 
+# Issue48 — MAIN1.0.11, аудит и реализация, 21.10.2026
+
+ТЗ уточнено и явно утверждено владельцем в сессии: исторические состояния переводятся
+на25/50/75/100%, паспортная вместимость — одно число, range вместимости исключён.
+Аудит завершён, технически массовая миграция не нужна. Реализация готова к CI/review;
+Draft PR и фактические результаты будут добавлены после публикации. Статус не release.
+
+Новая функция считает четверти перед умножением, без округления бункеров.
+Никакой перезаписи исторических fillLevel/объёмов/дней/событий/площадей/плотностей/связей:
+вычисляемые итоги обновляются при чтении. Повторный запуск не преобразует значения
+снова; старый backup хранит те же коды и после restore использует новую формулу.
+Room24/DatabaseProvider/entities/backup format неизменны. Существующий снимок объёма
+кампании сохранён в базе; для расчёта приоритет имеет ТТХ связанного комбайна,
+снимок используется при недоступной карточке. Чтение не меняет старую строку. Нет придуманной константы или второго поля ввода/диапазона вместимости.
+
+UI проценты/точный объём бункера/одно значение массы и урожайности; объём и масса
+до3знаков, внутренняя арифметика без промежуточного округления. Общий ReplacementSpan
+связывает число с единицей. Площадь/прогресс/режимы плотности без изменения семантики.
+Полный протокол аудита и перехода: docs/issue48-fixed-fill.md.
+
+База main2a37bfe05c9b60f04035f7b64fae7f726117d647, деревоf085d292e79424376cdc019e7c3c5912f7aa42b1.
+Отдельный worktree/ветка feature/issue-48-fixed-fill. Из-за недоступного git proxy базу
+импортировали через GitHub API: все27отличающихся blobs и итоговый tree сверены;
+локальныйad45fca имеет точное дерево main. PR будет создан с настоящим parent main,
+локальные технические import commits в PR не попадут. Исходная ветка Agent Core сохранена.
+Код до финальной чистки форматирования:61b9342 (локальный); точный проверенный SHA
+и CI добавляются следующим отчётным коммитом. Незакоммиченные на момент записи:
+чистка форматирования и этот отчёт; не объявлять их SHA уже проверенным.
+
+Локально новые запуски:
+- python3 docs/run-harvest-jvm-checks.py --gradle-lib <Gradle8.13lib>:62JUnit/0ошибок.
+  Это реальные Kotlin/JUnit исходники Calculator/CampaignMetrics/CardModel/FixedFill;
+  не Android/Room и не замена Gradle-сборки.
+- python3 -m unittest discover -s docs -p 'test_*.py' -q:108tests,106pass/2SDKskip,
+  0failures/0errors. Вложенные frozen-policy sandboxes не суммировать.
+- source /workspace/agronaliz-env.sh; agrogradle :app:assembleDebug :app:test:
+  Gradle не стартует: FileLockContentionHandler / Could not determine a usable wildcard IP.
+  Конфигурация проекта ради среды не менялась. Android build/UI/upgrade пока не проверены.
+- Python compile/YAML parsing нового CI/diff whitespace:pass.
+
+Все существующие .github/workflows побайтно прежние; добавлен только безопасный
+PR workflow без production secrets. Production admission/signer всё ещё запрещают
+product1.0.11: изменение допуска не входит в Issue48. VersionName candidate1.0.11
+и обновлённые read-only test expectations не являются разрешением публикации.
+Не запускать production signing, APK/Release, merge или действия с реальной MAIN1.0.10.
+
+Новая instrumentation-проверка pinned MAIN1.0.10→candidate1.0.11: оба debug пакета,
+полный JSON таблиц/SQL схемы/файлы/preferences/старый backup/restore/restart/edit;
+кроме синтетических данных ничего не используется. Её фактический успех пока не заявлен.
+Следующий шаг: CI, исправления при необходимости, Draft PR и остановка для review.
+Удалённых файлов нет. Полный список изменённых путей будет добавлен итоговым дополнением.
+
+
+## Issue48 — публикация Draft PR49 и аудит состава
+
+PR: https://github.com/Arch-relic/AgroNaliz/pull/49 — open/Draft, не объединён.
+Ветка feature/issue-48-fixed-fill. Опубликованный и локально проверенный код:
+168fded5d12745705292e08f93eb75666c258e37, дерево056054086156fece5e8394edee6466966349c614,
+совпадает с локальным bd5d8251910370682aef2a5e795798244d96b5fc. Parent main:
+2a37bfe05c9b60f04035f7b64fae7f726117d647. Следующий отчётный коммит меняет handoff,
+не проверенный Android-код. Изменений main не было.
+
+Состав33пути относительно репозитория (удалений нет):
+- .github/workflows/harvest-fixed-fill-checks.yml
+- app/build.gradle.kts
+- app/src/androidTest/java/ru/fo6osik/workjournal/AppVersionUiTest.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/ChangelogUiTest.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/HarvestFixedFillUpgradeTest.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/HarvestFullBackup108Test.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/HarvestResultsCardUiTest.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/Main109UpdateUiTest.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/MainRoom23MigrationTest.kt
+- app/src/main/java/ru/fo6osik/workjournal/AppChangelog.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestCalculator.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestDao.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestDayActivity.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestProcessActivity.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestResultsCardView.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestResultsFormatter.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestValueText.kt
+- app/src/test/java/ru/fo6osik/workjournal/AppChangelogTest.kt
+- app/src/test/java/ru/fo6osik/workjournal/HarvestCalculatorTest.kt
+- app/src/test/java/ru/fo6osik/workjournal/HarvestCampaignMetricsTest.kt
+- app/src/test/java/ru/fo6osik/workjournal/HarvestFixedFillTest.kt
+- app/src/test/java/ru/fo6osik/workjournal/HarvestResultsCardModelTest.kt
+- docs/codex-handoff.md
+- docs/issue48-fixed-fill.md
+- docs/run-harvest-fixed-fill-checks.py
+- docs/run-harvest-jvm-checks.py
+- docs/run-main-room23-checks.py
+- docs/run-main-room24-same-checks.py
+- docs/run-room24-update-checks.py
+- docs/test_app_version.py
+- docs/test_main_room23_policy_patch.py
+- docs/test_main_room24_release.py
+- docs/verify-build-variants.py
+
+Дополнительно отдельно исполнены4JUnit AppChangelogTest реальным Kotlin-компилятором:
+4/4pass,0ошибок. Это не повторные62теста расчётов. Сборка/JVM/instrumentation в CI
+на момент записи выполнялись. Policy CI #23/run39552980179 уже success:
+https://github.com/Arch-relic/AgroNaliz/actions/runs/39552980179.
+Новый fixed-fill CI #1/run39552980141: в процессе; успех Android не предполагается
+по наличию тестов. Фактические итоги добавляются следующим дополнением.
+
+Повторная статическая сверка: AppDatabase/DatabaseProvider/HarvestBunker/HarvestDay/
+HarvestProcess/DatabaseBackupManager/DataImportManager, AGENTS.md и все10ранее
+существующих workflow побайтно прежние; handoff история полностью сохранена.
+Production secrets/ключи не читались; APK/Release не публиковались; никакого
+merge/действий с установленной MAIN1.0.10 физического устройства.
+
+
+### Уточнение приоритета вместимости при проверке ТЗ
+
+Расчёт использует реальную ТТХ связанного комбайна в первую очередь, как требует
+пункт3. Сохранённый snapshot не перезаписывается и используется только при отсутствии
+доступной допустимой ТТХ (например, удалена техника). Добавлены readonly assertions
+на различающиеся ТТХ/snapshot и неизвестный объём; сравнение всех таблиц остаётся.
+Первоначальное описание приоритета snapshot в PR заменяется итоговой реализацией.
+
+
+# Итог Issue48 — MAIN1.0.11, Draft PR49, 21.10.2026
+
+Статус: реализация/сборка/тесты завершены, подготовлено для review владельца.
+PR https://github.com/Arch-relic/AgroNaliz/pull/49 — open/Draft, не объединён.
+Ветка feature/issue-48-fixed-fill. Настоящий parent main:
+2a37bfe05c9b60f04035f7b64fae7f726117d647. Проверенный GitHub код:
+ab8bb449bd11aecc1b6af406272c56fccb97cb63; дерево0e22ca86681df6c39facd20a136f33967207445f
+совпало с локальным e36c34dcaf0e658b625c343b61dd67db1a6b75d4.
+CI использовал технический PR merge-ref c377d8b37879b4f69299d0594736209a2f027dc9;
+его tree независимо сверено через GitHub API и совпадает. Это не merge в main.
+Следующий коммит меняет только docs/issue48-fixed-fill.md и этот handoff; его SHA
+не подменяет проверенный код. Автоматический повтор CI после отчёта не считается
+уже проверенным, Android-код при этом тот же.
+
+## Окончательное поведение и сохранность
+
+Старые/новые FULL/HALF/MORE_THAN_HALF/LESS_THAN_HALF →100/50/75/25%.
+Сначала сумма четвертей, потом умножение на вместимость, без округления каждого
+бункера. Никакой физической конвертации записей/массового UPDATE/новых колонок:
+Room24 и identity/schema прежние. Даты, время, события, интервалы, связи, ID,
+площади, плотности и stored snapshot не переписываются. Повторные открытия и
+старые backup не дают повторного умножения/конвертации. Backup/import реализация
+и четыре строковых кода прежние. Range-контейнер совместимости имеет равные границы;
+UI выводит одно значение, неожиданный настоящий интервал — неизвестное, не среднее.
+
+Приоритет вместимости — реальная ТТХ связанного комбайна согласно пункту3ТЗ.
+Снимок кампании остаётся нетронутым резервом при недоступной/невалидной карточке.
+Это введённое прежде значение, не произвольная константа. Нет обоих — невозможность
+расчёта. Новые кампании получают значение автоматически из существующей ТТХ.
+Readonly проверки подтверждают приоритет карточки при отличающемся snapshot;
+реальные таблицы после вычислений не меняются.
+
+NOVA4.7:25%=1.175,50%=2.35,75%=3.525,100%=4.7м³;
+10FULL+25%=48.175м³; MIN720→34.686т; при10га→3.4686т/га→34.686ц/га.
+Массы разных дней считаются с их собственными плотностями. MIN/AVERAGE/MAX/CUSTOM,
+выбор площади и правила неполной кампании сохранены. Объём/масса форматируются
+до3знаков, урожайность по прежнему правилу до2; внутренние числа не округляются.
+Проценты добавлены к подписям, точный объём — к бункеру; число+единица неразрывны.
+Только количество шире всей карточки прокручивается горизонтально без уменьшения
+шрифта/потери текста; обычные значения сохраняют прежнюю адаптивную компоновку.
+
+## Фактически выполненные проверки
+
+Все9workflow на ab8bb449 завершились success:
+- Новый MAIN1.0.10→1.0.11, #5/run39555161368:
+  https://github.com/Arch-relic/AgroNaliz/actions/runs/39555161368.
+ 12инструментальных вызовов:6на каждый disposable MAIN/TEST. Pinned source1.0.10
+ 2a37bfe пересобран с CI debug ключом, не оригинальной production подписью.
+ До update проверен старый47–49.35м³, после —48.175м³/34.686т/3.4686т/га.
+ Сравнены все JSON таблицы, SQL schema, файлы/preferences; старый backup в отдельную
+ in-memory БД, roundtrip, повторный запуск, редактирование/возврат старого бункера,
+ неизвестные/различающиеся вместимости и неразрывность единиц. MAIN fixture code
+ 3000008→3000009, TEST1000301→1000302 — только синтетические коды, не обещанный release code.
+- Android PR #163/run39555161356:
+  https://github.com/Arch-relic/AgroNaliz/actions/runs/39555161356.
+ 53инструментальных вызова/107тестовых выполнений: UI результатов/календарь/навигация/
+ интервалы/плотности, все прежние backup/merge/repeat/corrupt rollback, миграции,
+ MAIN/TEST isolation и реальные synthetic TEST update same-key/different-key rejection
+ с сохранением данных. Python50:13catalog+8version+29TEST tools, без ошибок.
+ Upload debug APK skipped; только android-pr6-diagnostics/id12325783120.
+- MAIN safe update #80/run39555161373:
+  https://github.com/Arch-relic/AgroNaliz/actions/runs/39555161373.
+ Python18signer+10read-only,3инструментальных вызова Room20→24→24/restart;
+ данные/preferences/files/timers/certificate сохранены. Production signer реально
+ отверг candidate1.0.11до декодирования ключа, output отсутствует. Синтетическое
+ обновление использует уже подписанные Gradle debug fixtures с проверкой настоящих
+ подписей/одного disposable cert/package/product/increasing code; production signer
+ для разрешения тестового update больше не вызывается.
+- MAIN Room22 regression #50/run39555161469:
+  https://github.com/Arch-relic/AgroNaliz/actions/runs/39555161469.
+ 3вызова1.0.7/Room22→1.0.11/24, все старые поля/таблицы/FK/файлы/preferences,
+ отдельный restore/restart. Масса4состояний при8м³/750 — одно15т, не прежние12–18.
+- Room23→24 #37/run39555161567:
+  https://github.com/Arch-relic/AgroNaliz/actions/runs/39555161567 —10вызовов обоих пакетов.
+- Room24→24 #9/run39555161479:
+  https://github.com/Arch-relic/AgroNaliz/actions/runs/39555161479 —10вызовов обоих пакетов.
+ Старые names1.0.9→1.0.10/Room22→23 исторические; read-only candidate assertions
+ обновлены на1.0.11. Эти проверки не допускают1.0.11к production публикации.
+- UI-polish #12/run39555161499:
+  https://github.com/Arch-relic/AgroNaliz/actions/runs/39555161499 —API23/35, MAIN/TEST,
+ 12вызовов: metadata/cert/copy/recreation, width280/360/600dp/font1/1.6,
+ полные числа+единицы и доступность горизонтального overflow без обрезки/уменьшения.
+- Changelog #22/run39555161379:
+  https://github.com/Arch-relic/AgroNaliz/actions/runs/39555161379 —3UI-вызова.
+- Policy #27/run39555161461:
+  https://github.com/Arch-relic/AgroNaliz/actions/runs/39555161461 —30верхнеуровневых
+ Python:10frozen Room23+10live23→24+10live24→24. Старые manifests/fixtures/guards
+ сохранены, candidate1.0.11не получает release admission; временные sandboxes
+ нормализуют только свои product metadata. Вложенные архивные проверки не суммировать.
+
+Всего106инструментальных вызовов/160тестовых выполнений (107+12+10+10+12+3+3+3),
+включая намеренные повторения, не160уникальных методов. Python108верхнеуровневых в CI
+(50Android+28MAIN-safe+30policy), без ошибок; вложенные sandboxes не прибавляются.
+
+Артефакт нового CI12325603142 fixed-fill-test-reports реально скачан и разобран.
+SHA256 ZIP69313873f9f84a28f72a92bd49a26a20d5f570adcd55587028e2a1ced1fa0550
+совпал с GitHub. APK/AAB/keys в ZIP нет. verification.json содержит sourceSha
+c377d8b37879b4f69299d0594736209a2f027dc9, baseline2a37bfe, schemaUnchanged/rowsUnchanged/
+legacyBackupRestored/restart=true для обоих пакетов, productionReleaseAuthorized=false.
+XML:15suite/181tests в testDebugUnitTest и15suite/181в testDebugTestUnitTest;
+0failures/0errors/0skip в каждом. Повторные JVM-прогоны9workflow не суммировать.
+
+Локальные новые прогоны:62Kotlin/JUnit расчётов/карточки/FixedFill плюс отдельно4
+AppChangelogTest, все успешны. Python108tests:106pass/2SDKskip,0ошибок.
+Команды: python3 docs/run-harvest-jvm-checks.py --gradle-lib <Gradle8.13lib>;
+python3 -m unittest discover -s docs -p 'test_*.py' -q; отдельно K2JVMCompiler/JUnitCore
+для AppChangelog. Python compile, новый YAML parse и diff whitespace —pass.
+Обязательная локальная source /workspace/agronaliz-env.sh;
+agrogradle :app:assembleDebug :app:test не стартует из-за FileLockContentionHandler/
+Could not determine a usable wildcard IP; конфигурация ради среды не менялась.
+Android build/assembleDebug/assembleDebugTest/обаAndroidTest/обаJVM выполнены в CI;
+результаты не подменены локальным обходным JVM-прогоном.
+
+Первые CI обнаружили устаревшие ожидания версии/интервала и зависимость synthetic
+update от production signer; они исправлены только в тестовой инфраструктуре.
+Случай широкой неразрывной единицы выявлен и исправлен адаптивной прокруткой.
+Утверждение полного старого update до этих исправлений не считать успешным;
+окончательные ссылки/результаты приведены выше.
+
+## Полный окончательный список файлов
+
+Созданы (6):
+- .github/workflows/harvest-fixed-fill-checks.yml
+- app/src/androidTest/java/ru/fo6osik/workjournal/HarvestFixedFillUpgradeTest.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestValueText.kt
+- app/src/test/java/ru/fo6osik/workjournal/HarvestFixedFillTest.kt
+- docs/issue48-fixed-fill.md
+- docs/run-harvest-fixed-fill-checks.py
+
+Изменены (31):
+- app/build.gradle.kts
+- app/src/androidTest/java/ru/fo6osik/workjournal/AppVersionUiTest.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/ChangelogUiTest.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/HarvestFullBackup108Test.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/HarvestResultsCardUiTest.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/Main109UpdateUiTest.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/MainRoom23MigrationTest.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/UiPolishTest.kt
+- app/src/main/java/ru/fo6osik/workjournal/AppChangelog.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestCalculator.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestDao.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestDayActivity.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestProcessActivity.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestResultsCardView.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestResultsFormatter.kt
+- app/src/test/java/ru/fo6osik/workjournal/AppChangelogTest.kt
+- app/src/test/java/ru/fo6osik/workjournal/HarvestCalculatorTest.kt
+- app/src/test/java/ru/fo6osik/workjournal/HarvestCampaignMetricsTest.kt
+- app/src/test/java/ru/fo6osik/workjournal/HarvestResultsCardModelTest.kt
+- docs/codex-handoff.md
+- docs/run-harvest-jvm-checks.py
+- docs/run-main-room23-checks.py
+- docs/run-main-room24-same-checks.py
+- docs/run-main-update-checks.py
+- docs/run-room24-update-checks.py
+- docs/test_app_version.py
+- docs/test_main_apk_release.py
+- docs/test_main_room23_policy_patch.py
+- docs/test_main_room24_release.py
+- docs/verify-build-variants.py
+- docs/verify-main-room23-inputs.py
+
+Удалений нет, всего37путей. Все10существующих workflows, AGENTS.md, Room/entities/
+DatabaseProvider и backup/import реализация побайтно прежние; история handoff main
+сохранена целиком. Из старых release files менялись только тесты/read-only verifier,
+не publisher/signer/admission и не подписи/applicationId. Dependencies не обновлялись.
+
+## Ограничения и следующий шаг
+
+Это candidate1.0.11, не выпущенная версия. Production admission/signer всё ещё
+запрещают1.0.11; будущий допуск/точный итоговый SHA/возрастающий release code/подпись
+и публикация — отдельное согласованное задание после review. Не использовать старые
+зелёные аудиты или синтетические коды как разрешение выпуска. Смена SHA снимает
+любые будущие exact-source допуски согласно прежней политике.
+
+Физический смартфон и установленная MAIN1.0.10не подключались; фактические значения
+его ТТХ/кода/сертификата/данные напрямую не проверялись. Работает реальное сохранённое
+значение вместимости, не константа по названию модели. Приватный production key не
+требовался и не использовался. Production signing/workflows/публикация APK/Release,
+merge/main push, удаление пользовательских данных не выполнялись.
+
+Следующее действие — review владельца. Проверить подписи25/50/75/100%, последний
+NOVA25%при4.7→1.175, объём/массу кампании и обычный/крупный шрифт. На телефон ничего
+не устанавливать без отдельного разрешения и прежнего backup/release процесса.
+После этого отчёта остановиться; PR оставить Draft.
+
 # Agent Core v1.0 — этап 1, 20.10.2026
 
 Цель: управляющая основа задач/согласований/полномочий без автоматического Codex.
@@ -1731,3 +2041,230 @@ base main e13fd1e19f531824e148fff1d17d481098929e43.
 отдельно и будут отражены в PR. Нет ручного dispatch/rerun, изменения workflow или
 ослабления защиты. Модель остаётся synthetic; вывод не является гарантией OS sandbox.
 После обновления Draft PR и проверки полного CI — остановиться для owner review.
+
+
+## AGN-49 — подготовка PR #49 к внедрению, 24.10.2026
+
+Цель: синхронизировать feature/issue-48-fixed-fill с актуальным main без
+переписывания истории, сохранить точные проценты и совместимость данных.
+Статус этого отчёта: локальная проверка завершена частично, remote CI ожидается.
+
+Основа main: 4c21c59acf8febc71d123e3582b74eeac613b49e (сверена GitHub API).
+Исходный PR head: cbec8d21d2dbf37443d086d2969c6bc14959e575. Локальная ветка
+feature/issue-48-fixed-fill. Проверены изменения перед merge-коммитом; его SHA
+будет зафиксирован следующим отчётным коммитом после проверки CI.
+
+Git fetch не работал: proxy:8080 connection refused. Через GitHub API получены
+37 отсутствующих blobs, дерево head и шесть оригинальных commits; все Git SHA
+побайтно проверены перед записью локальных объектов. История PR восстановлена
+точно, без synthetic замены commits. Выполнен git merge --no-commit --no-ff origin/main.
+Единственный конфликт: docs/codex-handoff.md, два блока (вводная и добавленные
+отчёты). Сохранены обе стороны, включая Issue48 и новые этапы main. Android-код
+и тесты PR не потребовали исправлений. Новые файлы main сохранены без изменений.
+
+На этапе AGN-49 изменён только docs/codex-handoff.md плюс включение изменений
+main merge-коммитом. Созданных и удалённых специально для AGN-49 файлов нет.
+Перечень файлов исходной реализации Issue48 приведён в предыдущем отчёте выше.
+Схема Room24, entities, DatabaseProvider, DatabaseBackupManager, DataImportManager,
+production workflows/policies и подпись не менялись относительно main.
+FULL/MORE_THAN_HALF/HALF/LESS_THAN_HALF = 100/75/50/25%; суммирование четвертей
+до умножения, без UPDATE старых записей. Вместимость из ТТХ связанного комбайна,
+исторический снимок только как резерв; расчёт не записывает разрешённое значение
+обратно. Объём и масса выводятся до трёх десятичных знаков без промежуточного
+округления. Пользовательские базы и устройства не подключались.
+
+Новые локальные запуски:
+- source /workspace/agronaliz-env.sh; agrogradle :app:assembleDebug :app:assembleDebugTest :app:test --console=plain
+  — FAILED до компиляции: FileLockContentionHandler / Could not determine a usable wildcard IP for this machine.
+- python3 docs/run-harvest-jvm-checks.py --gradle-lib <Gradle 8.13 lib>
+  — OK, 62 JUnit tests, 0 failures/errors. Автономный Kotlin, не Android/Room.
+- python3 -m unittest discover -s docs -p 'test_*.py' — 108 tests,
+  106 passed, 2 skipped (необходим построенный APK/SDK); 0 failures/errors.
+- git diff --cached --check — passed. Схема/backup/import/production paths
+  сравнены с main, различий в реализации нет.
+
+Локально нет /dev/kvm и emulator images; API23/35, Room migration, upgrade
+1.0.10→1.0.11 и backup/restore ожидают штатного PR CI. Исторические success
+из предыдущего отчёта не выдаются за проверки нового merge. Конфигурация проекта
+и production допуск ради запуска не менялись.
+
+PR #49: https://github.com/Arch-relic/AgroNaliz/pull/49 — open, draft=true,
+merged=false перед публикацией. Следующий этап: публикация merge в ту же
+feature-ветку без force и ожидание всех CI; исправление подтверждённых ошибок
+в рамках AGN-49. Не merge в main, не Ready, не APK/Release, не production dispatch.
+После отчёта остановиться и ожидать решения владельца.
+
+### AGN-49: опубликован merge и исправлена точность малых значений
+
+Опубликован remote merge 37b0b1c5e599c7bf0df1bb99e68545326c4bf13b,
+parents cbec8d21d2dbf37443d086d2969c6bc14959e575 +
+4c21c59acf8febc71d123e3582b74eeac613b49e, tree
+5c80663a27e550f25f6338a1ba416b94c962ef6b (совпадает с локальным a70740b).
+Обновление ref force=false с expected_sha; main не менялся. GitHub подтвердил
+head/base, mergeable=true, draft=true, merged=false. Отсутствие конфликтов
+не означает разрешение merge.
+
+Найден дефект исходного PR: исключение number() для малых площадей действовало
+и для объёма/массы <0.005, выводя больше трёх десятичных знаков. Новый тест сначала
+воспроизвёл ошибку: 63 tests / 1 failure (0,001175 м³ вместо 0,001 м³).
+Исправление ограничивает исключение прежней двухзначной точностью; объём/масса
+округляются только при отображении до 3 знаков. Правило малых площадей и точность
+хранимых/расчётных значений сохранены. Изменены дополнительно:
+- app/src/main/java/ru/fo6osik/workjournal/HarvestResultsFormatter.kt
+- app/src/test/java/ru/fo6osik/workjournal/HarvestFixedFillTest.kt
+- docs/codex-handoff.md (это дополнение).
+Созданных/удалённых файлов нет. Новый автономный Kotlin/JUnit запуск: 63 passed,
+0 failures/errors. Новый Python: 108 tests, 106 passed / 2 APK-dependent skips,
+0 failures/errors. git diff --check passed. CI исходного merge не заменяет CI
+исправления; SHA проверенного результата и финальные runs будут записаны ниже.
+
+Блокер CI: Agent Core trusted-validation, pull_request_target из main,
+https://github.com/Arch-relic/AgroNaliz/actions/runs/40081154410,
+job 120834818874: DENIED: Governance/workflow changes require separate owner review;
+gate cannot authorize itself. Причина — исходное добавление workflow
+.github/workflows/harvest-fixed-fill-checks.yml относительно main. Unit suite
+Agent Core и production policy tests на merge прошли; trusted denial отдельно
+не выдаётся за success. Защита не менялась, обход/ослабление/rerun не выполнялись.
+Для полностью зелёного допуска требуется отдельное решение владельца по workflow;
+AGN-49 не разрешает менять производственные правила. Остальные уже запущенные
+Android checks ожидаются, окончательная готовность к merge не заявляется.
+
+
+### AGN-49 — итоговые проверки и передача владельцу, 24.10.2026
+
+Статус: синхронизация и проверки приложения завершены; полный допуск BLOCKED
+отдельным trusted governance gate. PR #49 остаётся Draft, разрешение merge отсутствует.
+
+Проверенный remote code commit: 3fb976d83d03a3d719c5064bd6f6c0c99526959e,
+tree 41b28f408b4039524f0f97f61308fd38aa33ffcb. Его содержимое точно совпало с
+локальным 78491dafe2881c96735f4e37bd16d487b2bff5a3; локальная ветка затем
+приведена к точному remote commit. Основа main повторно сверена перед сдачей:
+4c21c59acf8febc71d123e3582b74eeac613b49e. Merge 37b0b1c имеет обоих исходных
+родителей; force/rebase/main push не выполнялись. Последующий отчётный коммит
+изменяет только docs/codex-handoff.md, не код/тесты. Его автоматические повторные
+CI не подменяют приведённые ниже результаты проверенного code commit.
+
+Все новые штатные CI на 3fb976d завершились; 10 workflows success, 1 trusted gate failure:
+- Main APK safe update checks [pull_request]: success; https://github.com/Arch-relic/AgroNaliz/actions/runs/40081459510
+- Offline changelog UI checks [pull_request]: success; https://github.com/Arch-relic/AgroNaliz/actions/runs/40081459534
+- Installed diagnostics and harvest typography [pull_request]: success; https://github.com/Arch-relic/AgroNaliz/actions/runs/40081459606
+- MAIN Room22 to23 migration audit [pull_request]: success; https://github.com/Arch-relic/AgroNaliz/actions/runs/40081459536
+- Fixed bunker percentages and MAIN 1.0.10 update [pull_request]: success; https://github.com/Arch-relic/AgroNaliz/actions/runs/40081459547
+- MAIN 1.0.9 to1.0.10 Room24 same-schema audit [pull_request]: success; https://github.com/Arch-relic/AgroNaliz/actions/runs/40081459505
+- Room24 synthetic MAIN TEST update audit [pull_request]: success; https://github.com/Arch-relic/AgroNaliz/actions/runs/40081459537
+- Detached MAIN release policy proposal checks [pull_request]: success; https://github.com/Arch-relic/AgroNaliz/actions/runs/40081459528
+- Agent Core validation [pull_request]: success; https://github.com/Arch-relic/AgroNaliz/actions/runs/40081459530
+- Android PR checks [pull_request]: success; https://github.com/Arch-relic/AgroNaliz/actions/runs/40081459549
+- Agent Core validation [pull_request_target]: failure; https://github.com/Arch-relic/AgroNaliz/actions/runs/40081457906
+
+Подтверждённые результаты по завершённым job logs:
+- MAIN/debug и TEST/debugTest собраны; JVM-задачи Gradle успешны. CI использует
+  :app:assembleDebug :app:assembleDebugTest :app:assembleDebugAndroidTest
+  :app:testDebugUnitTest :app:testDebugTestUnitTest; отдельный запуск с
+  -PtestBuildType=debugTest собирает TEST instrumentation. Полное число JVM tests
+  из XML в этой сессии не извлекалось; их отчёты приложены к Actions artifacts.
+- Общая Android job 120835722001: 53 инструментальных вызова / 107 выполненных
+  тестов, включая группы и повторы. Python в этой job: 13 + 8 + 29 tests passed.
+- Fixed-fill 1.0.10→1.0.11: 12 вызовов / 12 tests (MAIN и TEST). Проверены SQL
+  schema и все tables без изменений, исторические коды, backup→отдельная БД→
+  roundtrip, повторный запуск, редактирование с возвратом, приоритет ТТХ.
+- Room23→24 и Room24→24: по 10 вызовов / 10 tests; обе job подтвердили
+  data/files/preferences/certificate retention, отдельный restore и restart.
+- Room22 regression: 3 вызова / 3 tests. MAIN safe update: 3 / 3 tests;
+  Python 18 + 10 tests passed.
+- UI API23 и API35: по 6 вызовов / 6 tests; changelog UI: 3 / 3 tests.
+- Итого по всем Android workflows: 106 инструментальных вызовов / 160
+  выполненных tests, 0 failures. Повторы не выдаются за уникальные сценарии.
+- Agent Core unit suite: 140 tests passed. Detached policy: 3 набора по 10 tests.
+- Локальные финальные 63 Kotlin/JUnit и 108 Python (106 passed / 2 skips)
+  описаны выше; они не смешиваются с CI и не называются эмуляторными.
+- CI на merge 37b0b1c — промежуточный, не основание итоговых результатов выше.
+- git diff --check passed; 7 файлов Room/entities/backup/import и все 12
+  существующих workflows побайтно совпадают с main. Production workflow
+  .github/workflows/main-apk-publish.yml SHA256:
+  fd9c73989583e47ed7337a7f7fa904dde844fa2b864ea06a0e9666d9ab330712.
+
+Fixed-fill artifact: 12555831642, fixed-fill-test-reports, API digest
+sha256:61b0200c7c3889c9dd5f347093cf34b82093e7e0ec449f65ccf943925e7a6d5d.
+Это метаданные GitHub; ZIP этого artifact локально не распаковывался и digest
+скачанных байтов не проверялся. Фактические проверки подтверждены success job
+и её логом с 12 OK (1 test), а не вымышленным локальным анализом JSON artifact.
+Workflows загружают отчёты/diagnostics, публикация APK/Release не выполнялась.
+
+Оставшийся блокер: trusted-validation job 120835718313, run 40081457906,
+pull_request_target с кодом main, отказ:
+DENIED: Governance/workflow changes require separate owner review; gate cannot authorize itself.
+В PR присутствует исходный новый workflow .github/workflows/harvest-fixed-fill-checks.yml.
+Gate не допускает любые workflow changes. Это не дефект расчётов и не повод
+ослаблять защиту; gate/production policies не менялись. Rerun/bypass/manual
+approval/dispatch не выполнялись. Даже при 10 success задача НЕ удовлетворяет
+критерию «все автоматические проверки успешны»; требуется отдельное решение
+владельца о допустимой процедуре review workflow, без автоматического merge.
+
+Финальные изменения AGN-49 сверх исходного PR и включения main:
+- docs/codex-handoff.md — оба конфликтовавших блока сохранены, отчёт дополнен;
+- app/src/main/java/ru/fo6osik/workjournal/HarvestResultsFormatter.kt —
+  исправлено отображение малых объёмов/масс до 3 десятичных знаков;
+- app/src/test/java/ru/fo6osik/workjournal/HarvestFixedFillTest.kt —
+  регрессия малых значений и сохранение прежнего отображения малой площади.
+Созданных/удалённых специально для AGN-49 файлов нет. Незакоммиченных правок
+кода при сдаче нет. Полный исходный scope Issue48 сохранён и описан выше.
+
+Все данные тестов synthetic на одноразовых эмуляторах; физический телефон и
+реальные пользовательские данные не использовались. API23/35 emulator success
+не означает проверку на реальном устройстве. Room24 и backup совместимы по
+пройденным миграциям/restore, downgrade не обещается. Локальный Gradle по-прежнему
+ограничен wildcard IP; успех Android относится именно к CI, не локальной сборке.
+Production 1.0.11 по-прежнему не допущена отдельной политикой выпуска.
+
+PR: https://github.com/Arch-relic/AgroNaliz/pull/49. Перед отчётным commit:
+open, draft=true, merged=false, mergeable=true (только отсутствие конфликтов).
+Описание PR обновляется итогом AGN-49 и ссылкой на этот handoff из feature-ветки.
+Следующий этап: решение владельца по blocked trusted gate и review реализации.
+Остановиться; не Ready, не merge, не APK/Release, не менять подпись/production admission.
+
+## AGN-49 — разделение приложения и инфраструктуры, 24.10.2026
+
+Цель владельца: два отдельных Draft PR от актуального main, сохранение истории,
+кода приложения, тестов и документации; при любом новом отказе безопасности
+остановиться. Merge, APK/Release, обход защиты и изменение admission запрещены.
+Текущая часть: приложение, feature/issue-48-fixed-fill, существующий Draft PR #49:
+https://github.com/Arch-relic/AgroNaliz/pull/49.
+
+Основа main: 4c21c59acf8febc71d123e3582b74eeac613b49e, сверена GitHub API.
+Исходный head до разделения: 6bdf03a8a38ea5bb138d6e5df18082a4322e81d0.
+История сохраняется добавленным commit, без rebase/force. SHA проверяемого
+разделённого head будет указан в итогах проверки, не как хеш этого же отчёта.
+
+Удалены из текущей ветки для переноса в feature/issue-49-fixed-fill-ci:
+- .github/workflows/harvest-fixed-fill-checks.yml;
+- docs/run-harvest-fixed-fill-checks.py — единственный вызывающий workflow,
+  сценарий запуска специального upgrade-аудита; общие drivers не переносятся.
+Изменён docs/codex-handoff.md только этим дополнением. Созданных файлов нет.
+Все app/**, включая HarvestFixedFillUpgradeTest, расчёты/форматирование/DAO и
+остальные тесты, а также docs/issue48-fixed-fill.md сохранены побайтно.
+Прежние отчёты и результаты выше — исторические; они не заменяют новый CI head.
+
+В PR #49 больше нет различий .github/** и agent_core/** с main. Все существующие
+проверки pull_request остаются без изменений и должны запуститься на новом head.
+Специальный fixed-fill workflow исключён из этого PR как инфраструктура;
+существующие Android/Room/backup/UI/policy проверки не отключаются.
+Room24, backup/import, signing, production admission и пользовательские данные
+не меняются. Все проверки приложения используют synthetic данные.
+
+Локальная проверка: сравнение дерева app/** и документации с исходным head,
+scope diff и git diff --check. Повторная Android-сборка для удаления workflow и
+переноса driver локально не запускалась; новый штатный CI и security checks
+ожидаются после публикации head. Предыдущие 63 Kotlin и 160 instrumentation
+результаты не выдаются за новый запуск. Независимая проверка уже подключена:
+agronaliz-security-controller / agronaliz-security-gate и security-preview.
+Исходный head имел исторический отказ PROTECTED_CHANGE (24.10 09:38 UTC),
+до этой задачи; текущая задача явно разрешает разделить этот scope.
+
+Проверки Agent Core trusted-validation и независимого controller выполнятся
+автоматически при обновлении PR; при новом отказе остановиться, без rerun/bypass
+и без последующей публикации инфраструктурного PR. Если application head принят,
+следующий этап — инфраструктурный Draft PR от main, его отдельные отчёт и проверки.
+Инфраструктурный PR пока не создан, номер неизвестен. Новый workflow остаётся
+protected change; отдельное review не даёт автоматического разрешения merge.
+Статус этого commit: разделение приложения подготовлено; новые проверки not_run.
