@@ -44,7 +44,18 @@ interface HarvestDao {
     @Transaction
     fun createProcess(process: HarvestProcess): Long {
         val area = process.fieldId?.let { getFieldArea(it) }
-        return insertProcess(process.copy(fieldAreaSnapshotHa = area, actualPlantedAreaHa = area))
+        return insertProcess(calculationProcess(process).copy(fieldAreaSnapshotHa = area, actualPlantedAreaHa = area))
+    }
+
+    @Query("SELECT grainTankVolumeM3 FROM combine_specs WHERE vehicleId = :vehicleId LIMIT 1")
+    fun getCombineCapacity(vehicleId: Int): Double?
+
+    /** Use the linked combine's real TTX; retain the historical snapshot as fallback when its
+     * card is unavailable. Neither source is rewritten and no model-specific constant is used. */
+    fun calculationProcess(process: HarvestProcess): HarvestProcess {
+        val capacity = process.combineVehicleId?.let { HarvestCalculator.positive(getCombineCapacity(it)) }
+            ?: HarvestCalculator.positive(process.bunkerVolumeM3)
+        return process.copy(bunkerVolumeM3 = capacity)
     }
 
     @Query("UPDATE harvest_processes SET actualPlantedAreaHa = :area WHERE id = :id")
