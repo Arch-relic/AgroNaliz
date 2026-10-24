@@ -2222,3 +2222,49 @@ open, draft=true, merged=false, mergeable=true (только отсутстви�
 Описание PR обновляется итогом AGN-49 и ссылкой на этот handoff из feature-ветки.
 Следующий этап: решение владельца по blocked trusted gate и review реализации.
 Остановиться; не Ready, не merge, не APK/Release, не менять подпись/production admission.
+
+## AGN-49 — разделение приложения и инфраструктуры, 24.10.2026
+
+Цель владельца: два отдельных Draft PR от актуального main, сохранение истории,
+кода приложения, тестов и документации; при любом новом отказе безопасности
+остановиться. Merge, APK/Release, обход защиты и изменение admission запрещены.
+Текущая часть: приложение, feature/issue-48-fixed-fill, существующий Draft PR #49:
+https://github.com/Arch-relic/AgroNaliz/pull/49.
+
+Основа main: 4c21c59acf8febc71d123e3582b74eeac613b49e, сверена GitHub API.
+Исходный head до разделения: 6bdf03a8a38ea5bb138d6e5df18082a4322e81d0.
+История сохраняется добавленным commit, без rebase/force. SHA проверяемого
+разделённого head будет указан в итогах проверки, не как хеш этого же отчёта.
+
+Удалены из текущей ветки для переноса в feature/issue-49-fixed-fill-ci:
+- .github/workflows/harvest-fixed-fill-checks.yml;
+- docs/run-harvest-fixed-fill-checks.py — единственный вызывающий workflow,
+  сценарий запуска специального upgrade-аудита; общие drivers не переносятся.
+Изменён docs/codex-handoff.md только этим дополнением. Созданных файлов нет.
+Все app/**, включая HarvestFixedFillUpgradeTest, расчёты/форматирование/DAO и
+остальные тесты, а также docs/issue48-fixed-fill.md сохранены побайтно.
+Прежние отчёты и результаты выше — исторические; они не заменяют новый CI head.
+
+В PR #49 больше нет различий .github/** и agent_core/** с main. Все существующие
+проверки pull_request остаются без изменений и должны запуститься на новом head.
+Специальный fixed-fill workflow исключён из этого PR как инфраструктура;
+существующие Android/Room/backup/UI/policy проверки не отключаются.
+Room24, backup/import, signing, production admission и пользовательские данные
+не меняются. Все проверки приложения используют synthetic данные.
+
+Локальная проверка: сравнение дерева app/** и документации с исходным head,
+scope diff и git diff --check. Повторная Android-сборка для удаления workflow и
+переноса driver локально не запускалась; новый штатный CI и security checks
+ожидаются после публикации head. Предыдущие 63 Kotlin и 160 instrumentation
+результаты не выдаются за новый запуск. Независимая проверка уже подключена:
+agronaliz-security-controller / agronaliz-security-gate и security-preview.
+Исходный head имел исторический отказ PROTECTED_CHANGE (24.10 09:38 UTC),
+до этой задачи; текущая задача явно разрешает разделить этот scope.
+
+Проверки Agent Core trusted-validation и независимого controller выполнятся
+автоматически при обновлении PR; при новом отказе остановиться, без rerun/bypass
+и без последующей публикации инфраструктурного PR. Если application head принят,
+следующий этап — инфраструктурный Draft PR от main, его отдельные отчёт и проверки.
+Инфраструктурный PR пока не создан, номер неизвестен. Новый workflow остаётся
+protected change; отдельное review не даёт автоматического разрешения merge.
+Статус этого commit: разделение приложения подготовлено; новые проверки not_run.
