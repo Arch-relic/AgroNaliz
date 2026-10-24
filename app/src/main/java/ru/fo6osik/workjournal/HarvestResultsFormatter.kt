@@ -6,7 +6,7 @@ import java.util.Locale
 object HarvestResultsFormatter {
     fun number(value: Double, decimals: Int = 2): String {
         // A positive fractional area must never be presented as a stored zero.
-        if (value > 0 && value < 0.005) {
+        if (decimals == 2 && value > 0 && value < 0.005) {
             return java.math.BigDecimal.valueOf(value).stripTrailingZeros().toPlainString().replace('.', ',')
         }
         return String.format(Locale.forLanguageTag("ru-RU"), "%.${decimals}f", value)

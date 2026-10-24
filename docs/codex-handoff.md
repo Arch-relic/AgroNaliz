@@ -2093,3 +2093,38 @@ merged=false перед публикацией. Следующий этап: п�
 feature-ветку без force и ожидание всех CI; исправление подтверждённых ошибок
 в рамках AGN-49. Не merge в main, не Ready, не APK/Release, не production dispatch.
 После отчёта остановиться и ожидать решения владельца.
+
+### AGN-49: опубликован merge и исправлена точность малых значений
+
+Опубликован remote merge 37b0b1c5e599c7bf0df1bb99e68545326c4bf13b,
+parents cbec8d21d2dbf37443d086d2969c6bc14959e575 +
+4c21c59acf8febc71d123e3582b74eeac613b49e, tree
+5c80663a27e550f25f6338a1ba416b94c962ef6b (совпадает с локальным a70740b).
+Обновление ref force=false с expected_sha; main не менялся. GitHub подтвердил
+head/base, mergeable=true, draft=true, merged=false. Отсутствие конфликтов
+не означает разрешение merge.
+
+Найден дефект исходного PR: исключение number() для малых площадей действовало
+и для объёма/массы <0.005, выводя больше трёх десятичных знаков. Новый тест сначала
+воспроизвёл ошибку: 63 tests / 1 failure (0,001175 м³ вместо 0,001 м³).
+Исправление ограничивает исключение прежней двухзначной точностью; объём/масса
+округляются только при отображении до 3 знаков. Правило малых площадей и точность
+хранимых/расчётных значений сохранены. Изменены дополнительно:
+- app/src/main/java/ru/fo6osik/workjournal/HarvestResultsFormatter.kt
+- app/src/test/java/ru/fo6osik/workjournal/HarvestFixedFillTest.kt
+- docs/codex-handoff.md (это дополнение).
+Созданных/удалённых файлов нет. Новый автономный Kotlin/JUnit запуск: 63 passed,
+0 failures/errors. Новый Python: 108 tests, 106 passed / 2 APK-dependent skips,
+0 failures/errors. git diff --check passed. CI исходного merge не заменяет CI
+исправления; SHA проверенного результата и финальные runs будут записаны ниже.
+
+Блокер CI: Agent Core trusted-validation, pull_request_target из main,
+https://github.com/Arch-relic/AgroNaliz/actions/runs/40081154410,
+job 120834818874: DENIED: Governance/workflow changes require separate owner review;
+gate cannot authorize itself. Причина — исходное добавление workflow
+.github/workflows/harvest-fixed-fill-checks.yml относительно main. Unit suite
+Agent Core и production policy tests на merge прошли; trusted denial отдельно
+не выдаётся за success. Защита не менялась, обход/ослабление/rerun не выполнялись.
+Для полностью зелёного допуска требуется отдельное решение владельца по workflow;
+AGN-49 не разрешает менять производственные правила. Остальные уже запущенные
+Android checks ожидаются, окончательная готовность к merge не заявляется.

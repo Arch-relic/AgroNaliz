@@ -31,6 +31,12 @@ class HarvestFixedFillTest {
             exact(4.7*expected/1000,HarvestCalculator.day(4.7,HarvestCalculator.DayInput(listOf("FULL"),1.0,density)).massTonnes)
         }
     }
+    @Test fun smallVolumesAndMassesStillUseAtMostThreeDecimalPlaces() {
+        assertEquals("0,001 м³", HarvestResultsFormatter.range(HarvestCalculator.Range(0.001175, 0.001175), "м³"))
+        assertEquals("0,005 т", HarvestResultsFormatter.range(HarvestCalculator.Range(0.0047, 0.0047), "т"))
+        // Preserve the existing display rule for tiny positive field areas.
+        assertEquals("0,001175", HarvestResultsFormatter.number(0.001175))
+    }
     @Test fun historicalCodesAreReadRepeatedlyWithoutTransformingInputs() {
         val original = levels.toList()
         val input = HarvestCalculator.DayInput(original, 2.0, 720.0)
