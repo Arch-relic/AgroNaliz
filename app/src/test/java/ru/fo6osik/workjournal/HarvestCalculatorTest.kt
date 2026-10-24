@@ -20,14 +20,14 @@ class HarvestCalculatorTest {
     @Test fun invalidInputRejected() { for(s in listOf("0","-1","NaN","Infinity","1e309","1,2.3")) { try { HarvestCalculator.parseOptionalPositive(s);fail(s) } catch(_:IllegalArgumentException) {} } }
     @Test fun fullVolume() { assertEquals(HarvestCalculator.Range(8.0,8.0),HarvestCalculator.volume(8.0,listOf("FULL"))) }
     @Test fun halfVolume() { assertEquals(HarvestCalculator.Range(4.0,4.0),HarvestCalculator.volume(8.0,listOf("HALF"))) }
-    @Test fun moreThanHalfVolume() { assertEquals(HarvestCalculator.Range(4.0,8.0),HarvestCalculator.volume(8.0,listOf("MORE_THAN_HALF"))) }
-    @Test fun lessThanHalfVolume() { assertEquals(HarvestCalculator.Range(0.0,4.0),HarvestCalculator.volume(8.0,listOf("LESS_THAN_HALF"))) }
+    @Test fun moreThanHalfVolume() { assertEquals(HarvestCalculator.Range(6.0,6.0),HarvestCalculator.volume(8.0,listOf("MORE_THAN_HALF"))) }
+    @Test fun lessThanHalfVolume() { assertEquals(HarvestCalculator.Range(2.0,2.0),HarvestCalculator.volume(8.0,listOf("LESS_THAN_HALF"))) }
     @Test fun unknownLevelDoesNotBecomeZero() { assertNull(HarvestCalculator.volume(8.0,listOf("unknown"))) }
-    @Test fun massAndYieldRange() {
+    @Test fun fixedMassAndYield() {
         val r=HarvestCalculator.day(8.0,input(2.0,750.0,"MORE_THAN_HALF"))
-        assertEquals(HarvestCalculator.Range(3.0,6.0),r.massTonnes)
-        assertEquals(HarvestCalculator.Range(1.5,3.0),r.yieldTonnesPerHa)
-        assertEquals(HarvestCalculator.Range(15.0,30.0),r.yieldCentnersPerHa)
+        assertEquals(HarvestCalculator.Range(4.5,4.5),r.massTonnes)
+        assertEquals(HarvestCalculator.Range(2.25,2.25),r.yieldTonnesPerHa)
+        assertEquals(HarvestCalculator.Range(22.5,22.5),r.yieldCentnersPerHa)
     }
     @Test fun missingAreaStillCalculatesMass() { val r=HarvestCalculator.day(8.0,input(null));assertNotNull(r.massTonnes);assertNull(r.yieldTonnesPerHa) }
     @Test fun zeroAreaNoDivision() { assertNull(HarvestCalculator.day(8.0,input(0.0)).yieldTonnesPerHa) }
