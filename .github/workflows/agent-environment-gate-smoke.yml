@@ -1,0 +1,14 @@
+name: Agent Environment Gate
+
+'on':
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  environment-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    environment: agronaliz-agent-readonly
+    steps:
+      - run: echo "Environment gate approved"

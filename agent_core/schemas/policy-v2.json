@@ -1,0 +1,40 @@
+{
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 2
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "operations": {
+      "const": [
+        "test"
+      ]
+    },
+    "handler": {
+      "const": "read_identity_smoke"
+    },
+    "consent_seconds": {
+      "const": 28800
+    },
+    "session_seconds": {
+      "const": 600
+    },
+    "clock_skew_seconds": {
+      "const": 60
+    }
+  },
+  "required": [
+    "schema_version",
+    "version",
+    "operations",
+    "handler",
+    "consent_seconds",
+    "session_seconds",
+    "clock_skew_seconds"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

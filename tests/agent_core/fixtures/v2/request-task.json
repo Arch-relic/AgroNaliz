@@ -1,0 +1,90 @@
+{
+  "schema_version": 2,
+  "id": "AGN-9001",
+  "type": "maintenance",
+  "state": "awaiting_approval",
+  "issue": "https://github.com/Arch-relic/AgroNaliz/issues/54",
+  "executor": {
+    "kind": "github_app_installation",
+    "app_id": 9001,
+    "installation_id": 9002,
+    "installation_account_id": 9003,
+    "repository_id": 9004,
+    "policy_version": "offline-1"
+  },
+  "current_revision": "r1",
+  "revisions": [
+    {
+      "spec": {
+        "id": "r1",
+        "title": "Synthetic only",
+        "description": "No live task",
+        "acceptance": [
+          "Offline smoke"
+        ],
+        "operations": [
+          "test"
+        ],
+        "constraints": [
+          "No network"
+        ],
+        "risks": [
+          "Not live evidence"
+        ]
+      },
+      "hash": "92ebe1c60adc2ff33342110a341dab1ad498ecaa051eca3478c324b12507c85a"
+    }
+  ],
+  "approval_requests": [
+    {
+      "context": {
+        "protocol_version": 2,
+        "task_id": "AGN-9001",
+        "revision_id": "r1",
+        "spec_hash": "92ebe1c60adc2ff33342110a341dab1ad498ecaa051eca3478c324b12507c85a",
+        "operations_hash": "ecfd160805b1b0481fd0793c745be3b45d2054582de1c4df5d9b8fa4d78e7fbc",
+        "executor": {
+          "kind": "github_app_installation",
+          "app_id": 9001,
+          "installation_id": 9002,
+          "installation_account_id": 9003,
+          "repository_id": 9004,
+          "policy_version": "offline-1"
+        },
+        "repository_id": 9004,
+        "policy_version": "offline-1",
+        "policy_hash": "e6abfe5f41e40dd7941942e221a53318bef32b7e2397b8857e121c1716a9a6db",
+        "history_position": 2,
+        "nonce": "ffffffffffffffffffffffffffffffff",
+        "not_before": "2026-10-21T12:00:00Z",
+        "not_after": "2026-10-21T20:00:00Z"
+      },
+      "context_hash": "9d7385c7e84ed3caa9f4999826342ab27e354a4dfacb3a13bd75ef9573cecd2e"
+    }
+  ],
+  "history": [
+    {
+      "from": null,
+      "to": "proposed",
+      "revision": "r1",
+      "reason": "Synthetic registration",
+      "at": "2026-10-21T12:00:00Z",
+      "approval": null
+    },
+    {
+      "from": "proposed",
+      "to": "awaiting_approval",
+      "revision": "r1",
+      "reason": "Synthetic request",
+      "at": "2026-10-21T12:00:00Z",
+      "approval": null
+    }
+  ],
+  "decisions": [],
+  "links": {
+    "branches": [],
+    "commits": [],
+    "checks": [],
+    "prs": []
+  }
+}

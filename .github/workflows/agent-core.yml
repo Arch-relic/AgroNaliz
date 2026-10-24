@@ -1,0 +1,66 @@
+name: Agent Core
+run-name: >-
+  ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'approve' && format('approve:{0}:{1}:{2}:{3}:{4}', inputs.task, inputs.spec_hash, inputs.operations_hash, inputs.executor_id, inputs.sequence) || 'Agent Core validation' }}
+on:
+  pull_request:
+    branches: [main]
+  pull_request_target:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      mode:
+        type: choice
+        options: [session_start, approve]
+        default: session_start
+      task:
+        type: string
+      spec_hash:
+        type: string
+      operations_hash:
+        type: string
+      executor_id:
+        type: string
+      sequence:
+        type: string
+permissions:
+  contents: read
+jobs:
+  tests:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - run: python3 -m pip install jsonschema==4.23.0
+      - run: python3 -m unittest discover -s tests/agent_core -v
+  trusted-validation:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.base.sha || github.sha }}
+          persist-credentials: false
+      - run: python3 -m pip install jsonschema==4.23.0
+      - name: Verify event and immutable task data
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUEST_MODE: ${{ inputs.mode }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = pull_request_target ]; then
+            python3 -m agent_core.check pr
+          elif [ "$GITHUB_EVENT_NAME" = workflow_dispatch ] && [ "$REQUEST_MODE" = approve ]; then
+            python3 -m agent_core.check approve
+          else
+            python3 -m agent_core.check analysis
+          fi

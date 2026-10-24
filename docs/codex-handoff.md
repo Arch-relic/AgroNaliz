@@ -1,4 +1,12 @@
+Актуальный этап: AGN-49, синхронизация Draft PR #49 с main, 24.10.2026; отчёт в конце.
+
 Актуальный этап: Issue48 / Draft PR49, MAIN1.0.11; новый отчёт в конце.
+
+Актуальный этап: PR47, вариант1 отзыва полномочий по решению владельца21.10.2026; новый отчёт в конце.
+
+Актуальный этап: повторный аудит и синхронизация Agent Core, Draft PR #47, 21.10.2026; отчёт в конце.
+
+Актуальный этап: Agent Core v1.0, этап 1, Draft PR #47; итог и ограничения в конце документа.
 
 Актуальный этап: issue44 / Draft PR45, безопасное MAIN1.0.10 Room24→24; итог в конце. Предыдущая история сохранена.
 
@@ -1350,3 +1358,738 @@ merge/main push, удаление пользовательских данных 
 NOVA25%при4.7→1.175, объём/массу кампании и обычный/крупный шрифт. На телефон ничего
 не устанавливать без отдельного разрешения и прежнего backup/release процесса.
 После этого отчёта остановиться; PR оставить Draft.
+
+# Agent Core v1.0 — этап 1, 20.10.2026
+
+Цель: управляющая основа задач/согласований/полномочий без автоматического Codex.
+Задание и техническая автономность явно утверждены пользователем в текущей сессии.
+Статус: реализация и локальные проверки завершены, подготовка Draft PR; результаты
+реального GitHub owner/main approval не заявлены. После публикации — остановка для review.
+Прежняя история handoff сохранена, AGENTS.md прочитан и побайтно не изменён.
+
+## Результат и решения
+
+Версионируемые JSON Schema Draft2020-12 для задач/рекомендаций, append-only редакции,
+решения и история переходов; SHA256 канонического spec, строгая матрица состояний.
+Approval привязан к реальному GitHub workflow_dispatch: pinned owner ID240867647,
+main, attempt1, successful run, workflow ID/path, task/spec/operations/executor/sequence.
+История и редакция независимо сверяются с задачей в неизменяемом run.head_sha.
+Комментарии/метки/файл PR не являются полномочиями. Самосогласование запрещено.
+Изменение ТЗ, блокировка/отмена/повторное согласование снимают действующий допуск.
+Сохранены причины и прошлые approvals. Защищённые операции всегда fail-closed;
+протокол отдельного разрешения не имитируется.
+
+PR unit job не имеет secrets/переданного токена/записи. Trusted pull_request_target
+читает код/схемы только из base SHA и JSON PR через API; не выполняет код PR.
+Смена governance/workflow (включая rename), удаление задач, неполная выдача API,
+несовпадение текущего head/base отклоняются. Weekly понедельник06:17UTC и manual
+session_start проверяют контракт рекомендаций; ИИ/уведомления/исполнитель не подключены.
+Варианты и причина выбора owner/main dispatch вместо комментариев или отдельного
+приватного signer описаны в docs/agent-core.md. Новый ключ/backup не требуется.
+
+## Файлы
+
+Созданы:
+- .github/workflows/agent-core.yml
+- agent_core/__init__.py
+- agent_core/core.py
+- agent_core/check.py
+- agent_core/requirements.txt
+- agent_core/schemas/task-v1.json
+- agent_core/schemas/recommendation-v1.json
+- agent_core/tasks/.gitkeep
+- agent_core/recommendations/.gitkeep
+- tests/agent_core/test_core.py
+- tests/agent_core/test_trusted_checks.py
+- docs/agent-core.md
+
+Изменён только docs/codex-handoff.md. Удалённых файлов нет.
+
+## Ветка, SHA, проверки
+
+Ветка feature/agent-core-stage1. GitHub API подтвердил базу main
+`e77e6241885e8ecbe031aed475312b6664b5eb58`, совпадающую с локальным HEAD до изменений;
+origin/main локально устарел, git fetch/gh недоступны из-за proxy8080. Подключённый
+GitHub API доступен, публикация выполняется через него без изменения main.
+Проверенный локальный коммит кода `a4007ba3054d4fc55e164476583a1638adbca76b`,
+дерево `0ad8e86a83ebdd9e99e1ee42b30459b0487b7507`.
+Следующий отчётный коммит добавляет этот handoff; его SHA не подменяет проверенный код.
+
+Новые запуски:
+- `python3 -m unittest discover -s tests/agent_core -q`:51tests,0failures/0errors/0skip.
+  Проверены регистрация, все основные состояния, недопустимый переход, missing approval,
+  конкретный grant, изменение/recomputed hash, outsider/self-approval, forged/replayed run,
+  blocked/cancelled, missing fields, сохранение решений/истории, protected operations,
+  PR/workflow/schema/init injection и rename, incomplete API/offline, unknown operations,
+  owner/main/first-attempt dispatch, параметры, session_start, weekly schedule, JSON/schema.
+- `python3 -m agent_core.check local`:success для пустых рабочих каталогов; это проверка
+  структуры, не доказательство реального approval. Фиктивные задачи не зарегистрированы.
+- `python3 -m unittest discover -s docs -p 'test_*.py' -q`:96tests,94passed/2SDKskipped,
+  0failures/0errors; вложенные временные patch-tests не прибавляются к96.
+- `python3 -m compileall -q agent_core tests/agent_core`:success.
+- YAML parsing нового workflow и проверка набора triggers/jobs:success.
+- `git diff --check` / `git diff --cached --check`:success.
+- Проверено отсутствие diff AGENTS.md, всего app/ и существующих workflows.
+
+Android не собирался: его код не менялся. Эмулятор/физическое устройство/реальные
+данные не использовались. Room24/миграции/backup/подписи MAIN и TEST/production admission
+и версии приложения без изменений. Production secrets не читались и не использовались;
+APK/Release не публиковались, merge/main push отсутствуют.
+
+## Аудит безопасности, ограничения и следующий этап
+
+Gate минимизирует privileges, не сохраняет credentials checkout, не интерполирует
+PR-текст в shell и fail-closed при неполных/противоречивых данных. Реальная выдача
+согласования и schedule требуют наличия workflow на main после отдельного review/merge
+владельцем. Этот bootstrap PR не может доказать доверенный запуск нового gate из main.
+Тесты approval воспроизводимы с синтетическим GitHub API; реальный owner-run не запускался.
+Автоинтеграция Codex не готова и не заявляется готовой.
+
+API ветки сообщил protected:false, rulesets вернул []; отдельный branch-protection API
+недоступен интеграции403. Защита/настройки репозитория не менялись. Требуется отдельное
+решение владельца о required trusted check и защите governance. Пока статус проверки
+не обязателен в GitHub, CI не способен технически запретить обход пользователем с write.
+Проверяется модель зарегистрированных задач, не семантика всех Android PR и не новая
+обязательная привязка legacy PR к task ID. Будущий исполнитель обязан использовать
+доверенные core/API/идентичность и authorize перед каждым действием; это следующий этап.
+Сохранность исторического run зависит от GitHub: удаление/недоступность — отказ.
+
+Следующее: review текущего протокола владельцем; отдельно merge; реальная тестовая
+регистрация/owner approval/отрицательные проверки на main; затем согласованная интеграция
+Codex и уведомлений. Не выполнять merge, signing, выпуск или изменение production gates.
+
+PR пока не создан: публикация ветки/дерева и Draft PR следующим действием через API;
+номер/URL и результаты CI будут добавлены отдельным дополнением в той же ветке.
+
+
+## Публикация Agent Core — Draft PR #47, 20.10.2026
+
+https://github.com/Arch-relic/AgroNaliz/pull/47 — open/Draft, не объединён.
+Ветка feature/agent-core-stage1; parent main e77e6241885e8ecbe031aed475312b6664b5eb58.
+Опубликованный код с первоначальным отчётом: 2ff804583ef677c2fec6720a7149441b2d4ff179,
+дерево cbd891ea89ea31d5b374e117a2f7dc940cf94f10 совпало с локальным 4fcce11.
+API PR подтвердил ровно13ожидаемых путей (12новых и этот handoff), удалений нет.
+Все9прежних workflow, весь app/ и AGENTS.md побайтно прежние; прежний handoff
+целиком сохранён внутри дополненного документа.
+
+Новый CI Agent Core #1 завершился успешно:
+https://github.com/Arch-relic/AgroNaliz/actions/runs/39474407982.
+Job tests/id118806522463:51tests,0errors/0failures; лог фактически прочитан.
+Unit job имеет Contents:read, persist-credentials:false. Trusted-validation skipped
+для pull_request — ожидаемое разделение, это не проверенный owner/main grant.
+CI checkout технического merge-ref832027bb998a71647f45937cde4d51ac7b0ad3ee;
+это GitHub PR-ref, не merge в main. Новый отчётный коммит меняет только handoff;
+повтор CI может запуститься автоматически и не считается уже проверенным здесь.
+
+Дополнительные существующие Android PR workflows запущены GitHub автоматически,
+на момент этой записи ещё выполнялись; их успех не заявляется. Production publish
+не запускались. Android-код этой задачей не менялся; целевой Agent Core CI зелёный.
+Состояние main/rulesets и ограничения bootstrap остаются описанными выше.
+
+Далее только review владельцем. Merge/production signing/APK/Release запрещены.
+Фактическую интеграцию Codex и live owner approval не объявлять готовыми.
+
+
+# Agent Core — синхронизация PR #47 и повторный аудит, 21.10.2026
+
+Задание: синхронизировать feature/agent-core-stage1 с актуальным main без потери
+изменений, повторить тесты/Gate/Actions/применимые CI, подготовить review.
+PR https://github.com/Arch-relic/AgroNaliz/pull/47 остаётся open/Draft; merge запрещён.
+
+Main: 2a37bfe05c9b60f04035f7b64fae7f726117d647. Проверенный GitHub SHA:
+5e80cb913811e48f8da4bd918b496bfd15032be6, tree ac9ff4bb5da7c4e14438ce4e379321f079015f3d.
+Локальный эквивалент с тем же деревом: 5b6d260fba70ec8c7e838b414a7cc38752ed995b.
+Remote merge имеет двух родителей: прежний feature 2d329de2876961181505113c3c932e2db56c424c
+и актуальный main. GitHub ref обновлён fast-forward с expected_sha; force push нет.
+Локальный git использовал ранее побайтно проверенное дерево main (ad45fca), поэтому
+локальный SHA отличается. Отчётный коммит последует отдельно и меняет только документы;
+указанные SHA обозначают реально проверенный код, не содержащий отчёт коммит.
+
+Конфликт только docs/codex-handoff.md: полный текущий main handoff и вся история
+Agent Core сохранены. App/AGENTS.md/10 прежних workflows точно совпадают с main.
+Наследованные изменения MAIN1.0.10 сохранены без новых изменений production-политик.
+Issue48/PR49 в эту ветку не включены. Room24/backup/подписи не менялись.
+
+Аудит выявил ошибку строгого Base64-декодирования: стандартные переносы строк
+GitHub Contents API блокировали реальный approval. Удаляются только CR/LF перед
+validate=True; недопустимые символы отвергаются. Архитектура протокола прежняя.
+Добавлены два регрессионных теста. Полный аудит: docs/agent-core-security-audit.md.
+
+Пути изменений этой итерации относительно прежнего PR47 (кроме наследования main):
+- agent_core/core.py — исправление декодирования GitHub evidence;
+- tests/agent_core/test_core.py — два автоматических теста;
+- docs/codex-handoff.md — объединение историй и этот отчёт;
+- docs/agent-core-security-audit.md — новый отчёт.
+Удалений нет. Полный diff PR относительно main содержит прежние 13 путей Agent Core
+и новый отчёт; приложение и существующие политики вне diff.
+
+Новые локальные запуски:
+- python3 -m unittest discover -s tests/agent_core -q: 53 tests, 0 errors/failures/skips.
+- python3 -m unittest discover -s docs -p 'test_*.py' -q: 107 tests, 0 errors/failures,
+  2 SDK skips; вложенные временные patch-tests отдельно в 107 не прибавляются.
+- python3 -m agent_core.check local: passed, пустые рабочие каталоги, не live approval.
+- python3 -m compileall -q agent_core tests/agent_core: passed.
+- YAML parsing всех 11 workflows, проверка triggers/jobs/permissions: passed.
+- git diff --check, сохранность обеих историй, отсутствие diff app/AGENTS/existing workflows: passed.
+Android локально не собирался: код приложения прежний. CI выполняет сборки и эмуляторы.
+
+Результаты CI проверенного SHA внесены в docs/agent-core-security-audit.md.
+Agent Core run39560669437: 53 tests успешно, лог job119090876285 прочитан;
+trusted-validation skipped для pull_request ожидаемо. Это не реальный owner/main grant.
+Changelog и detached policy CI не запустились из-за paths filters; все существующие
+Python policy tests вошли в 107 локальных тестов. Публикационные workflows не запускались.
+
+Аудит подтверждает fail-closed для forged/replayed approval, другой редакции,
+самосогласования, protected operations, missing data/API failure, изменения управляющего
+кода/workflow/rename. PR code не исполняется доверенным job; permissions только read,
+checkout credentials не сохраняются. Задачи/решения/редакции append-only.
+
+Ограничения: main API protected:false, required checks off, rulesets[]; настройки не
+изменены. Обязательность Gate требует отдельного решения владельца. Bootstrap workflow
+ещё отсутствует в main: live owner/main approval и weekly schedule не проверены;
+после отдельного owner review/решения о первом включении нужен реальный синтетический
+прогон и отрицательные проверки. Автоисполнитель, ИИ и уведомления не подключены.
+Gate проверяет зарегистрированные задачи, не семантику всех Android изменений.
+Полную эксплуатационную готовность до live-проверки/решения о защите main не заявлять.
+Изменение архитектуры не предпринималось. Для следующего этапа — review владельца.
+
+Main не обновлялся; merge PR, production signing, APK/Release публикация, реальные
+пользовательские данные и физический смартфон не затрагивались.
+
+
+## Блокирующий результат повторного аудита: отзыв полномочий
+
+PR не готов к merge. Воспроизведено: authorize принимает старый approved JSON после
+перевода актуальной задачи в blocked, cancelled или awaiting_approval. Функция читает
+исторический GitHub run и task на run.head_sha, но не текущее доверенное состояние.
+53 зелёных теста проверяют отказ на обновлённом JSON, не этот stale-snapshot сценарий.
+Ранее перечисленные гарантии отказа относятся к переданному актуальному снимку;
+они не обеспечивают отзыв при использовании устаревшего снимка.
+
+По прямому условию пользователя об архитектуре реализация отзыва остановлена.
+В docs/agent-core-security-audit.md приведены воспроизведение и варианты:
+1. Рекомендуется определить main task как источник актуального разрешения и отзыва,
+   читать его по закреплённому SHA перед authorize, проверять соответствие и гонки;
+   отзыв вступает в силу после попадания метаданных в main.
+2. Отдельный доверенный журнал отзывов/состояния — более крупное изменение протокола.
+
+Нужно согласовать источник и момент вступления отзыва в силу. Автоматического
+исполнителя нет; несанкционированная автоматическая операция не выполнялась.
+Логика Gate после исправления Base64 не менялась. Дальше — решение владельца,
+исправление с отрицательными тестами и повторный аудит; merge пока не рекомендован.
+
+
+## Финал повторных CI на проверенном коде
+
+Все 7 применимых workflow SHA5e80cb913811e48f8da4bd918b496bfd15032be6 — success:
+AgentCore39560669437, AndroidPR39560669436, MAINsafe39560669423,
+Room22regression39560669450, Room23→24 39560669441, Room24same39560669480,
+UIAPI23/35 39560669438. Логи всех 8 выполнявшихся jobs прочитаны.
+Android: сборки MAIN/TEST и JVM tests успешно; 53 инструментальных вызова,
+107 исполнений. Остальные инструментальные вызовы: 3+3+10+10+12.
+В артефактах всех 7 runs только diagnostics/reports, APK отсутствуют.
+Результаты и ссылки — в docs/agent-core-security-audit.md. Последующий docs-only
+коммит может автоматически запустить повторные CI; их успех здесь не заявлен.
+Готовность к merge остаётся заблокированной дефектом отзыва, несмотря на зелёный CI.
+
+
+# PR47 — согласованный вариант 1 отзыва полномочий, 21.10.2026
+
+Источник задания: прямой запрос пользователя и решение владельца
+https://github.com/Arch-relic/AgroNaliz/pull/47#issuecomment-6312800007.
+Автор решения GitHub ID 240867647 проверен через API. Это разрешение на доработку PR;
+комментарии не становятся машинными task approvals. PR47 open/Draft, не объединён.
+
+Ветка feature/agent-core-stage1. Main2a37bfe05c9b60f04035f7b64fae7f726117d647.
+Проверенный код GitHub34b89e4e8a544a5ee833640fa2a6b079aa7323cc,
+tree 5fc57eb7ba976c4d7086b5fc2cc0f804772e8ec4. Локальный эквивалент с тем же деревом
+83976df6ea3b626f6f6d6b900cd661cd4487123c. Публикация через API с expected_sha,
+без force push. Отчётный коммит после кода меняет только документацию и не подменяет
+SHA проверенного кода. Старые аудиты/решения/история handoff сохранены.
+
+Реализовано:
+- authorize(task, operation) больше не принимает api/actor_id от вызывающего кода.
+- Фиксированный GitHub transport и identity из run API; repo/head repo/main/SHA,
+  workflow path/ID/ref, dispatch/attempt1/active run, actor=triggering_actor и runner
+  GITHUB_ACTOR_ID проверяются. Недоверенный процесс/PR не должен управлять runtime,
+  GH_TOKEN, GITHUB_*, импортами или monkeypatch доверенного процесса.
+- Main SHA через refs API → task строго по SHA → полное сравнение snapshot →
+  validate/history/hash/approval/state/revision/scope → повтор main SHA.
+  Ошибки/404/неполные или противоречивые данные/смена main — Denied без fallback.
+- Отзыв действует после изменения task в main. Проверять перед каждым действием;
+  нет кэша/lease, немедленной остановки уже запущенной операции или атомарности
+  проверки с исполнением. Force-push/обход write-пользователем требует защиты main.
+- Старый defect stale-approved snapshot закрыт. Прежние policy-тесты адаптированы
+  к новому API; отдельные full-context tests не подменяют execution_actor.
+
+Изменены:
+agent_core/core.py
+agent_core/check.py
+tests/agent_core/test_core.py
+tests/agent_core/test_trusted_checks.py
+docs/agent-core.md
+docs/agent-core-security-audit.md
+docs/codex-handoff.md
+Создан tests/agent_core/test_revocation.py. Удалений нет.
+App/, AGENTS.md и10прежних workflows точно совпадают с main. Новый agent-core.yml
+не изменялся этой итерацией. Protected production policies/Room24/backup/подписи/
+release admission/main settings не менялись. Код Issue48/PR49 не включён.
+
+Новые локальные запуски:
+python3 -m unittest discover -s tests/agent_core -q —69 tests,0 failures/errors/skips.
+python3 -m unittest discover -s docs -p 'test_*.py' -q —107 tests,0 failures/errors,2 SDK skips;
+вложенные временные patch-tests не прибавляются к 107.
+python3 -m agent_core.check local — passed, пустые каталоги (не live approval).
+python3 -m compileall -q agent_core tests/agent_core — passed.
+YAML parsing11workflows, git diff --check, scope comparison — passed.
+Android локально не собирался: код не менялся, сборки/эмуляторы выполняются CI.
+
+16новых regression tests с subcases: текущий approval/implementing/review; stale
+blocked/cancelled/awaiting_approval/новаяредакция; matching revoked snapshot; replay;
+новое действие после отзыва; main SHA race; outage на каждом API чтении; missing task;
+смена executor/scope/history/links; неподдерживаемые api/actor parameters; untrusted
+run/runner; неполные main/task ответы и duplicate JSON/invalid Base64.
+AgentCore CI39579506821 —69 tests success; trusted-validation skipped для PR ожидаемо.
+Лог job119153311247 прочитан. Все применимые CI исправления и ссылки внесены
+в docs/agent-core-security-audit.md по завершении; старые результаты не переиспользуются.
+
+Независимо от unit fixtures выполнен ручной аудит входов, транспорта, последовательности
+чтений/отказов и workflow trust boundary. Реальный API main task directory вернул404,
+старый AgentCore PR run имеет feature branch/completed/PR event и не подходит для
+execution context. Main protected:false/rulesets[]; настройки не менялись.
+Live owner/main positive/negative approval и weekly run не проверены из-за bootstrap;
+после отдельного owner review/решения о включении нужны реальные проверки.
+Текущий workflow не вызывает authorize для реальных действий, исполнитель не подключён;
+execution context пока допускает только trusted AgentCore main dispatch. Future executor
+integration/workflow contexts — отдельное согласование. AI recommendations не подключены.
+
+Статус: исправление варианта 1 реализовано, для review владельца; полной эксплуатационной
+готовности не заявлять. Остаточные риски и будущие шаги — live bootstrap validation,
+защита main/required checks и отдельно согласованная интеграция исполнителя.
+PR https://github.com/Arch-relic/AgroNaliz/pull/47 оставить Draft и остановиться для review.
+Merge, публикация APK/Release, production secrets и смартфон не использовались.
+
+
+## Android CI: первый сбой и повтор
+
+Все 6 остальных workflow исправления завершились success. Общий AndroidPR run39579506701
+attempt1/job119153310556 прошёл сборки и JVM suites (175+175 tests,0 errors/failures/skips,
+подтверждено XML из diagnostic artifact12336965208), но остановился на первом
+AppVersionUiTest#showsInstalledVersion: Espresso RootViewWithoutFocusException,
+окно не получило focus за 10 секунд. Это не assertion проверки Agent Core.
+APK в diagnostic archive нет. Сохранены логи/первый результат; код не менялся.
+Перезапущен только этот job на том же code SHA: attempt2/job119159373964.
+Это не approval workflow, повтор не выдаёт полномочий. Окончательный результат
+внесён ниже и в docs/agent-core-security-audit.md после завершения.
+
+
+## Финал CI варианта 1 — review владельца, 21.10.2026
+
+Все 7 применимых CI проверенного code SHA 34b89e4e8a544a5ee833640fa2a6b079aa7323cc — success:
+- AgentCore39579506821:69 tests.
+- AndroidPR39579506701 attempt2/job119159373964: сборки MAIN/TEST, JVM-тесты,53 инструментальных
+  вызова/107 исполнений; первая попытка с focus error сохранена выше, код не менялся.
+- MAINsafe39579506619:28 Python и 3 инструментальных вызова.
+- Room22regression39579506708:3 инструментальных вызова.
+- Room23→24 39579506618:10 инструментальных вызовов.
+- Room24same39579506666:10 инструментальных вызовов.
+- UIAPI23/35 39579506650:6+6 инструментальных вызовов.
+Логи8 успешных jobs и исходного failed Android job прочитаны. Последующий отчётный
+коммит изменяет только docs/codex-handoff.md и docs/agent-core-security-audit.md;
+его возможные автоматические CI не приравниваются к уже проверенному коду.
+Все подробности/ссылки/ограничения: docs/agent-core-security-audit.md, новый раздел
+«Вариант 1: устранение дефекта отзыва». Предыдущий блокирующий аудит относится к старому
+SHA5e80cb9; на новом SHA согласованный defect устранён, предыдущая история сохранена.
+
+Статус: готово для review владельца, PR47 оставить Draft. Эксплуатационная готовность
+без live bootstrap/защиты main/согласованной интеграции исполнителя не заявляется.
+Main остался 2a37bfe,protected:false; production policies/Room24/backup/signatures/
+release admission не изменены. Merge,APK/Release публикация,production secrets,
+физический смартфон и автоматический Codex не затрагивались. Дальше — только review.
+## G2 Offline Agent Identity v2 — 21.10.2026
+
+Цель: реализовать согласованную offline часть Issue54 без live entrypoint/credentials.
+Разрешение владельца:
+https://github.com/Arch-relic/AgroNaliz/issues/54#issuecomment-6315717967.
+Статус: offline код и аудит готовы к Draft PR/review; live и merge не разрешены.
+Архитектурный источник: PR53 head96d8535ec544fcd13e93335e3d0f096c966da0f8,
+G1 D01–D12 утверждены. PR51 и PR53 не объединялись и не cherry-pick целиком.
+
+Реализованы task/registry/policy schemas v2, typed App subject, immutable approval
+context, append-only state/history/requests, owner/run/source/policy verification,
+fresh-main offline controller, фиксированный smoke, disabled credential boundary,
+safe audit и synthetic fakes/fixtures. V1 интерфейсы и документы не меняются;
+App не исполняет старые grants, никаких миграций пользовательских данных нет.
+
+Созданы файлы:
+- agent_core/schemas/task-v2.json
+- agent_core/schemas/registry-v2.json
+- agent_core/schemas/policy-v2.json
+- agent_core/v2/__init__.py
+- agent_core/v2/model.py
+- agent_core/v2/task.py
+- agent_core/v2/approval.py
+- agent_core/v2/trust.py
+- agent_core/v2/controller.py
+- agent_core/v2/credentials.py
+- agent_core/v2/audit.py
+- tests/agent_core/v2_fakes.py
+- tests/agent_core/test_v2_schema.py
+- tests/agent_core/test_v2_approval.py
+- tests/agent_core/test_v2_controller.py
+- tests/agent_core/test_v2_compatibility.py
+- tests/agent_core/fixtures/v2/policy.json
+- tests/agent_core/fixtures/v2/registry.json
+- tests/agent_core/fixtures/v2/request-task.json
+- docs/agent-identity-v2/g2-offline-implementation.md
+- docs/agent-identity-v2/acceptance-matrix.md
+
+Изменены только отчёты:
+- docs/agent-core-security-audit.md
+- docs/codex-handoff.md
+
+Удалений нет. core.py/check.py/task-v1/requirements/v1 tests/workflows/tasks/
+recommendations/app сравнивались с main: изменений нет. Permissions/secrets,
+main policies, Room24/backup/signing/release admission не менялись.
+
+Ветка: feature/agent-identity-v2-g2-offline.
+Base: e5e0aeae9474307562a90ca4d3d075dc11800841.
+Проверенный локальный code SHA: 6e0cdb90ce91f23cc391c94ca4ea517f8bf70b6a,
+tree4d68c4e06b2bd38640bb52f8cd412c636ee3dd6e. Его содержимое проверялось до
+создания commit, без последующего изменения кода; отчёты добавляются отдельным commit.
+Git fetch недоступен: proxy connection refused. Main commit восстановлен из GitHub API
+signed payload с проверкой точного SHA; worktree создан от этого main, не от старой ветки.
+Для публикации используется connector; remote commit SHA может отличаться, tree
+проверяется независимо. Точный remote head и CI относятся к PR, не подменяют local SHA.
+
+Команды/результаты:
+- python3 -m unittest discover -s tests/agent_core -v: passed до двух финальных
+  дополнительных boundary tests; окончательный запуск всей suite ниже включает их.
+- Полная unittest discovery с socket.socket=forbidden и очищенным os.environ:
+  140 methods, 0 failures/errors, 342 subtest cases; 69 прежних +71 новых методов.
+  Код воспроизведения в g2-offline-implementation.md. Это новый запуск, не UP-TO-DATE.
+- python3 -m agent_core.check local: passed, действующие directories пусты;
+  не доказательство реального approval или регистрации v2.
+- python3 -m compileall -q agent_core/v2 tests/agent_core/test_v2_*.py: passed.
+- git diff --check и scope diff для защищённых файлов: passed.
+- Первый запуск имел SyntaxError в новом тесте; исправлен до итогового запуска.
+
+Матрица A01–A32 содержит отдельные passed/not_run/blocked по O/N/L.
+Live тестов не было. Не проверены реальные App/install credentials, pagination adapter,
+environment/key release, platform isolation, token revoke и branch protection.
+ABA/in-flight ограничения явно воспроизведены/описаны; полной атомарности нет.
+Finally не гарантируется при forced runner kill; blocked cleanup после smoke не
+отменяет уже выполненный read. Outcome и fake source/complete не являются live authority.
+
+PR ещё не открыт на момент этого отчётного commit; следующий разрешённый шаг —
+публикация Draft PR с кодом/документацией и ссылкой на этот handoff.
+Ожидается блокировка trusted PR gate из-за agent_core/: это штатный запрет self-approval
+governance changes. Фактический результат/URL/remote SHA будут указаны при создании PR.
+Если gate отклонит PR, не исправлять/обходить/перезапускать ради авторизации: остановиться
+для отдельного owner review. Автоматические CI не называются успешными заранее.
+
+G3–G6 не разрешены: App/environments/keys/tokens/secrets не создавать; live task,
+approval/dispatch, production APK/release, merge и write permissions не выполнять.
+Следующий исполнитель сначала читает PR и точный head/CI, затем ждёт решения владельца.
+
+### Публикация G2 Draft PR — 21.10.2026
+
+Открыт Draft PR55: https://github.com/Arch-relic/AgroNaliz/pull/55.
+Первый remote head: 4839e0fd4cdb55054a881d36cd07b74dc01d5f52,
+base e5e0aeae9474307562a90ca4d3d075dc11800841, tree169ce78cbb7cf4d8c7344fc0ca5adaba030861e7
+совпадает с локальным c18ecf5afb107b1de2a43743c26203ecb1108b2d.
+Этот следующий commit только фиксирует URL публикации; код не изменён.
+Remote CI запущены автоматически; итоговый статус/run/SHA проверять в PR55.
+Trusted gate не обходить; его отказ требует остановки для review, не исправления защиты.
+## Issue58 — Agent Environment Gate, 22.10.2026
+
+Цель: подготовить минимальный workflow environment smoke-test без запуска/merge.
+Источник: https://github.com/Arch-relic/AgroNaliz/issues/58 и прямое задание владельца.
+Статус: YAML и security scope проверены локально; live gate НЕ проверен.
+
+Созданы:
+- .github/workflows/agent-environment-gate-smoke.yml
+- docs/agent-environment-gate-smoke.md
+Изменён только docs/codex-handoff.md, append-only. Удалений нет.
+
+Workflow: только workflow_dispatch без inputs; permissions={}; один job ubuntu-latest,
+timeout3, environment agronaliz-agent-readonly; единственный run echo заданной строки.
+Нет checkout/uses, secret/token references, API/network commands, App, artifacts/cache,
+outputs/env или repository write. Job permissions не расширяются. Workflow не запускался,
+команда вывода не исполнялась локально. Agent Core и существующие workflows не менялись.
+
+Ветка: feature/agent-environment-gate-smoke.
+Base main: 0b41d1251363696b5bc99a5109752baa02911ae8 (PR55 уже merged владельцем).
+Проверенный локальный implementation/doc SHA: de7ef9fefcf1078ac7989dd80e5184872f1ecf80,
+tree c6d200f1e545924aaf5f776e80f82a4b1bcaa15f. Проверки выполнены до commit на тех же
+файлах; следующий отчётный commit только добавляет этот handoff. База восстановлена
+из GitHub API signed payload с проверкой exact SHA; worktree от актуального main.
+При публикации connector SHA может отличаться, полный tree сверяется отдельно.
+
+Выполнены проверки:
+- PyYAML SafeLoader с duplicate-key rejection и exact structure assertions: passed.
+- Запрет uses/expressions/secrets/token refs/network commands/env/inputs/auto triggers/
+  write в новом YAML: passed. В репозитории не добавлены dependencies или test files.
+- bash -n для единственной команды, без её исполнения: passed.
+- git diff --check и защищённый scope diff: passed.
+actionlint не установлен; его запуск не заявляется. Android/Agent Core suite вручную
+не запускались, так как код приложения/Core не затронут. Новых workflow runs/dispatch/
+rerun/approval этим этапом не создавалось. Автоматические CI PR существуют отдельно
+от нового manual-only workflow и не доказывают environment approval.
+
+Настройки environment (owner reviewer, self-review allowed, bypass disabled, main-only,
+no secrets) сообщены владельцем в Issue58; live независимо не проверены. Environment/
+secrets/permissions/settings/main/protection/Room/backup/signing/release не менялись.
+В будущем нужны отдельные разрешения на merge, затем dispatch ref=main; проверить
+Waiting for review, owner UI approval и success. Сейчас это not_run. Не ослаблять
+main-only deployment rule и не создавать заменяющий environment ради запуска из PR.
+
+Trusted gate защищает .github/workflows/: ожидается governance failure, его не менять
+и не обходить. Ни этот smoke, ни его будущий success не выдают machine/task consent.
+G3–G6 не открываются. APK/Release не публиковались, main не изменялся этим заданием.
+
+На момент записи Draft PR ещё не открыт; следующий шаг — публикация workflow/report
+в отдельный Draft PR и фиксация его URL в этой ветке. После этого остановиться для
+owner review. Не выполнять merge, Ready, environment approval, dispatch или cleanup.
+
+### Публикация Issue58
+
+Открыт Draft PR59: https://github.com/Arch-relic/AgroNaliz/pull/59.
+Первый remote head79311884b3d477d5baecef24a6133d65f7b7bdbc,
+tree69a8124954aaa381b88fd17156438ae93bf4989b совпадает с local4c90404b.
+Этот следующий commit фиксирует только URL публикации. Новый environment smoke
+workflow не запускался; state Waiting for review/approval/success остаётся not_run.
+Main и settings не менялись. PR оставить Draft и остановиться для owner review.
+
+
+## Этап 3 / B — mock-first v1.4 Final с поправкой WORKER RESULT, 23.10.2026
+
+Цель: реализовать только локальную synthetic модель controller → approvals → fake
+worker → independent validator → simulated publisher → evidence/checkpoint.
+Статус: реализация и локальные проверки завершены; требуется owner review Draft PR.
+
+### Основание и решения
+
+Владелец отдельно утвердил план v1.4 Final (исходная дата 22.10.2026), реализацию,
+feature-ветку, тесты, Draft PR и только отчётное изменение этого handoff. SHA256
+исходного вложения: 223d45ceb4c01b086d564202154fab908aa49d2a3a7180c2648e08934ea5e409.
+План и нормативная поправка к §13.2 воспроизведены в docs/agent-mock-b/protocol-v1.md.
+Исходное вложение и AGENTS.md не изменены. Только конечные пробелы строк копии плана
+в новой документации удалены для git diff --check.
+
+Официальная внешняя библиотека rfc8785==0.1.4 используется через PYTHONPATH, без
+копирования исходников, новой установки или изменения зависимостей приложения.
+Контроллер проверяет пакет при импорте. RFC-векторы (float/negative zero, Unicode,
+escaping, UTF-16 key order) проверены до кода и повторно в тестах. Доменные схемы
+запрещают float, duplicate keys, неизвестные поля, surrogate, invalid integer.
+
+WORKER RESULT сохраняет доверенный workerResponseDigest; replay восстанавливает
+его только из checkpointed prefix. VALIDATOR и simulated publisher проверяют связь
+подтверждённых результатов одного run с разными operationId. Journal fsync и
+независимый monotonic checkpoint моделируют durable authorization/action evidence.
+Budget резервируется только WORKER INTENT, не возвращается после отказов/crash и не
+обнуляется новым approval. Trusted adapter закрепляет один retained log на taskDigest.
+
+Snapshot/diff проверяются по immutable bytes; scope/denylist, Base64/UTF-8/hash/mode,
+case collisions и ресурсные пределы проверяются независимо от worker report.
+workerKind=mock, publishAllowed=false, externalCalls=0. Никакого настоящего агента,
+GitHub publisher, сети или рабочих credentials в runtime/тестах. Создание Draft PR —
+отдельное разрешённое действие разработки, не simulated publisher.
+
+### Файлы
+
+Созданы:
+- docs/agent-mock-b/protocol-v1.md
+- tools/agent_mock_b/README.md
+- tools/agent_mock_b/__init__.py
+- tools/agent_mock_b/approval_store.py
+- tools/agent_mock_b/budget.py
+- tools/agent_mock_b/canonical.py
+- tools/agent_mock_b/checkpoint.py
+- tools/agent_mock_b/contracts.py
+- tools/agent_mock_b/controller.py
+- tools/agent_mock_b/diff_validator.py
+- tools/agent_mock_b/evidence.py
+- tools/agent_mock_b/fake_worker.py
+- tools/agent_mock_b/fixtures/README.md
+- tools/agent_mock_b/recovery.py
+- tools/agent_mock_b/repository_store.py
+- tools/agent_mock_b/simulated_publisher.py
+- tools/agent_mock_b/snapshot.py
+- tools/agent_mock_b/state_machine.py
+- tools/agent_mock_b/tests/test_acceptance_15.py
+- tools/agent_mock_b/tests/test_contracts.py
+- tools/agent_mock_b/tests/test_snapshot_diff.py
+- tools/agent_mock_b/tests/test_state_recovery.py
+
+Изменён существующий docs/codex-handoff.md только этим отчётом. Удалений нет.
+
+### Ветка и проверенный результат
+
+Ветка: feature/agent-mock-b-v1-4.
+Base remote main: e13fd1e19f531824e148fff1d17d481098929e43; дважды сверён через GitHub
+перед реализацией. Локальный HEAD совпадал с ним. Устаревший origin/main ранее был
+28f34f8e95785daf62ea54bd08dd4b97131b5eca (отставание 124 commit); ссылка актуализирована.
+Проверенный implementation commit: 0b774e040fc62be0d38376c953817e8e4dd2c795,
+tree c148287d4092c3fcdc1404e2b892fa783d7b6c42. Тесты выполнены на точном содержимом
+этого commit до его фиксации. Следующий commit добавляет только этот handoff;
+его SHA не подменяет SHA проверенного кода. Remote tree при публикации сверяется.
+
+### Проверки
+
+Новый полный запуск:
+
+```bash
+PYTHONPATH=/tmp/codex-rfc8785-igo5yiag:$PWD python -B -m unittest discover -s tools/agent_mock_b/tests -q
+```
+
+Результат: 49 test methods, 0 failures, 0 errors, 5.347 s; все 15 acceptance groups
+выполнены, включая утверждённые дополнительные подслучаи. Ранние проходы 15/44/48
+были промежуточными; окончательный результат — 49. Это новый запуск, не UP-TO-DATE.
+Подслучаи сгруппированы через subTest и циклы и не выдаются за отдельные test methods.
+Матрица и synthetic fixture metadata: tools/agent_mock_b/fixtures/README.md.
+
+Также: git diff --cached --check; AST parse; проверка точного file scope; отсутствие
+runtime network/process/legacy imports; исходный SHA256 плана сохранился. Проверен
+итоговый diff на посторонние изменения и секреты: только synthetic тестовые данные.
+Android build, emulator, смартфон и прежние v1/v2 suites не запускались: их файлы,
+workflows, схемы Room, APK/signing/release и grants/hashes не изменены.
+
+### Ограничения и дальнейшая работа
+
+Это single-writer модель, не OS sandbox и не production tamper-proof store. Trusted
+checkpoint anchor и operation ledger — отдельные synthetic adapters в памяти;
+при потере adapters нет заявления о восстановлении доверия из файлов. Повторное
+чтение использует retained independent anchor. Замена trusted store вне модели угроз.
+UTC и monotonic clock инъецированы. Worker factory — trusted fixture, не недоверенный
+Python. Тесты ограничивают буферизацию контроллера, не память генератора fixture.
+
+Recovery read-only классифицирует prefix/tail и независимый worker receipt. Unknown
+tail/pending outcome не принимается и не запускается повторно; автоматического
+resume нет. Controller.stop допускает protective cancel без approval и фиксирует
+CANCELLED только после synthetic acknowledgment; при outage только недоверенный
+STOP_REQUESTED_UNVERIFIED. Reconciliation требует отдельной разрешённой процедуры.
+Временный пакет может исчезнуть с Cloud session; при отсутствии остановиться,
+не заменять JCS. Никаких гарантий реального worker/publisher эти тесты не дают.
+
+Следующее действие: owner review кода, поправки и evidence/recovery ограничений.
+Не выполнять merge, Ready for review, dispatch, реальный worker или production actions.
+
+### Draft PR
+
+На момент этого отчётного commit Draft PR ещё не создан; публикация — следующий
+разрешённый шаг. Номер/URL и подтверждённый Draft status будут добавлены отдельным
+отчётным commit в эту же ветку. Remote CI пока не запускался этой локальной проверкой.
+
+
+### Публикация этапа B
+
+Создан Draft PR #62: https://github.com/Arch-relic/AgroNaliz/pull/62.
+Состояние при создании: open, draft=true, merged=false. Base main остаётся
+e13fd1e19f531824e148fff1d17d481098929e43.
+Первый remote implementation/report commit: 7f551c4bf869fb25ed3e0cf4ac7be48c0150cb54,
+tree 9e547118cfca25373ee142b170191faf9212f8af точно совпал с local report commit
+53bfce6f74caa8defe85dd386cad9daa0e7ef6d3. Код идентичен проверенному local
+0b774e040fc62be0d38376c953817e8e4dd2c795; различаются только commit metadata и
+группировка implementation/handoff в истории. Следующий commit меняет только этот
+отчёт, фиксируя PR URL; тестируемый код не меняется. Local worktree после commit чист.
+Автоматические remote CI не выдаются за локальные 49 прошедших тестов; их итог
+на момент этой записи не проверен. Workflows/rerun/dispatch вручную не запускались.
+PR оставить Draft. После этой отчётной публикации остановиться для owner review;
+не merge, не Ready, не запускать настоящего worker/publisher и production actions.
+
+## PR62: аудит защищённых путей, 23.10.2026
+
+Обход подтверждён на исходном PR head cc6a93c28f20b7746387d7f275e7625f439dde55:
+при явном allowlist synthetic ADD для APP/example.txt и .GIT/config проходил validator.
+Причина: системный denylist сравнивал исходный регистр, тогда как только sensitive
+keywords и snapshot collision check уже использовали lower(). Case-only DELETE/ADD
+также обходил проверку конечного snapshot, поскольку исходный alias удалялся.
+
+Исправление не меняет протокол, wire schema, specification/response bytes, JCS,
+digests или case-sensitive allowlist. Только проверки защиты сравнивают ASCII lower
+для системного denylist и protected selectors с прежними границами сегментов.
+Все операции одного diff проверяются на одинаковый lower(path), включая DELETE/ADD
+в обоих порядках. Ранее существовавшая проверка коллизий с неизменёнными файлами
+сохранена. Нет case normalization записываемых путей и ослабления denylist.
+
+Изменены tools/agent_mock_b/diff_validator.py,
+tools/agent_mock_b/tests/test_snapshot_diff.py,
+tools/agent_mock_b/tests/test_acceptance_15.py и только этот docs/codex-handoff.md.
+Созданных/удалённых файлов нет. AGENTS.md, утверждённый план, main, workflows,
+production policies, identity v1/v2 и Android/Room не менялись.
+
+Отрицательные тесты сначала воспроизвели ошибку (100 failing assertions/subcases
+в 12 методах snapshot/diff suite). После исправления новый полный запуск:
+
+```bash
+PYTHONPATH=/tmp/codex-rfc8785-igo5yiag:$PWD python -B -m unittest discover -s tools/agent_mock_b/tests -q
+```
+
+Результат: 54 test methods, 0 failures/errors, 5.485 s, все 15 групп приёмки, включая
+все ранее утверждённые проверки. Добавлены upper/mixed-case denylist для ADD/MODIFY/
+DELETE, custom protection, case-only DELETE/ADD, границы сегментов и сохранение
+case-sensitive allowlist; end-to-end примеры дают PROTECTED_PATH, REJECTED validation,
+zero publisherCalls и ни одного SIMULATED_* события. git diff --check passed.
+Проверенный local code commit: 481bb5977047bbb93508a2e69950d9b8e7f9dd30;
+следующий commit содержит только этот отчёт. Ветка feature/agent-mock-b-v1-4,
+base main e13fd1e19f531824e148fff1d17d481098929e43.
+
+Существующий PR https://github.com/Arch-relic/AgroNaliz/pull/62 остаётся Draft.
+Предыдущий head cc6a93c... имел 7 успешных CI workflows, но это не проверка исправления.
+Новый push запускает весь штатный PR CI; результаты исправленного head проверяются
+отдельно и будут отражены в PR. Нет ручного dispatch/rerun, изменения workflow или
+ослабления защиты. Модель остаётся synthetic; вывод не является гарантией OS sandbox.
+После обновления Draft PR и проверки полного CI — остановиться для owner review.
+
+
+## AGN-49 — подготовка PR #49 к внедрению, 24.10.2026
+
+Цель: синхронизировать feature/issue-48-fixed-fill с актуальным main без
+переписывания истории, сохранить точные проценты и совместимость данных.
+Статус этого отчёта: локальная проверка завершена частично, remote CI ожидается.
+
+Основа main: 4c21c59acf8febc71d123e3582b74eeac613b49e (сверена GitHub API).
+Исходный PR head: cbec8d21d2dbf37443d086d2969c6bc14959e575. Локальная ветка
+feature/issue-48-fixed-fill. Проверены изменения перед merge-коммитом; его SHA
+будет зафиксирован следующим отчётным коммитом после проверки CI.
+
+Git fetch не работал: proxy:8080 connection refused. Через GitHub API получены
+37 отсутствующих blobs, дерево head и шесть оригинальных commits; все Git SHA
+побайтно проверены перед записью локальных объектов. История PR восстановлена
+точно, без synthetic замены commits. Выполнен git merge --no-commit --no-ff origin/main.
+Единственный конфликт: docs/codex-handoff.md, два блока (вводная и добавленные
+отчёты). Сохранены обе стороны, включая Issue48 и новые этапы main. Android-код
+и тесты PR не потребовали исправлений. Новые файлы main сохранены без изменений.
+
+На этапе AGN-49 изменён только docs/codex-handoff.md плюс включение изменений
+main merge-коммитом. Созданных и удалённых специально для AGN-49 файлов нет.
+Перечень файлов исходной реализации Issue48 приведён в предыдущем отчёте выше.
+Схема Room24, entities, DatabaseProvider, DatabaseBackupManager, DataImportManager,
+production workflows/policies и подпись не менялись относительно main.
+FULL/MORE_THAN_HALF/HALF/LESS_THAN_HALF = 100/75/50/25%; суммирование четвертей
+до умножения, без UPDATE старых записей. Вместимость из ТТХ связанного комбайна,
+исторический снимок только как резерв; расчёт не записывает разрешённое значение
+обратно. Объём и масса выводятся до трёх десятичных знаков без промежуточного
+округления. Пользовательские базы и устройства не подключались.
+
+Новые локальные запуски:
+- source /workspace/agronaliz-env.sh; agrogradle :app:assembleDebug :app:assembleDebugTest :app:test --console=plain
+  — FAILED до компиляции: FileLockContentionHandler / Could not determine a usable wildcard IP for this machine.
+- python3 docs/run-harvest-jvm-checks.py --gradle-lib <Gradle 8.13 lib>
+  — OK, 62 JUnit tests, 0 failures/errors. Автономный Kotlin, не Android/Room.
+- python3 -m unittest discover -s docs -p 'test_*.py' — 108 tests,
+  106 passed, 2 skipped (необходим построенный APK/SDK); 0 failures/errors.
+- git diff --cached --check — passed. Схема/backup/import/production paths
+  сравнены с main, различий в реализации нет.
+
+Локально нет /dev/kvm и emulator images; API23/35, Room migration, upgrade
+1.0.10→1.0.11 и backup/restore ожидают штатного PR CI. Исторические success
+из предыдущего отчёта не выдаются за проверки нового merge. Конфигурация проекта
+и production допуск ради запуска не менялись.
+
+PR #49: https://github.com/Arch-relic/AgroNaliz/pull/49 — open, draft=true,
+merged=false перед публикацией. Следующий этап: публикация merge в ту же
+feature-ветку без force и ожидание всех CI; исправление подтверждённых ошибок
+в рамках AGN-49. Не merge в main, не Ready, не APK/Release, не production dispatch.
+После отчёта остановиться и ожидать решения владельца.

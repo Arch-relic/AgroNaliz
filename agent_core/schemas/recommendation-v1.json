@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "trigger": {
+      "enum": [
+        "session_start",
+        "weekly"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 1
+    },
+    "priority": {
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ]
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "proposed_operations": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "implement",
+          "technical_fix",
+          "test",
+          "draft_pr",
+          "room",
+          "backup",
+          "signing",
+          "production_policy",
+          "merge_main",
+          "publish_apk"
+        ]
+      },
+      "uniqueItems": true,
+      "minItems": 1
+    },
+    "status": {
+      "const": "proposed"
+    }
+  },
+  "required": [
+    "schema_version",
+    "id",
+    "trigger",
+    "created_at",
+    "title",
+    "rationale",
+    "priority",
+    "evidence",
+    "proposed_operations",
+    "status"
+  ],
+  "additionalProperties": false
+}
