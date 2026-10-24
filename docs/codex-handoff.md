@@ -1731,3 +1731,37 @@ base main e13fd1e19f531824e148fff1d17d481098929e43.
 отдельно и будут отражены в PR. Нет ручного dispatch/rerun, изменения workflow или
 ослабления защиты. Модель остаётся synthetic; вывод не является гарантией OS sandbox.
 После обновления Draft PR и проверки полного CI — остановиться для owner review.
+
+
+---
+
+## 24.10.2026 — безопасное разделение Issue #48 после активации независимой защиты
+
+**Цель:** продолжить расчёты заполненности бункеров 25/50/75/100% при активной защите main, без workflow, Gradle, Python-policy, подписей и Room. **Статус: Draft PR #66, необходим новый CI и review владельца; merge не разрешён.**
+
+Файлы приложения перенесены из PR #49 по исходным Git blob SHA без ручных изменений. Ветка не содержит защищённых workflow/config файлов. Это **функциональный этап, не выпуск MAIN 1.0.11**: versionName и changelog оставлены прежними, migration/update-fixtures не переносились. Проверить новую конфигурацию независимо от CI исходного PR.
+
+**Изменённые и добавленные файлы из PR #49 (14):**
+- app/src/androidTest/java/ru/fo6osik/workjournal/HarvestResultsCardUiTest.kt
+- app/src/androidTest/java/ru/fo6osik/workjournal/UiPolishTest.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestCalculator.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestDao.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestDayActivity.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestProcessActivity.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestResultsCardView.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestResultsFormatter.kt
+- app/src/main/java/ru/fo6osik/workjournal/HarvestValueText.kt
+- app/src/test/java/ru/fo6osik/workjournal/HarvestCalculatorTest.kt
+- app/src/test/java/ru/fo6osik/workjournal/HarvestCampaignMetricsTest.kt
+- app/src/test/java/ru/fo6osik/workjournal/HarvestFixedFillTest.kt
+- app/src/test/java/ru/fo6osik/workjournal/HarvestResultsCardModelTest.kt
+- docs/issue48-fixed-fill.md
+- docs/codex-handoff.md — данный последующий отчётный коммит.
+
+Удалений нет. Room24, backup/import, production signing, MAIN/TEST подписи и workflows не изменены. Управляющие изменения PR #49 (.github, app/build.gradle.kts, docs/*.py и version-dependent тесты) требуют отдельного review владельца, без обхода правил.
+
+**Ветка:** feature/issue48-safe-app-split. **Base main:** 4c21c59acf8febc71d123e3582b74eeac613b49e. **Кодовый коммит:** 02cf80df2ed31ab14c19b554ede66c047598ec54, Git tree 4f4577e99c5279e801db9c3a80e8a20c8951b16c. Данный отчёт закоммичен позже кодового SHA.
+
+**Draft PR:** https://github.com/Arch-relic/AgroNaliz/pull/66 (не объединён). PR #49 оставлен без изменений. Независимая проверка agronaliz-security-gate и Android CI android должны быть проверены на точном head PR #66. Локальная сборка, эмулятор и физический смартфон для этой ветки не проверялись. APK не опубликован, пользовательские данные не трогались.
+
+**Остаток:** дождаться нового CI и независимого статуса, проверить regression backup/UI, затем отдельно согласовать release/governance и merge. При отказе защиты не обходить её и не считать skipped/neutral разрешением.
