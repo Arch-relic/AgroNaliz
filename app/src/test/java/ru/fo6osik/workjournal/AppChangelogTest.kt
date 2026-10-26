@@ -5,7 +5,7 @@ import org.junit.Test
 
 class AppChangelogTest {
     @Test fun newestFirstWithStableUniqueKeys() {
-        assertEquals(listOf("1.0.10", "1.0.9", "1.0.8", "1.0.7", "early"), AppChangelog.entries.map { it.id })
+        assertEquals(listOf("1.0.11", "1.0.10", "1.0.9", "1.0.8", "1.0.7", "early"), AppChangelog.entries.map { it.id })
         assertEquals(AppChangelog.entries.size, AppChangelog.entries.map { it.id }.toSet().size)
     }
     @Test fun noInventedDatesOrDatabaseReleaseNumber() {
@@ -15,6 +15,9 @@ class AppChangelogTest {
     }
     @Test fun developmentAndCategories() {
         assertEquals("В разработке", AppChangelog.entries.first().status)
+        assertEquals("1.0.11", AppChangelog.entries.first().version)
+        assertNull(AppChangelog.entries.first().releaseDate)
+        assertNull(AppChangelog.entries.first { it.id == "1.0.10" }.status)
         assertTrue(AppChangelog.entries.drop(1).all { it.status == null })
         assertTrue(AppChangelog.entries.all { it.visibleCategories.values.all { changes -> changes.isNotEmpty() } })
         assertTrue(AppChangelog.entries.all { it.summary.isNotBlank() })
