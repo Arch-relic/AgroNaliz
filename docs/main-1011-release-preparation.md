@@ -23,7 +23,7 @@
 
 ## Контракт нового read-only аудита 1.0.10 → 1.0.11
 
-- Источник **официально опубликованной MAIN1.0.10**, versionCode3000008, Room24, `applicationId=ru.fo6osik.workjournal`, original cert SHA256 подтверждать по неизменяемому `verification.json` и успешному owner-only публикационному run; **точный опубликованный source SHA / publish run для 1.0.10 пока не сверены**. Не подменять baseline source на HEAD произвольного PR и не брать 1.0.9.
+- **Официально опубликованная MAIN1.0.10 подтверждена GitHub API:** owner/main manual publish run `39492121711`, `workflow_id=384685122`, path `.github/workflows/main-apk-publish.yml`, run number `8`, `attempt=1`, `conclusion=success`, `sourceSha=2a37bfe05c9b60f04035f7b64fae7f726117d647`, artifact ID `12296776599`, artifact `app-main-original-main-2a37bfe05c9b60f04035f7b64fae7f726117d647-v3000008`. Build и Sign jobs оба `success`, в том числе `Sign and verify stable MAIN certificate` и `Publish verified MAIN APK`. На pinned source подтверждены `versionName=1.0.10`, Room24, `applicationId=ru.fo6osik.workjournal`. Оригинальный cert pin `3FE57967...15EE3C` указан в trusted signer; **байтовый SHA256 опубликованной APK и содержание verification.json пока независимо не извлечены**, их нельзя придумывать. Перед официальным pin baseline получить и сверить именно этот verification.json и неизменность артефакта с GitHub. Не заменять pinned baseline исходниками 1.0.9 или HEAD PR.
 - В CI строить закреплённую опубликованную 1.0.10 и candidate 1.0.11 как одноразовые, **не производственно подписанные** фикстуры, обе с ожидаемыми package ID, версией и Room24. Тестировать MAIN и изолированную TEST отдельно. Не использовать production keystore и реальные данные.
 - До обновления засеять старую Room24: 10 FULL + 1 LESS_THAN_HALF бункер при 4,7 м³, плотность720 кг/м³, конкретные даты/UID/события/топливо/поля/площади, preference и файл; проверить историческое интервальное вычисление и JSON backup. При обновлении установить новую фикстуру **поверх** старой без clear/reinstall.
 - После обновления: те же таблицы/значения/ID/FK/схема, файлы и preferences; новые вычисления **48.175 м³, 34.686 т, 3.4686 т/га** при 10 га и без диапазона. Проверить: изменение старого неполного бункера и возврат, повторный пересчёт, restart, JSON backup→отдельную БД→roundtrip, отсутствие миграции/массового UPDATE. Проверять сохранность завершённых и активных дней, событий и настроек.
@@ -49,3 +49,11 @@
 5. Перед установкой сделать свежий личный JSON backup и сохранить вне приложения; проверить реальные текущие versionCode/Room/подпись на телефоне, а также сохранность файлов/preferences. После сверки официального signed APK обновлять только поверх установленной MAIN. Проверить рабочие записи, бункеры, события, площади, топливо и расчёты на физическом устройстве.
 
 **Ни эта запись, ни успешный Draft PR не являются разрешением на выпуск.**
+
+## Установленная защита и результаты PR #74
+
+Обязательный независимый App `agronaliz-security-gate` (ID5441843) на SHA `5cefab9abe42877a40347b9572d6c2f35729cff7` сообщил `failure: PROTECTED_CHANGE`. `agronaliz-security-preview` — `failure/protected_change`. Полные API-сведения о конкретном запрещённом файле не раскрыты; **не угадывать путь и не обходить охрану через rename, другой файл или workflow**. `main` использует ruleset 25782758: обязательные `agronaliz-security-gate` и `android`, active enforcement, no bypass. Владелец согласовал отдельное рассмотрение protected changes, но не снятие защиты, merge, owner/main dispatch, подпись или публикацию.
+
+Результаты обычных Android/Changelog CI не заменяют отрицательный independent gate. Текущие правки PR #74 нельзя считать разрешёнными к merge. Для финала необходим **поддерживаемый владельцем и независимо проверенный процесс допуска protected paths**, а не правка candidate-side CI, не подделка check name и не отключение required status. Если административный путь недоступен — выпуск остановлен, а релиз остаётся заблокированным.
+
+Подписанный production artifact 1.0.11 и реальная проверка на смартфоне не создавались.
