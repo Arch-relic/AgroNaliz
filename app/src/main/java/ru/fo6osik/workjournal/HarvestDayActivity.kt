@@ -86,10 +86,10 @@ class HarvestDayActivity : AppCompatActivity() {
 
     private val fillLevelLabels =
         linkedMapOf(
-            "FULL" to "Полный",
-            "MORE_THAN_HALF" to "Больше половины",
-            "HALF" to "Половина",
-            "LESS_THAN_HALF" to "Меньше половины"
+            "FULL" to "Полный — 100%",
+            "MORE_THAN_HALF" to "Больше половины — 75%",
+            "HALF" to "Половина — 50%",
+            "LESS_THAN_HALF" to "Меньше половины — 25%"
         )
 
     private val postEventLabels =
@@ -450,13 +450,9 @@ class HarvestDayActivity : AppCompatActivity() {
                         )
                 }
 
-                val process =
-                    dao.getProcessById(
-                        day.processId
-                    )
-                        ?: error(
-                            "Уборочный процесс не найден"
-                        )
+                val process = dao.calculationProcess(
+                    dao.getProcessById(day.processId) ?: error("Уборочный процесс не найден")
+                )
 
                 val days =
                     dao.getDaysForProcess(
@@ -545,10 +541,10 @@ class HarvestDayActivity : AppCompatActivity() {
             HarvestCalculator.DayInput(bunkers.map { it.fillLevel }, day.harvestedAreaHa, day.bulkDensityKgM3)
         )
         textBunkerCount.text = "Бункеров: ${bunkers.size}"
-        textEstimatedVolume.text = "Объём: ${result.volumeM3?.let { HarvestResultsFormatter.range(it,"м³") } ?: "—"}"
+        textEstimatedVolume.text = HarvestValueText.unbroken("Объём: ${result.volumeM3?.let { HarvestResultsFormatter.range(it,"м³") } ?: "не рассчитан — вместимость не указана или состояние неизвестно"}")
         textAverageVolume.visibility = View.GONE
-        textHarvestResults.text = HarvestResultsFormatter.results(result, campaign = false) +
-            (day.moisturePercent?.let { "\nВлажность: ${HarvestResultsFormatter.number(it)}%" } ?: "")
+        textHarvestResults.text = HarvestValueText.unbroken(HarvestResultsFormatter.results(result, campaign = false) +
+            (day.moisturePercent?.let { "\nВлажность: ${HarvestResultsFormatter.number(it)}%" } ?: ""))
         textHarvestResults.contentDescription = "Изменить влажность урожая"
         buttonEditArea.visibility = if (day.status == "COMPLETED") View.VISIBLE else View.GONE
         buttonEditArea.setText(if (day.harvestedAreaHa == null) R.string.harvest_add_area else R.string.harvest_change_area)
@@ -725,9 +721,9 @@ class HarvestDayActivity : AppCompatActivity() {
             val view =
                 TextView(this).apply {
                     text =
-                        "${bunker.fillTime} — " +
-                            "Бункер №${index + 1} — " +
-                            fillText
+                        HarvestValueText.unbroken("${bunker.fillTime} — Бункер №${index + 1} — $fillText\n" +
+                            (HarvestCalculator.volume(currentProcess?.bunkerVolumeM3, listOf(bunker.fillLevel))
+                                ?.let { HarvestResultsFormatter.range(it, "м³") } ?: "Объём не рассчитан: вместимость не указана или состояние неизвестно"))
 
                     textSize =
                         17f
@@ -2953,31 +2949,10 @@ class HarvestDayActivity : AppCompatActivity() {
         bunkerVolumeM3, bunkers.map { it.fillLevel }
     )?.asPair()
 
-    private fun calculationText(
-        label: String,
-        bunkerVolumeM3: Double?,
-        bunkers: List<HarvestBunker>
-    ): String {
-        val range =
-            totalVolumeRange(
-                bunkerVolumeM3,
-                bunkers
-            )
-                ?: return "$label: не настроен"
-
-        return if (
-            kotlin.math.abs(
-                range.first -
-                    range.second
-            ) <
-            0.0001
-        ) {
-            "$label: ${formatNumber(range.first)} м³"
-        } else {
-            "$label: ${formatNumber(range.first)}–" +
-                "${formatNumber(range.second)} м³"
-        }
-    }
+    private fun calculationText(label: String, bunkerVolumeM3: Double?, bunkers: List<HarvestBunker>): String =
+        HarvestCalculator.volume(bunkerVolumeM3, bunkers.map { it.fillLevel })
+            ?.let { "$label: ${HarvestResultsFormatter.range(it, "м³")}" }
+            ?: "$label: не рассчитан — вместимость не указана или состояние неизвестно"
 
     private fun averageText(bunkerVolumeM3: Double?, bunkers: List<HarvestBunker>): String {
         if (bunkers.isEmpty()) return "Средний объём бункера: —"

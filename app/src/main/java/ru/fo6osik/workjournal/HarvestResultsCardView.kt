@@ -6,8 +6,6 @@ import android.graphics.Typeface
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.drawable.GradientDrawable
-import android.text.SpannableString
-import android.text.Spanned
 import android.text.style.ReplacementSpan
 import android.util.AttributeSet
 import android.view.View
@@ -28,11 +26,7 @@ class HarvestResultsCardView @JvmOverloads constructor(context: Context, attrs: 
     }
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
     // Keep the original glyphs and formatting, but make each number/unit indivisible.
-    private fun readable(value: String) = SpannableString(value).apply {
-        Regex("-?\\d+(?:[.,]\\d+)?|[тц]/га|м³").findAll(value).forEach {
-            setSpan(UnbrokenHarvestValue(), it.range.first, it.range.last + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        }
-    }
+    private fun readable(value: String) = HarvestValueText.unbroken(value)
     fun setExpansion(value: Boolean) { expanded = value; render() }
     fun update(model: HarvestResultsCardModel) { currentModel = model; render() }
     private fun text(value: String, size: Float = 17f) = TextView(context).apply {
@@ -55,6 +49,20 @@ class HarvestResultsCardView @JvmOverloads constructor(context: Context, attrs: 
                 val value = cell.getChildAt(1) as TextView
                 value.text.split('\n').any { value.paint.measureText(it) + cell.paddingLeft + cell.paddingRight +
                     value.compoundPaddingLeft + value.compoundPaddingRight > columnWidth }
+            }
+            // A quantity wider than the whole card cannot wrap without separating its unit.
+            // Keep the system font and full text; only that value becomes horizontally scrollable.
+            for (cell in cells) {
+                val value = cell.getChildAt(1) as TextView
+                val available = MeasureSpec.getSize(widthMeasureSpec) - paddingLeft - paddingRight -
+                    cell.paddingLeft - cell.paddingRight - value.compoundPaddingLeft - value.compoundPaddingRight
+                val spans = value.text as? android.text.Spanned
+                val oversized = spans?.getSpans(0, spans.length, ReplacementSpan::class.java)?.any {
+                    value.paint.measureText(spans, spans.getSpanStart(it), spans.getSpanEnd(it)) > available
+                } == true
+                value.setHorizontallyScrolling(oversized)
+                value.isHorizontalScrollBarEnabled = oversized
+                value.movementMethod = if (oversized) android.text.method.ScrollingMovementMethod.getInstance() else null
             }
             for (r in 0 until grid.childCount) {
                 val row = grid.getChildAt(r) as LinearLayout
@@ -107,7 +115,7 @@ class HarvestResultsCardView @JvmOverloads constructor(context: Context, attrs: 
     }
 }
 
-private class UnbrokenHarvestValue : ReplacementSpan() {
+internal class UnbrokenHarvestValue : ReplacementSpan() {
     override fun getSize(paint: Paint, text: CharSequence, start: Int, end: Int, fm: Paint.FontMetricsInt?): Int =
         kotlin.math.ceil(paint.measureText(text, start, end).toDouble()).toInt()
     override fun draw(canvas: Canvas, text: CharSequence, start: Int, end: Int, x: Float, top: Int, y: Int, bottom: Int, paint: Paint) {

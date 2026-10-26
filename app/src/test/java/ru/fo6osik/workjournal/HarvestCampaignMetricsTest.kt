@@ -22,10 +22,10 @@ class HarvestCampaignMetricsTest {
         assertEquals(a.harvestedHa, b.harvestedHa, 0.0)
         assertEquals(a.harvestedAreaYield, b.harvestedAreaYield)
     }
-    @Test fun retainsMassRangeAndRecalculatesEditedDay() {
+    @Test fun fixedMassAndRecalculatesEditedDay() {
         val a = metrics(95.0, listOf(day(fill = "MORE_THAN_HALF")))
-        assertEquals(75.0 / 95, a.wholeAreaYield!!.min, 0.0)
-        assertEquals(150.0 / 95, a.wholeAreaYield!!.max, 0.0)
+        assertEquals(112.5 / 95, a.wholeAreaYield!!.min, 0.0)
+        assertEquals(112.5 / 95, a.wholeAreaYield!!.max, 0.0)
         val b = metrics(95.0, listOf(day(30.0)))
         assertEquals(30.0, b.harvestedHa, 0.0)
         assertEquals(5.0, b.harvestedAreaYield!!.min, 0.0)
@@ -147,15 +147,15 @@ class HarvestCampaignMetricsTest {
         assertFalse(partial.massesComplete); assertNull(partial.wholeAreaYield)
         assertNull(campaign(listOf(day(fill = "UNKNOWN"))).wholeAreaYield)
     }
-    @Test fun preservesVolumeMassYieldRangesAndCentnerConversionWithoutRounding() {
+    @Test fun exactVolumeMassYieldAndCentnerConversionWithoutRounding() {
         val result = campaign(listOf(day(7.0, 750.0, "MORE_THAN_HALF")))
         assertEquals(1, result.bunkerCount)
-        assertEquals(HarvestCalculator.Range(75.0, 150.0), result.volumeM3)
-        assertEquals(HarvestCalculator.Range(56.25, 112.5), result.mass)
-        assertEquals(56.25 / 7, result.wholeAreaYield!!.min, 0.0)
-        assertEquals(112.5 / 7, result.wholeAreaYield!!.max, 0.0)
-        assertEquals(56.25 / 7 * 10, result.yieldCentnersPerHa!!.min, 0.0)
-        assertEquals(112.5 / 7 * 10, result.yieldCentnersPerHa!!.max, 0.0)
+        assertEquals(HarvestCalculator.Range(112.5, 112.5), result.volumeM3)
+        assertEquals(HarvestCalculator.Range(84.375, 84.375), result.mass)
+        assertEquals(84.375 / 7, result.wholeAreaYield!!.min, 0.0)
+        assertEquals(84.375 / 7, result.wholeAreaYield!!.max, 0.0)
+        assertEquals(84.375 / 7 * 10, result.yieldCentnersPerHa!!.min, 0.0)
+        assertEquals(84.375 / 7 * 10, result.yieldCentnersPerHa!!.max, 0.0)
     }
     @Test fun excessRemainsVisibleForSnapshotAndPartialProgress() {
         val result = campaign(listOf(day(), day(null)), actual = null, snapshot = 50.0)
