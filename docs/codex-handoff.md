@@ -1765,3 +1765,70 @@ base main e13fd1e19f531824e148fff1d17d481098929e43.
 **Draft PR:** https://github.com/Arch-relic/AgroNaliz/pull/66 (не объединён). PR #49 оставлен без изменений. Независимая проверка agronaliz-security-gate и Android CI android должны быть проверены на точном head PR #66. Локальная сборка, эмулятор и физический смартфон для этой ветки не проверялись. APK не опубликован, пользовательские данные не трогались.
 
 **Остаток:** дождаться нового CI и независимого статуса, проверить regression backup/UI, затем отдельно согласовать release/governance и merge. При отказе защиты не обходить её и не считать skipped/neutral разрешением.
+
+
+## Issue #73 — исправление инструментальных ожиданий PR #66, 26.10.2026
+
+Цель: устранить два устаревших диапазонных ожидания точной шкалы, сохранив backup/
+Room проверки. Ветка feature/issue48-safe-app-split, существующий Draft PR:
+https://github.com/Arch-relic/AgroNaliz/pull/66. Merge и APK/Release запрещены.
+
+Независимо сверены GitHub PR/branch/commit SHA. Исходный head:
+7aaf389d40a763b7a037ad0d1c0be94844c18810. Актуальный main:
+ce628143f9b77de1e9b5fe986ef5ac7a54c2cb8f. Git fetch не работал: proxy:8080
+connection refused. Через API получены 3 blobs и 8 исходных commits; оба дерева
+и все оригинальные commit SHA (включая подписанные merge main) побайтно проверены.
+В отдельном worktree выполнен git merge --no-commit --no-ff origin/main,
+без конфликтов. Из main сохранены изменения docs/harvest-moisture-fuel.md и
+docs/harvest-results.md. История существующей ветки сохранена, force/rebase нет.
+
+Проверенный code commit: 8d7e5859d3e2e1f41aa7bdaf0f4db98dd81758d5,
+tree dcf857de35603a94eaedd9bf89f3cbd5e1b45f7a. То же дерево у локального
+3072c567a08dbd927597bb2d6a50395762018c08. Его родители — исходный PR head и
+main выше. Этот последующий отчётный commit меняет только handoff, не код.
+
+Изменения непосредственно Issue #73:
+- app/src/androidTest/java/ru/fo6osik/workjournal/HarvestFullBackup108Test.kt:
+  result.massTonnes.min/max: 24/36 → 30/30;
+- app/src/androidTest/java/ru/fo6osik/workjournal/MainRoom23MigrationTest.kt:
+  mass.massTonnes.min/max: 12/18 → 15/15;
+- docs/codex-handoff.md: этот отчёт.
+Созданных и удалённых файлов нет. Проверено точным сравнением исходных файлов:
+поменялись только четыре числа ожиданий, assertions и fixtures не удалялись.
+FULL/HALF/MORE_THAN_HALF/LESS_THAN_HALF = 1/.5/.75/.25; 8 × 2.5 = 20 м³,
+20 × 750 / 1000 = 15 т, два дня = 30 т. Расчёт приложения не менялся.
+
+Backup suite реально экспортирует JSON, импортирует в отдельную БД и сравнивает
+все колонки/строки, связи, active states и foreign_key_check; merge сохраняет
+локальные изменения и проверяет повторный импорт. Миграционный тест обновляет
+Room22→24, сравнивает прежние колонки/UID/время/события, preferences/certificate/
+файлы, затем реально импортирует backup в отдельную in-memory БД, экспортирует
+повторно и сравнивает таблицы и FK. Все эти проверки сохранены полностью.
+Room/backup implementation, миграции, Gradle, .github, signing, security/admission
+не менялись. Dev Agent CLI не запускался, его права не расширялись.
+
+Новые локальные проверки:
+- source /workspace/agronaliz-env.sh; agrogradle :app:assembleDebug :app:test
+  --console=plain: не стартовала компиляция, FileLockContentionHandler /
+  Could not determine a usable wildcard IP for this machine.
+- Реальные Kotlin источники и четыре существующие JUnit suites с компилятором
+  Gradle 8.13: HarvestCalculatorTest, HarvestCampaignMetricsTest,
+  HarvestResultsCardModelTest, HarvestFixedFillTest — 63 tests passed,
+  0 failures/errors. Временная Kotlin probe вызвала настоящий HarvestCalculator
+  с исходной fixture 8 м³ / 750 кг/м³: Range(15,15) и Range(30,30).
+  Это не Android/Room запуск; временная probe не добавлена в репозиторий.
+- git diff --check, точное сравнение двух тестов с исходным PR, scope audit:
+  passed; protected paths и приложение сохранены.
+
+Перед ref update повторно сверить head PR и main, использовать expected_sha
+исходного PR с force=false, при гонке остановиться. Новый CI на публикуемом
+head ещё not_run. Обязательны agronaliz-security-gate от App ID 5441843 и android
+от GitHub Actions App ID 15368; профильные Room/backup/UI также проверить.
+Исходный head имел security success, но android/main-room23 failure — это не
+результат исправления. Preview action_required не является success/разрешением.
+Точные итоговые CI SHA/URL будут указаны в продолжении отчёта и описании PR.
+
+Ограничения: локально Android не собран, физическое устройство и пользовательские
+данные не используются. Только disposable synthetic CI. Не снимать Draft, не
+merge, не публиковать APK, не менять подпись, миграции и безопасность. При
+небезопасном обновлении/отказе защиты — остановиться и сообщить причину.
