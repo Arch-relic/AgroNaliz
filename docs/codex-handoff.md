@@ -1832,3 +1832,71 @@ head ещё not_run. Обязательны agronaliz-security-gate от App ID 
 данные не используются. Только disposable synthetic CI. Не снимать Draft, не
 merge, не публиковать APK, не менять подпись, миграции и безопасность. При
 небезопасном обновлении/отказе защиты — остановиться и сообщить причину.
+
+
+### Issue #73 — завершённые проверки исправления, 26.10.2026
+
+Проверенный PR head 92850bc437165ca813ecb1b1d47dc9f133d46ea7,
+tree c13c177d3ee9013db1b60891e54418508fad887c. История включает code merge
+8d7e5859d3e2e1f41aa7bdaf0f4db98dd81758d5 с обоими исходными родителями.
+Main и feature head повторно сверены после CI: main ce628143f9b77de1e9b5fe986ef5ac7a54c2cb8f,
+feature 92850bc437165ca813ecb1b1d47dc9f133d46ea7. Гонки и конфликты не выявлены.
+Последующий commit с этим дополнением меняет исключительно docs/codex-handoff.md;
+его точный новый head проверяется отдельно, без подмены статусов предыдущего head.
+
+Все 8 запущенных workflows завершились success на проверенном head:
+- Agent Core validation (pull_request): https://github.com/Arch-relic/AgroNaliz/actions/runs/40341633294
+- Android PR checks (pull_request): https://github.com/Arch-relic/AgroNaliz/actions/runs/40341633228
+- Installed diagnostics and harvest typography (pull_request): https://github.com/Arch-relic/AgroNaliz/actions/runs/40341633155
+- MAIN 1.0.9 to1.0.10 Room24 same-schema audit (pull_request): https://github.com/Arch-relic/AgroNaliz/actions/runs/40341633260
+- Main APK safe update checks (pull_request): https://github.com/Arch-relic/AgroNaliz/actions/runs/40341633192
+- Room24 synthetic MAIN TEST update audit (pull_request): https://github.com/Arch-relic/AgroNaliz/actions/runs/40341633243
+- MAIN Room22 to23 migration audit (pull_request): https://github.com/Arch-relic/AgroNaliz/actions/runs/40341633182
+- Agent Core validation (pull_request_target): https://github.com/Arch-relic/AgroNaliz/actions/runs/40341628727
+
+Обязательные check-runs проверены по head и идентификаторам приложений:
+- agronaliz-security-gate, App ID 5441843: success / VALIDATED; последний
+  check-run на этом head 121639165523.
+- android, GitHub Actions App ID 15368: success; job 121637594901.
+- Preview agronaliz-security-preview: action_required, preview_only;
+  не success и не разрешение на merge. Никакого обхода/изменения политики нет.
+- Agent Core: tests success и trusted-validation success. Skipped противоположные
+  ветви jobs для разных событий не выдаются за исполненные проверки.
+
+По завершённым job logs:
+- Android: 53 инструментальных вызова / 107 выполнений с учётом повторов.
+  HarvestFullBackup108Test: 7 точек, OK (7 tests), без трёх прежних падений.
+  Сюда входят реальное восстановление всех колонок/связей, merge с remapping IDs,
+  сохранение локальных правок, повторный импорт и legacy Room22 backup.
+- MainRoom23MigrationTest: 3 вызова, 3 passed. Seed исходной Room22, upgrade,
+  проверка 15 т и separate restore, затем повтор после restart — успешны.
+- Room23→24 и Room24→24: по 10 вызовов / 10 passed; логи подтверждают
+  сохранение данных, files/preferences/certificate, отдельный restore и restart.
+- MAIN safe update: 3 / 3 passed; Python 18 + 10 tests passed.
+- API23 и API35 UI: по 6 / 6 passed.
+- Итого instrumentation: 91 вызов / 145 выполненных tests, 0 failures/errors.
+  Повторы не являются отдельными уникальными сценариями.
+- Android job Python: 13 + 7 + 29 tests passed. Локальные 63 Kotlin/JUnit
+  и fixture probe описаны выше. JVM suites Gradle в CI successful; точное
+  число JVM tests из XML отдельно не извлекалось и не придумывается.
+
+Никаких ослабленных проверок: числа исправлены в существующих assertEquals,
+состав методов/fixtures и все остальные assertions двух файлов совпадают с
+исходным PR. Room24, миграции, DatabaseBackupManager/DataImportManager, Gradle,
+.github, product version, signing и безопасность не изменены. В final scope
+Issue #73 только два Kotlin test файла и docs/codex-handoff.md; два документа
+из main вошли при синхронизации без ручных изменений. Созданных/удалённых файлов нет.
+git diff --check и точное сравнение scope passed.
+
+Остаточные ограничения: локальный Gradle не запустился из-за wildcard IP;
+Android, upgrade и restore подтверждены CI на synthetic эмуляторных данных,
+не физическим смартфоном. Preview остаётся action_required и отдельно не
+объявляется пройденным. Ветка и PR требуют review владельца; production
+готовность/выпуск не заявляются. Не использовались Dev Agent CLI, рабочие данные,
+production dispatch, merge, APK/Release, force push или изменение signing/security.
+
+Статус: дефект Issue #73 исправлен; Draft PR #66 обновлён. Это дополнение —
+последний отчётный commit, финальные check-runs на его head сверяются перед
+передачей и приводятся в описании PR:
+https://github.com/Arch-relic/AgroNaliz/pull/66.
+После проверки точного final head остановиться для владельческого review.
