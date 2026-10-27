@@ -104,7 +104,12 @@ class HarvestResultsCardUiTest {
                     value.text.length, layout.getLineEnd(layout.lineCount - 1))
                 assertTrue("Value $index exceeds its cell", value.bottom <= cell.height)
                 assertEquals(View.VISIBLE, value.visibility)
-                assertNull("Do not enable dynamic horizontal scrolling", value.movementMethod)
+                // Fixed row orientation must not prevent reading long values.
+                assertNotNull("Unbroken oversized numbers need local scrolling", value.movementMethod)
+                val visible = value.width - value.compoundPaddingLeft - value.compoundPaddingRight
+                if ((0 until layout.lineCount).any { layout.getLineWidth(it) > visible + 1 }) {
+                    assertTrue("Oversized value $index must be scrollable", value.canScrollHorizontally(1))
+                }
             }
         }
     }
