@@ -1928,3 +1928,18 @@ CI exact SHA и Android UI API23/35 должны быть сверены отд�
 чужие статусы. Физический смартфон новой сборкой ещё не проверялся. Не публиковать
 MAIN/TEST APK, не объединять PR без нового явного разрешения; прежний PR #74 остаётся
 отдельным Draft с независимым отказом gate. Продолжать только Issue #48.
+
+### Исправление обнаруженного падения CI — 27.10.2026
+
+UI polish API23 [run 40461144386](https://github.com/Arch-relic/AgroNaliz/actions/runs/40461144386)
+на head `d3a17ac585f7aeb243e8f48c6c6e25c3def45150` сообщил **failure**:
+`UiPolishTest.numericRangesRemainWholeAtDifferentWidthsAndFontScales`,
+`Oversized quantity must be scrollable` (огромное число ц/га).
+Это подтверждённый регрессионный сценарий удаления горизонтальной прокрутки.
+
+Исправлено в той же ветке, не меняя проверочный workflow: `HarvestResultsCardView`
+теперь сохраняет 2 горизонтальных ряда и прокручивает только текст значений
+внутри каждой ячейки; `HarvestResultsCardUiTest` проверяет доступность
+длинных значений и прежний контракт `count=5`. Документация уточнена.
+Новый CI должен быть выполнен на следующем SHA; старые успешные результаты
+не засчитывать. Production/Room24/backup/version/signing untouched.
