@@ -37,45 +37,8 @@ class HarvestResultsCardView @JvmOverloads constructor(context: Context, attrs: 
         breakStrategy = android.text.Layout.BREAK_STRATEGY_SIMPLE
         hyphenationFrequency = android.text.Layout.HYPHENATION_FREQUENCY_NONE
     }
-    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val grid = findViewWithTag<LinearLayout>("harvest-results-grid")
-        if (grid != null && MeasureSpec.getMode(widthMeasureSpec) != MeasureSpec.UNSPECIFIED) {
-            val columnWidth = (MeasureSpec.getSize(widthMeasureSpec) - paddingLeft - paddingRight) / 2
-            val cells = (0 until grid.childCount).flatMap { r ->
-                val row = grid.getChildAt(r) as LinearLayout
-                (0 until row.childCount).map { row.getChildAt(it) as LinearLayout }
-            }
-            val stacked = cells.any { cell ->
-                val value = cell.getChildAt(1) as TextView
-                value.text.split('\n').any { value.paint.measureText(it) + cell.paddingLeft + cell.paddingRight +
-                    value.compoundPaddingLeft + value.compoundPaddingRight > columnWidth }
-            }
-            // A quantity wider than the whole card cannot wrap without separating its unit.
-            // Keep the system font and full text; only that value becomes horizontally scrollable.
-            for (cell in cells) {
-                val value = cell.getChildAt(1) as TextView
-                val available = MeasureSpec.getSize(widthMeasureSpec) - paddingLeft - paddingRight -
-                    cell.paddingLeft - cell.paddingRight - value.compoundPaddingLeft - value.compoundPaddingRight
-                val spans = value.text as? android.text.Spanned
-                val oversized = spans?.getSpans(0, spans.length, ReplacementSpan::class.java)?.any {
-                    value.paint.measureText(spans, spans.getSpanStart(it), spans.getSpanEnd(it)) > available
-                } == true
-                value.setHorizontallyScrolling(oversized)
-                value.isHorizontalScrollBarEnabled = oversized
-                value.movementMethod = if (oversized) android.text.method.ScrollingMovementMethod.getInstance() else null
-            }
-            for (r in 0 until grid.childCount) {
-                val row = grid.getChildAt(r) as LinearLayout
-                val orientation = if (stacked) VERTICAL else HORIZONTAL
-                if (row.orientation != orientation) {
-                    row.orientation = orientation
-                    for (c in 0 until row.childCount) row.getChildAt(c).layoutParams =
-                        LayoutParams(if (stacked) LayoutParams.MATCH_PARENT else 0, LayoutParams.WRAP_CONTENT, if (stacked) 0f else 1f)
-                }
-            }
-        }
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-    }
+    // Fixed 2×2 overview: never change row orientation while measuring.
+    // TextViews wrap between complete quantities; no values are hidden or ellipsized.
     private fun render() {
         val model = currentModel ?: return
         removeAllViews()
