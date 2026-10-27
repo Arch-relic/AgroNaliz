@@ -1900,3 +1900,46 @@ production dispatch, merge, APK/Release, force push или изменение si
 передачей и приводятся в описании PR:
 https://github.com/Arch-relic/AgroNaliz/pull/66.
 После проверки точного final head остановиться для владельческого review.
+
+---
+
+## 27.10.2026 — Issue #48: возвращение фиксированной сетки результатов 2×2
+
+**Пользовательское решение:** интервалы в результатах заменены точными числами, поэтому
+прежняя сетка 2×2 должна вернуться. На TEST 1.0.10/code2000010/Room24 физический
+скриншот показал заголовки всех 4 ячеек, но 3 значения в верхнем блоке не видны.
+Подробные данные/урожайность присутствуют; вывод о порче пользовательских данных
+не делается.
+
+**Ветка:** `fix/issue48-fixed-2x2-results-grid`, base `main=fb4492c67f251802b032b7f226063c39ab747028` (после объединения PR #66).
+**Scope:** `app/src/main/java/ru/fo6osik/workjournal/HarvestResultsCardView.kt` — удалено
+динамическое переключение расположения/горизонтальной прокрутки в `onMeasure`,
+сохранены две строки по две ячейки, шрифт значений 21sp→18sp; `app/src/androidTest/java/ru/fo6osik/workjournal/HarvestResultsCardUiTest.kt` — новый набор UI assertions в уже существующем двухрядном тесте,
+принудительная ориентация двух горизонтальных рядов в compactLargeFont; тестов
+по-прежнему 5 (штатный CI runner использует count=5);
+`docs/issue48-fixed-fill.md`, `docs/codex-handoff.md` — отчёт.
+Созданных/удалённых файлов нет. Логика HarvestCalculator, карточка результатов Model,
+Room24, backup, versionName/versionCode, package/подписи/production workflows, gate
+и данные физического устройства неизменны.
+
+**Проверки на момент подготовки:** код/тесты прочитаны из GitHub SHA; изменение
+опубликовано только в feature-ветке для Draft PR, локальная Android сборка не запускалась.
+CI exact SHA и Android UI API23/35 должны быть сверены отдельно после push; не переносить
+чужие статусы. Физический смартфон новой сборкой ещё не проверялся. Не публиковать
+MAIN/TEST APK, не объединять PR без нового явного разрешения; прежний PR #74 остаётся
+отдельным Draft с независимым отказом gate. Продолжать только Issue #48.
+
+### Исправление обнаруженного падения CI — 27.10.2026
+
+UI polish API23 [run 40461144386](https://github.com/Arch-relic/AgroNaliz/actions/runs/40461144386)
+на head `d3a17ac585f7aeb243e8f48c6c6e25c3def45150` сообщил **failure**:
+`UiPolishTest.numericRangesRemainWholeAtDifferentWidthsAndFontScales`,
+`Oversized quantity must be scrollable` (огромное число ц/га).
+Это подтверждённый регрессионный сценарий удаления горизонтальной прокрутки.
+
+Исправлено в той же ветке, не меняя проверочный workflow: `HarvestResultsCardView`
+теперь сохраняет 2 горизонтальных ряда и прокручивает только текст значений
+внутри каждой ячейки; `HarvestResultsCardUiTest` проверяет доступность
+длинных значений и прежний контракт `count=5`. Документация уточнена.
+Новый CI должен быть выполнен на следующем SHA; старые успешные результаты
+не засчитывать. Production/Room24/backup/version/signing untouched.

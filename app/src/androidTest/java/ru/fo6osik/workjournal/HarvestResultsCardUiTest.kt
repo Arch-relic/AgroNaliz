@@ -60,7 +60,7 @@ class HarvestResultsCardUiTest {
     }
     @Test fun twoByTwoGridInitiallyCollapsedAndToggle() {
         launch().use { s ->
-            await(s)
+            await(s) { it.currentModel != null && it.findViewWithTag<View>("harvest-results-grid").width > 0 }
             s.onActivity { a ->
                 val v = a.findViewById<HarvestResultsCardView>(R.id.harvestResultsCard)
                 val grid = v.findViewWithTag<LinearLayout>("harvest-results-grid")
@@ -68,11 +68,48 @@ class HarvestResultsCardUiTest {
                 for (i in 0..1) assertEquals(2, (grid.getChildAt(i) as LinearLayout).childCount)
                 assertEquals("90 га", v.findViewWithTag<TextView>("harvest-result-0").text.toString())
                 assertTrue(v.findViewWithTag<TextView>("harvest-result-3").text.contains("ц/га"))
+                assertFixedGridVisible(v)
                 assertFalse(v.expanded); assertEquals(View.GONE, v.findViewWithTag<View>("harvest-results-details").visibility)
                 v.findViewWithTag<View>("harvest-results-toggle").performClick()
                 assertTrue(v.expanded); assertEquals(View.VISIBLE, v.findViewWithTag<View>("harvest-results-details").visibility)
                 assertEquals(90, v.findViewWithTag<ProgressBar>("harvest-results-progress").progress)
                 v.findViewWithTag<View>("harvest-results-toggle").performClick(); assertFalse(v.expanded)
+            }
+        }
+    }
+    /** Regression: all four values are laid out inside a stable 2x2 grid. */
+    private fun assertFixedGridVisible(card: HarvestResultsCardView) {
+        val grid = card.findViewWithTag<LinearLayout>("harvest-results-grid")
+        assertEquals(LinearLayout.VERTICAL, grid.orientation)
+        assertEquals(2, grid.childCount)
+        val expected = requireNotNull(card.currentModel).overview
+        assertEquals(4, expected.size)
+        for (rowIndex in 0..1) {
+            val row = grid.getChildAt(rowIndex) as LinearLayout
+            assertEquals("Grid must always stay 2x2", LinearLayout.HORIZONTAL, row.orientation)
+            assertEquals(2, row.childCount)
+            for (colIndex in 0..1) {
+                val cell = row.getChildAt(colIndex) as LinearLayout
+                assertTrue("Cell needs nonzero width", cell.width > 0)
+                assertTrue("Cell needs nonzero height", cell.height > 0)
+                val label = cell.getChildAt(0) as TextView
+                val value = cell.getChildAt(1) as TextView
+                val index = rowIndex * 2 + colIndex
+                assertEquals(expected[index].first, label.text.toString())
+                assertEquals(expected[index].second, value.text.toString())
+                assertTrue("Value $index has no measured height", value.height > 0)
+                val layout = requireNotNull(value.layout)
+                assertTrue("Value $index has no text lines", layout.lineCount > 0)
+                assertEquals("Value $index must be fully laid out",
+                    value.text.length, layout.getLineEnd(layout.lineCount - 1))
+                assertTrue("Value $index exceeds its cell", value.bottom <= cell.height)
+                assertEquals(View.VISIBLE, value.visibility)
+                // Fixed row orientation must not prevent reading long values.
+                assertNotNull("Unbroken oversized numbers need local scrolling", value.movementMethod)
+                val visible = value.width - value.compoundPaddingLeft - value.compoundPaddingRight
+                if ((0 until layout.lineCount).any { layout.getLineWidth(it) > visible + 1 }) {
+                    assertTrue("Oversized value $index must be scrollable", value.canScrollHorizontally(1))
+                }
             }
         }
     }
@@ -134,9 +171,8 @@ class HarvestResultsCardUiTest {
                 val grid = v.findViewWithTag<LinearLayout>("harvest-results-grid")
                 for (row in 0..1) {
                     val r = grid.getChildAt(row) as LinearLayout
-                    if (r.orientation == LinearLayout.HORIZONTAL)
-                        assertTrue(r.getChildAt(0).right <= r.getChildAt(1).left)
-                    else assertTrue(r.getChildAt(0).bottom <= r.getChildAt(1).top)
+                    assertEquals(LinearLayout.HORIZONTAL, r.orientation)
+                    assertTrue(r.getChildAt(0).right <= r.getChildAt(1).left)
                     for (col in 0..1) {
                         val cell = r.getChildAt(col) as LinearLayout
                         val value = cell.getChildAt(1) as TextView
