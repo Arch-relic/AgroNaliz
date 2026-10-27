@@ -76,6 +76,43 @@ class HarvestResultsCardUiTest {
             }
         }
     }
+    /** Regression: all four numbers must be rendered in a fixed 2x2 grid, also at large font. */
+    @Test fun fixedGridNeverHidesFirstThreeValues() {
+        launch().use { s ->
+            await(s) { it.currentModel != null && it.findViewWithTag<View>("harvest-results-grid").width > 0 }
+            s.onActivity { a ->
+                val card = a.findViewById<HarvestResultsCardView>(R.id.harvestResultsCard)
+                val grid = card.findViewWithTag<LinearLayout>("harvest-results-grid")
+                assertEquals(LinearLayout.VERTICAL, grid.orientation)
+                assertEquals(2, grid.childCount)
+                val expected = requireNotNull(card.currentModel).overview
+                assertEquals(4, expected.size)
+                for (rowIndex in 0..1) {
+                    val row = grid.getChildAt(rowIndex) as LinearLayout
+                    assertEquals("Grid must always stay 2x2", LinearLayout.HORIZONTAL, row.orientation)
+                    assertEquals(2, row.childCount)
+                    for (colIndex in 0..1) {
+                        val cell = row.getChildAt(colIndex) as LinearLayout
+                        assertTrue("Cell needs nonzero width", cell.width > 0)
+                        assertTrue("Cell needs nonzero height", cell.height > 0)
+                        val label = cell.getChildAt(0) as TextView
+                        val value = cell.getChildAt(1) as TextView
+                        val index = rowIndex * 2 + colIndex
+                        assertEquals(expected[index].first, label.text.toString())
+                        assertEquals(expected[index].second, value.text.toString())
+                        assertTrue("Value $index has no measured height", value.height > 0)
+                        val layout = requireNotNull(value.layout)
+                        assertTrue("Value $index has no text lines", layout.lineCount > 0)
+                        assertEquals("Value $index must be fully laid out",
+                            value.text.length, layout.getLineEnd(layout.lineCount - 1))
+                        assertTrue("Value $index exceeds its cell", value.bottom <= cell.height)
+                        assertEquals(View.VISIBLE, value.visibility)
+                        assertNull("Do not enable dynamic horizontal scrolling", value.movementMethod)
+                    }
+                }
+            }
+        }
+    }
     @Test fun roomUpdatesAndRecreationRetainExpansion() {
         launch().use { s ->
             await(s)
@@ -134,9 +171,8 @@ class HarvestResultsCardUiTest {
                 val grid = v.findViewWithTag<LinearLayout>("harvest-results-grid")
                 for (row in 0..1) {
                     val r = grid.getChildAt(row) as LinearLayout
-                    if (r.orientation == LinearLayout.HORIZONTAL)
-                        assertTrue(r.getChildAt(0).right <= r.getChildAt(1).left)
-                    else assertTrue(r.getChildAt(0).bottom <= r.getChildAt(1).top)
+                    assertEquals(LinearLayout.HORIZONTAL, r.orientation)
+                    assertTrue(r.getChildAt(0).right <= r.getChildAt(1).left)
                     for (col in 0..1) {
                         val cell = r.getChildAt(col) as LinearLayout
                         val value = cell.getChildAt(1) as TextView
