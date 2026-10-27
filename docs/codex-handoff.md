@@ -1914,8 +1914,9 @@ https://github.com/Arch-relic/AgroNaliz/pull/66.
 **Ветка:** `fix/issue48-fixed-2x2-results-grid`, base `main=fb4492c67f251802b032b7f226063c39ab747028` (после объединения PR #66).
 **Scope:** `app/src/main/java/ru/fo6osik/workjournal/HarvestResultsCardView.kt` — удалено
 динамическое переключение расположения/горизонтальной прокрутки в `onMeasure`,
-сохранены две строки по две ячейки, шрифт значений 21sp→18sp; `app/src/androidTest/java/ru/fo6osik/workjournal/HarvestResultsCardUiTest.kt` — новый UI regression,
-принудительная ориентация двух горизонтальных рядов в compactLargeFont;
+сохранены две строки по две ячейки, шрифт значений 21sp→18sp; `app/src/androidTest/java/ru/fo6osik/workjournal/HarvestResultsCardUiTest.kt` — новый набор UI assertions в уже существующем двухрядном тесте,
+принудительная ориентация двух горизонтальных рядов в compactLargeFont; тестов
+по-прежнему 5 (штатный CI runner использует count=5);
 `docs/issue48-fixed-fill.md`, `docs/codex-handoff.md` — отчёт.
 Созданных/удалённых файлов нет. Логика HarvestCalculator, карточка результатов Model,
 Room24, backup, versionName/versionCode, package/подписи/production workflows, gate
