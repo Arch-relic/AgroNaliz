@@ -37,8 +37,7 @@ class HarvestResultsCardView @JvmOverloads constructor(context: Context, attrs: 
         breakStrategy = android.text.Layout.BREAK_STRATEGY_SIMPLE
         hyphenationFrequency = android.text.Layout.HYPHENATION_FREQUENCY_NONE
     }
-    // Keep exactly two rows of two cells; do not change the grid while measuring it.
-    // The fixed 25/50/75/100% values are shorter than the former ranges.
+    // Keep two stable rows of two cells; only oversized values scroll within their cells.
     private fun render() {
         val model = currentModel ?: return
         removeAllViews()
@@ -56,7 +55,14 @@ class HarvestResultsCardView @JvmOverloads constructor(context: Context, attrs: 
             items.forEachIndexed { column, (label, value) ->
                 val cell = LinearLayout(context).apply { orientation = VERTICAL; setPadding(dp(4), dp(4), dp(4), dp(4)) }
                 cell.addView(text(label, 16f))
-                cell.addView(text(value, 18f).apply { tag = "harvest-result-${rowIndex * 2 + column}"; setTypeface(typeface, Typeface.BOLD) })
+                cell.addView(text(value, 18f).apply {
+                    tag = "harvest-result-${rowIndex * 2 + column}"
+                    setTypeface(typeface, Typeface.BOLD)
+                    // Keep both columns fixed. Oversized individual values can scroll,
+                    // without reshaping the whole grid or clipping unbroken numbers.
+                    setHorizontallyScrolling(true)
+                    movementMethod = android.text.method.ScrollingMovementMethod.getInstance()
+                })
                 row.addView(cell, LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f))
             }
             grid.addView(row)
