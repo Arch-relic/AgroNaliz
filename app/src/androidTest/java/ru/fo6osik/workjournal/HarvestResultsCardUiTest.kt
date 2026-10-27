@@ -134,12 +134,16 @@ class HarvestResultsCardUiTest {
                 val grid = v.findViewWithTag<LinearLayout>("harvest-results-grid")
                 for (row in 0..1) {
                     val r = grid.getChildAt(row) as LinearLayout
-                    if (r.orientation == LinearLayout.HORIZONTAL)
-                        assertTrue(r.getChildAt(0).right <= r.getChildAt(1).left)
-                    else assertTrue(r.getChildAt(0).bottom <= r.getChildAt(1).top)
+                    // Even at font scale 1.6, a row must stay two columns wide.
+                    assertEquals(LinearLayout.HORIZONTAL, r.orientation)
+                    assertTrue(r.getChildAt(0).right <= r.getChildAt(1).left)
                     for (col in 0..1) {
                         val cell = r.getChildAt(col) as LinearLayout
                         val value = cell.getChildAt(1) as TextView
+                        val expected = v.currentModel!!.overview[row * 2 + col].second
+                        assertTrue("Missing value in grid cell ${row * 2 + col}", expected.isNotBlank())
+                        assertEquals(expected, value.text.toString())
+                        assertEquals(View.VISIBLE, value.visibility)
                         assertTrue(value.width > 0); assertNotNull(value.layout)
                         for (line in 0 until value.layout.lineCount) assertEquals(0, value.layout.getEllipsisCount(line))
                         assertTrue(value.height >= value.layout.height)
